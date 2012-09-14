@@ -3,10 +3,8 @@ from PyQt4 import QtCore, QtGui
 from tgrid import Ui_Form
 
 
-
 class TermGrid(QtGui.QFrame):
 #==============================
-
 
   sizeChanged = QtCore.pyqtSignal(int)
 
@@ -18,14 +16,24 @@ class TermGrid(QtGui.QFrame):
     self.setPalette(
       QtGui.QPalette(QtGui.QColor(200, 200, 255), QtGui.QColor(240, 255, 240))
       )
-
-    self.ui.property.addItem("Text")
-    self.ui.property.addItem("Property")
-
     self._rows = [ (self.ui.property, self.ui.relation, self.ui.valuelist, self.ui.operation) ]
     self._names = [ c.objectName() for c in self._rows[0] ]
     self._active_rows = 1
     self.setup_last_row()
+    self._config = None
+
+
+  def set_configuration(self, config):
+  #-----------------------------------
+    """
+    Set configuartion information.
+
+    This method should be called as part of initialistion.
+    """
+    self._config = config
+    if self._config:
+      for p in self._config.properties():
+        self.ui.property.addItem(p)
 
 
   def show_row(self, row):
@@ -85,14 +93,19 @@ class TermGrid(QtGui.QFrame):
 
   def on_property_changed(self, index):
   #------------------------------------
-    row = QtCore.QObject.sender(self).row
-    if index > 0 and str(self._rows[row][0].itemText(0)).startswith('Please'):
-      self._rows[row][0].removeItem(0)
-      self.show_row(row)
+    p = QtCore.QObject.sender(self)
+    text = p.currentText()
+#    if index > 0 and str(self._rows[p.row][0].itemText(0)).startswith('Please'):
+#      self._rows[p.row][0].removeItem(0)
+    if index > 0 and str(p.itemText(0)).startswith('Please'):
+      p.removeItem(0)
+      self.show_row(p.row)
+    reln = self._rows[p.row][1]
+    reln.clear()
+    if self._config:
+      for r in self._config.relations(text):
+        reln.addItem(r)
 
-    self.ui.relation.clear()
-    self.ui.relation.addItem("equal")
-    self.ui.relation.addItem("not equal")
 
   def clone(self, name):
   #---------------------
@@ -104,4 +117,3 @@ class TermGrid(QtGui.QFrame):
     copy.setFrameShadow(self.frameShadow())
     copy.setObjectName(name)
     return copy
-
