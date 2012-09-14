@@ -15,6 +15,9 @@ class TermGrid(QtGui.QFrame):
     QtGui.QWidget.__init__(self, parent)
     self.ui = Ui_Form()
     self.ui.setupUi(self)
+    self.setPalette(
+      QtGui.QPalette(QtGui.QColor(200, 200, 255), QtGui.QColor(240, 255, 240))
+      )
 
     self.ui.property.addItem("Text")
     self.ui.property.addItem("Property")
@@ -23,7 +26,6 @@ class TermGrid(QtGui.QFrame):
     self._names = [ c.objectName() for c in self._rows[0] ]
     self._active_rows = 1
     self.setup_last_row()
-
 
   def show_row(self, row):
   #-----------------------
@@ -50,10 +52,10 @@ class TermGrid(QtGui.QFrame):
     lastrow = (row == len(self._rows) - 1)
     if index == 0 and not lastrow: 
       for c in self._rows[row][:-1]:
-#        self.ui.gridLayout.removeWidget(c)
+##        self.ui.gridLayout.removeWidget(c)
         c.hide()
-#        del c
-#      self._active_rows -= 1
+##        del c
+      self._active_rows -= 1
       c = self._rows[row][-1]
       c.clear()
       c.addItem('Ignored')
@@ -71,10 +73,10 @@ class TermGrid(QtGui.QFrame):
       self._active_rows += 1
       self.setup_last_row()
       height = 30*self._active_rows
-      self.ui.layoutWidget.resize(self.ui.layoutWidget.width(), height)
+#      self.ui.layoutWidget.resize(self.ui.layoutWidget.width(), height)
       self.ui.gridLayout.invalidate()
-      self.resize(self.width(), height)
-      self.sizeChanged.emit(height)
+#      self.resize(self.width(), height)
+#      self.sizeChanged.emit(height)
     self.update()
 
 
@@ -95,8 +97,8 @@ class TermGrid(QtGui.QFrame):
     copy.setSizePolicy(self.sizePolicy())
     copy.setMinimumSize(self.minimumSize())
     copy.setMaximumSize(self.maximumSize())
-    self.setFrameShape(self.frameShape())
-    self.setFrameShadow(self.frameShadow())
+    copy.setFrameShape(self.frameShape())
+    copy.setFrameShadow(self.frameShadow())
     copy.setObjectName(name)
     return copy
 

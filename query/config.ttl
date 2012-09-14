@@ -1,0 +1,16 @@
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix bsml:  <http://www.biosignalml.org/ontologies/2011/04/biosignalml#> .
+@prefix query: <http://www.biosignalml.org/ontologies/query#> .
+
+[ ] a query:Definition ;
+  query:property bsml:event ;
+  rdfs:label "Event" ;
+  query:relation [
+    rdfs:label "equal" ;
+    query:sparql query:Direct
+  ], [
+    rdfs:label "not" ;
+    query:sparql query:Filter ;
+    query:filter "!="
+  ] ;
+  query:value query:List .
