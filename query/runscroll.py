@@ -21,16 +21,9 @@ class QueryForm(QtGui.QWidget):
     self.ui.expression.row = 0
 #    self.ui.expression.sizeChanged.connect(self.on_widget_resize)
 
+    self._last_row = 0
     self.ui.operation.hide()
-
     self.add_operation(1)
-
-
-    #self.ui.gridLayout.itemAtPosition(1, 0).setAlignment(QtCore.Qt.AlignTop)
-
-    #self.expressions = [ self.ui.expression ]
-    # operation  @ 1, 0
-    # expression @ 0, 1
 
 
   def on_widget_resize(self, height):
@@ -55,13 +48,14 @@ class QueryForm(QtGui.QWidget):
   def on_operation_changed(self, index):
   #-------------------------------------
     row = QtCore.QObject.sender(self).row
-    if index > 0:   # and row is last...
-      item = self.ui.expression.clone('exprsssion%d' % row)
+    if index > 0 and row == (self._last_row + 1):
+      item = self.ui.expression.clone('expression%d' % row)
       item.row = row
 #      item.sizeChanged.connect(self.on_widget_resize)
-      self.ui.gridLayout.addWidget(item, row, 3)
-##      self.ui.gridLayout.addItem(self.ui.gridLayout.itemAtLocation(row+1, 0), row+2, 0)
-      self.add_operation(row+1)
+      self.ui.gridLayout.addWidget(item, row, 2)
+      QtCore.QObject.sender(self).removeItem(0)
+      if row < 2: self.add_operation(row+1)
+      self._last_row += 1
 
 
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1020</width>
-    <height>512</height>
+    <width>1003</width>
+    <height>522</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,8 +27,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>996</width>
-        <height>488</height>
+        <width>979</width>
+        <height>498</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -39,14 +39,14 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>970</width>
-        <height>470</height>
+        <width>960</width>
+        <height>480</height>
        </size>
       </property>
       <widget class="QFrame" name="Frame">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>110</y>
          <width>941</width>
          <height>350</height>
@@ -85,7 +85,7 @@
           <x>0</x>
           <y>0</y>
           <width>951</width>
-          <height>521</height>
+          <height>351</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0">
@@ -219,13 +219,45 @@
            </property>
           </spacer>
          </item>
+         <item row="1" column="0">
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>5</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="2" column="0">
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>5</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
         </layout>
        </widget>
       </widget>
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>840</x>
+         <x>820</x>
          <y>0</y>
          <width>114</width>
          <height>100</height>
@@ -258,7 +290,7 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>10</y>
          <width>162</width>
          <height>32</height>

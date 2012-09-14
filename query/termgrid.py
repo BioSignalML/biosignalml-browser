@@ -27,10 +27,13 @@ class TermGrid(QtGui.QFrame):
     self._active_rows = 1
     self.setup_last_row()
 
+
   def show_row(self, row):
   #-----------------------
     for c in self._rows[row][1:]:
       c.show()
+    if row >= 2: c.hide()        ## Can't add more rows
+
 
   def setup_last_row(self):
   #------------------------
@@ -59,7 +62,7 @@ class TermGrid(QtGui.QFrame):
       c = self._rows[row][-1]
       c.clear()
       c.addItem('Ignored')
-    elif index > 0 and lastrow:
+    elif index > 0 and lastrow and row < 2:
       nextrow = [ ]
       next = len(self._rows)
       lastitem = len(self._rows[0]) - 1
