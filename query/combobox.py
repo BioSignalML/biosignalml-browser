@@ -6,7 +6,7 @@ class ComboBox(QtGui.QComboBox):
 
   def clone(self, name, copyItems=False):
   #--------------------------------------
-    copy = self.__class__(self.parent())
+    copy = self.__class__(self.parentWidget())
     copy.setSizePolicy(self.sizePolicy())
     copy.setMinimumSize(self.minimumSize())
     copy.setMaximumSize(self.maximumSize())
