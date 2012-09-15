@@ -53,6 +53,6 @@ if __name__ == "__main__":
 #=========================
   app = QtGui.QApplication(sys.argv)
   query = QueryForm(config=QueryConfig('config.ttl'))
-  print query
   query.show()
+  query.raise_()
   sys.exit(app.exec_())
