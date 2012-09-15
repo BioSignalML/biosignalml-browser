@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1003</width>
+    <width>906</width>
     <height>522</height>
    </rect>
   </property>
@@ -27,7 +27,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>979</width>
+        <width>882</width>
         <height>498</height>
        </rect>
       </property>
@@ -39,7 +39,7 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>960</width>
+        <width>863</width>
         <height>480</height>
        </size>
       </property>
@@ -48,7 +48,7 @@
         <rect>
          <x>0</x>
          <y>110</y>
-         <width>941</width>
+         <width>831</width>
          <height>350</height>
         </rect>
        </property>
@@ -84,7 +84,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>951</width>
+          <width>821</width>
           <height>351</height>
          </rect>
         </property>
@@ -124,7 +124,7 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>780</width>
+             <width>700</width>
              <height>100</height>
             </size>
            </property>
@@ -257,7 +257,7 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>820</x>
+         <x>710</x>
          <y>0</y>
          <width>114</width>
          <height>100</height>
@@ -291,7 +291,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>10</y>
+         <y>0</y>
          <width>162</width>
          <height>32</height>
         </rect>

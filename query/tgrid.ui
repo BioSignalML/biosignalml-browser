@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>780</width>
-    <height>31</height>
+    <width>700</width>
+    <height>30</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -27,11 +27,11 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>781</width>
+     <width>701</width>
      <height>31</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout" columnstretch="0,1,1,1,1">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="0,3,4,1,0">
     <property name="sizeConstraint">
      <enum>QLayout::SetMinimumSize</enum>
     </property>
