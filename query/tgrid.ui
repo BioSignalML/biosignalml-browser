@@ -31,7 +31,7 @@
      <height>31</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout" columnstretch="0,3,4,1,0">
+   <layout class="QGridLayout" name="gridLayout" columnstretch="0,2,4,1,0">
     <property name="sizeConstraint">
      <enum>QLayout::SetMinimumSize</enum>
     </property>
