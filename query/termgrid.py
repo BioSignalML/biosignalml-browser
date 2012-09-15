@@ -84,8 +84,8 @@ class TermGrid(QtGui.QFrame):
       self._active_rows += 1
       self.setup_last_row()
       height = 30*self._active_rows
-#      self.ui.layoutWidget.resize(self.ui.layoutWidget.width(), height)
       self.ui.gridLayout.invalidate()
+#      self.ui.layoutWidget.resize(self.ui.layoutWidget.width(), height)
 #      self.resize(self.width(), height)
 #      self.sizeChanged.emit(height)
     self.update()
@@ -95,16 +95,26 @@ class TermGrid(QtGui.QFrame):
   #------------------------------------
     p = QtCore.QObject.sender(self)
     text = p.currentText()
-#    if index > 0 and str(self._rows[p.row][0].itemText(0)).startswith('Please'):
-#      self._rows[p.row][0].removeItem(0)
     if index > 0 and str(p.itemText(0)).startswith('Please'):
       p.removeItem(0)
       self.show_row(p.row)
     reln = self._rows[p.row][1]
     reln.clear()
+    values = self._rows[p.row][2]
+    values.clear()
     if self._config:
       for r in self._config.relations(text):
         reln.addItem(r)
+      valuelist = self._config.values(text)
+      if isinstance(valuelist, list):
+        values.addItem('Please select:')
+        for v in valuelist: values.addItem(v)
+      else:
+        pass
+        # Need to replace (row, 2) with text input box
+        # And update _row[p.row][2] as ignore hides
+        # but what about clone...
+        # why not save a copy of initial widgets for cloning??
 
 
   def clone(self, name):
