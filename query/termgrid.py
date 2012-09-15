@@ -1,6 +1,26 @@
 from PyQt4 import QtCore, QtGui
 
 from tgrid import Ui_Form
+from combobox import ComboBox
+
+
+# Offsets into self._widgets
+PROPERTY  = 0
+RELATION  = 1
+VALUE     = 2
+OPERATION = 3
+VALUETEXT = 4
+
+
+class LineEdit(QtGui.QLineEdit):
+#===============================
+
+  def clone(self, name):
+  #---------------------
+    copy = self.__class__(self.parentWidget())
+    copy.setSizePolicy(self.sizePolicy())
+    copy.setObjectName(name)
+    return copy
 
 
 class TermGrid(QtGui.QFrame):
@@ -16,41 +36,48 @@ class TermGrid(QtGui.QFrame):
     self.setPalette(
       QtGui.QPalette(QtGui.QColor(200, 200, 255), QtGui.QColor(240, 255, 240))
       )
-    self._rows = [ (self.ui.property, self.ui.relation, self.ui.valuelist, self.ui.operation) ]
+    self._rows = [ [self.ui.property, self.ui.relation, self.ui.valuelist, self.ui.operation] ]
     self._names = [ c.objectName() for c in self._rows[0] ]
     self._active_rows = 1
     self.setup_last_row()
     self._config = None
-
+    self._widgets = [ ]
 
   def set_configuration(self, config):
   #-----------------------------------
     """
-    Set configuartion information.
+    Set configuration information.
 
     This method should be called as part of initialistion.
     """
-    self._config = config
-    if self._config:
-      for p in self._config.properties():
+    if config:
+      self.ui.property.addItem('Please select:')
+      for p in config.properties():
         self.ui.property.addItem(p)
-
+    # Now have property selection list so can save widgets for copying
+    self._widgets = [ c.clone('%s0' % self._names[n], n in [PROPERTY, OPERATION])
+                        for n, c in enumerate(self._rows[0]) ]
+    valuetext = LineEdit(self._widgets[VALUE].parentWidget())
+    valuetext.setSizePolicy(self._widgets[VALUE].sizePolicy())
+    valuetext.setObjectName('valuetext0')
+    self._widgets.append(valuetext)
+    self._names.append('valuetext')
+    for c in self._widgets: c.hide()
+    self._config = config
 
   def show_row(self, row):
   #-----------------------
-    for c in self._rows[row][1:]:
+    for c in self._rows[row][RELATION:]:
       c.show()
     if row >= 2: c.hide()        ## Can't add more rows
-
 
   def setup_last_row(self):
   #------------------------
     row = len(self._rows) - 1
     for n, c in enumerate(self._rows[row]):
       c.row = row
-      if n > 0: c.hide()
+      if n > PROPERTY: c.hide()
       else:
-        c.insertItem(0, 'Please select:')
         c.setCurrentIndex(0)
         c.currentIndexChanged.connect(self.on_property_changed)
     c.setItemText(0, 'More...')  ## Last row's operation
@@ -62,25 +89,21 @@ class TermGrid(QtGui.QFrame):
     row = QtCore.QObject.sender(self).row
     lastrow = (row == len(self._rows) - 1)
     if index == 0 and not lastrow: 
-      for c in self._rows[row][:-1]:
-##        self.ui.gridLayout.removeWidget(c)
-        c.hide()
-##        del c
+      for c in self._rows[row][:OPERATION]: c.hide()
       self._active_rows -= 1
-      c = self._rows[row][-1]
+      c = self._rows[row][OPERATION]
       c.clear()
       c.addItem('Ignored')
     elif index > 0 and lastrow and row < 2:
       nextrow = [ ]
       next = len(self._rows)
-      lastitem = len(self._rows[0]) - 1
-      for n, c in enumerate(self._rows[row]):
-        item = c.clone('%s%d' % (self._names[n], next), n in [0, lastitem])
-        col = n if n < lastitem else (n + 1)
+      for n, c in enumerate(self._widgets[:VALUETEXT]):
+        item = c.clone('%s%d' % (self._names[n], next), n in [PROPERTY, OPERATION])
+        col = n if n < OPERATION else (n + 1)
         self.ui.gridLayout.addWidget(item, next, col)
         nextrow.append(item)
       c.setItemText(0, 'Ignore')  ## Change current row's operation
-      self._rows.append(tuple(nextrow))
+      self._rows.append(nextrow)
       self._active_rows += 1
       self.setup_last_row()
       height = 30*self._active_rows
@@ -95,26 +118,30 @@ class TermGrid(QtGui.QFrame):
   #------------------------------------
     p = QtCore.QObject.sender(self)
     text = p.currentText()
-    if index > 0 and str(p.itemText(0)).startswith('Please'):
-      p.removeItem(0)
-      self.show_row(p.row)
-    reln = self._rows[p.row][1]
+    reln = self._rows[p.row][RELATION]
     reln.clear()
-    values = self._rows[p.row][2]
+    values = self._rows[p.row][VALUE]
     values.clear()
     if self._config:
       for r in self._config.relations(text):
         reln.addItem(r)
       valuelist = self._config.values(text)
       if isinstance(valuelist, list):
+        if not isinstance(values, ComboBox):
+          values = self._widgets[VALUE].clone('%s%d' % (self._names[VALUE], p.row))
+          self._rows[p.row][VALUE] = values
+          self.ui.gridLayout.addWidget(values, p.row, VALUE)
         values.addItem('Please select:')
         for v in valuelist: values.addItem(v)
       else:
-        pass
-        # Need to replace (row, 2) with text input box
-        # And update _row[p.row][2] as ignore hides
-        # but what about clone...
-        # why not save a copy of initial widgets for cloning??
+        if not isinstance(values, LineEdit):
+          valuetext = self._widgets[VALUETEXT].clone('%s%d' % (self._names[VALUETEXT], p.row))
+          self._rows[p.row][VALUE] = valuetext
+          self.ui.gridLayout.addWidget(valuetext, p.row, VALUE)
+    # If first time show widgets and remove selection propmpt
+    if index > 0 and str(p.itemText(0)).startswith('Please'):
+      p.removeItem(0)
+      self.show_row(p.row)
 
 
   def clone(self, name):
