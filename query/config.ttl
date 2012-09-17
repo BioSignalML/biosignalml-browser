@@ -14,3 +14,12 @@
     query:filter "!="
   ] ;
   query:value query:List .
+
+
+# Query properties:
+
+# text
+# event
+# duration
+# recording (uri)
+# database (uri)
