@@ -144,6 +144,7 @@ class TermGrid(QtGui.QFrame):
       valuelist = self._config.values(text)
       if isinstance(valuelist, list):
         if not isinstance(values, ComboBox):
+          values.hide()
           values = self._widgets[VALUE].clone('%s%d' % (self._names[VALUE], p.row))
           self._rows[p.row][VALUE] = values
           self.ui.gridLayout.addWidget(values, p.row, VALUE)
@@ -151,6 +152,7 @@ class TermGrid(QtGui.QFrame):
         for v in valuelist: values.addItem(v)
       else:
         if not isinstance(values, LineEdit):
+          values.hide()
           valuetext = self._widgets[VALUETEXT].clone('%s%d' % (self._names[VALUETEXT], p.row))
           self._rows[p.row][VALUE] = valuetext
           self.ui.gridLayout.addWidget(valuetext, p.row, VALUE)
