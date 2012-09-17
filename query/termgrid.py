@@ -89,6 +89,15 @@ class TermGrid(QtGui.QFrame):
     c.blockSignals(b)
 
 
+  def list_elements(self):
+  #-----------------------
+    gl = self.ui.gridLayout
+    for i in xrange(gl.count()):
+      itm = gl.itemAt(i)
+      if isinstance(itm, QtGui.QSpacerItem): name = 'spacer'
+      else:                                  name = itm.widget().objectName()
+      print i, name, gl.getItemPosition(i)
+
   def on_operation_changed(self, index):
   #-------------------------------------
     row = QtCore.QObject.sender(self).row
