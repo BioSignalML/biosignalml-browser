@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Simple Search</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
@@ -257,50 +257,53 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>710</x>
+         <x>733</x>
          <y>0</y>
-         <width>114</width>
+         <width>91</width>
          <height>100</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QPushButton" name="pushButton">
-          <property name="text">
-           <string>Save</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="load">
           <property name="text">
            <string>Load</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_4">
+         <widget class="QPushButton" name="save">
           <property name="text">
-           <string>Advanced</string>
+           <string>Save</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="clear">
+          <property name="text">
+           <string>Clear</string>
           </property>
          </widget>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
          <x>10</x>
          <y>0</y>
          <width>84</width>
-         <height>101</height>
+         <height>100</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QPushButton" name="pushButton_3">
+         <widget class="QPushButton" name="search">
           <property name="text">
            <string>Search</string>
+          </property>
+          <property name="default">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -318,11 +321,39 @@
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_5">
+         <widget class="QPushButton" name="cancel">
           <property name="text">
-           <string>Clear</string>
+           <string>Cancel</string>
           </property>
          </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>0</y>
+         <width>611</width>
+         <height>104</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Description (saved with search):</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="description"/>
         </item>
        </layout>
       </widget>
