@@ -11,6 +11,8 @@ VALUE     = 2
 OPERATION = 3
 VALUETEXT = 4
 
+MAXROWS   = 3   #: Maximum number of terms
+
 
 class LineEdit(QtGui.QLineEdit):
 #===============================
@@ -38,7 +40,7 @@ class TermGrid(QtGui.QFrame):
       )
     self._rows = [ [self.ui.property, self.ui.relation, self.ui.valuelist, self.ui.operation] ]
     self._names = [ c.objectName() for c in self._rows[0] ]
-    self._active_rows = 1
+    self._activerows = 1
     self.setup_last_row()
     self._config = None
     self._widgets = [ ]
@@ -80,21 +82,26 @@ class TermGrid(QtGui.QFrame):
       else:
         c.setCurrentIndex(0)
         c.currentIndexChanged.connect(self.on_property_changed)
-    c.setItemText(0, 'More...')  ## Last row's operation
+    b = c.blockSignals(True)       # To stop ourselves being triggered...
+    c.setItemText(0, 'More...')    ## Last row's operation
+    c.setCurrentIndex(0)
     c.currentIndexChanged.connect(self.on_operation_changed)
+    c.blockSignals(b)
 
 
   def on_operation_changed(self, index):
   #-------------------------------------
     row = QtCore.QObject.sender(self).row
     lastrow = (row == len(self._rows) - 1)
-    if index == 0 and not lastrow: 
+    if index == 0 and not lastrow:
       for c in self._rows[row][:OPERATION]: c.hide()
-      self._active_rows -= 1
+      ##self._activerows -= 1     ## We now just label the row as "Ignored"
       c = self._rows[row][OPERATION]
-      c.clear()
+      b = c.blockSignals(True)       # To stop ourselves being triggered...
+      c.clear()                      # as we are changing the current operation
       c.addItem('Ignored')
-    elif index > 0 and lastrow and row < 2:
+      c.blockSignals(b)
+    elif index > 0 and lastrow and row < (MAXROWS - 1):
       nextrow = [ ]
       next = len(self._rows)
       for n, c in enumerate(self._widgets[:VALUETEXT]):
@@ -102,17 +109,17 @@ class TermGrid(QtGui.QFrame):
         col = n if n < OPERATION else (n + 1)
         self.ui.gridLayout.addWidget(item, next, col)
         nextrow.append(item)
-      c.setItemText(0, 'Ignore')  ## Change current row's operation
+      self._rows[row][OPERATION].setItemText(0, 'Ignore')
       self._rows.append(nextrow)
-      self._active_rows += 1
+      self._activerows += 1
       self.setup_last_row()
-      height = 30*self._active_rows
       self.ui.gridLayout.invalidate()
+## This is if we want to resize containing widget...
+#      height = 30*self._activerows
 #      self.ui.layoutWidget.resize(self.ui.layoutWidget.width(), height)
 #      self.resize(self.width(), height)
 #      self.sizeChanged.emit(height)
     self.update()
-
 
   def on_property_changed(self, index):
   #------------------------------------
