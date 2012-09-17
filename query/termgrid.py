@@ -1,3 +1,5 @@
+from xml.sax.saxutils import escape, quoteattr
+
 from PyQt4 import QtCore, QtGui
 
 from tgrid import Ui_Form
@@ -161,7 +163,6 @@ class TermGrid(QtGui.QFrame):
       p.removeItem(0)
       self.show_row(p.row)
 
-
   def clone(self, name):
   #---------------------
     copy = self.__class__(self.parentWidget())
@@ -172,3 +173,101 @@ class TermGrid(QtGui.QFrame):
     copy.setFrameShadow(self.frameShadow())
     copy.setObjectName(name)
     return copy
+
+  def save_as_XML(self):
+  #---------------------
+    xml = [ ]
+    for r in self._rows:
+      prop = str(r[PROPERTY].currentText())
+      if not prop.startswith('Please'):
+        value = r[VALUE]
+        if isinstance(value, ComboBox):
+          text = str(value.currentText()) if value.currentIndex() > 0 else ''
+        else:
+          text = str(value.text()).strip()
+### Need to XML escape property, relation, text
+        if text and str(r[OPERATION].currentText()) != 'Ignored':
+          xml.append('<term property=%s relation=%s>%s</term>'
+                    % (quoteattr("%s" % prop),
+                       quoteattr("%s" % r[RELATION].currentText()),
+                       escape(text)))
+          xml.append('<%s/>' % r[OPERATION].currentText().replace(' ', '_'))
+    if xml: xml.pop()         # Remove last operator
+    return ''.join(xml)
+
+  @staticmethod
+  def validate_XML(xml):
+  #---------------------
+    rows = 0
+    operator = False
+    for t in xml:
+      if not operator:
+        if t.tag != 'term': raise Exception, "Invalid search file"
+        operator = True
+        rows += 1
+      else:
+        if t.tag not in ['AND', 'AND_NOT', 'OR']:
+          raise Exception, "Invalid term expression operator"
+        operator = False
+    if rows > MAXROWS:
+      raise Exception, "Too many terms in saved search"
+    if len(xml) > 0 and not operator:
+      raise Exception, "Invalid saved search file"
+
+  def _set_pulldown(self, value, row, col):
+  #----------------------------------------
+    if value:
+      c = self._rows[row][col]
+      i = c.findText(value)
+      if i > 0:
+        c.setCurrentIndex(i)  # Can trigger a signal --> slot
+
+  def _set_value(self, value, row, col):
+  #-------------------------------------
+    if value:
+      c = self._rows[row][col]
+      if isinstance(c, ComboBox):
+        self._set_pulldown(value, row, col)
+      else:
+        c.setText(value)
+
+  def load_from_XML(self, xml):
+  #----------------------------
+    row = 0
+    operator = False
+    for t in xml:
+      if not operator:
+        self._set_pulldown(t.get('property'), row, PROPERTY)
+        self._set_pulldown(t.get('relation'), row, RELATION)
+        self._set_value(t.text, row, VALUE)
+        operator = True
+      else:
+        self._set_pulldown(t.tag.replace('_', ' '), row, OPERATION)
+        operator = False
+        row += 1
+
+  def remove_row(self, row):
+  #-------------------------
+    t = self._rows.pop(row)
+    for c in t:
+      i = self.ui.gridLayout.indexOf(c)
+      c.hide()
+      item = self.ui.gridLayout.itemAt(i)
+      self.ui.gridLayout.removeItem(item)
+      del c
+      del item
+
+  def clear_terms(self):
+  #---------------------
+    rows = len(self._rows)
+    for row in xrange(1, rows):
+      self.remove_row(row)
+    c = self._rows[0][0]
+    b = c.blockSignals(True)       # To stop ourselves being triggered...
+    c.insertItem(0, 'Please select:')
+    c.setCurrentIndex(0)
+    c.show()                       # May have been hidden with ignore
+    c.blockSignals(b)
+    self._activerows = 1
+    self.setup_last_row()
+    self.ui.gridLayout.invalidate()
