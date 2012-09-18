@@ -18,7 +18,7 @@ class QueryConfig(object):
     Configuration includes location of RDF store.
     """
 
-    metadata = None
+    self.rdfstore = None
 
     self._propdata = {
       'Text': PropertyValue('text:stem',
@@ -44,7 +44,7 @@ class QueryConfig(object):
     for key, pv in self._propdata.iteritems():
       if pv.valuetype == 'list':
         values = [ ]
-#        for r in metadata.query("""select distinct ?value ?label where {
+#        for r in self.rdfstore.query("""select distinct ?value ?label where {
 #                                     [] <%s> ?value .
 #                                     optional { ?value rdfs:label ?label
 #                                     }""" % pv.uri,
