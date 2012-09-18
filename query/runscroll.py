@@ -7,6 +7,7 @@ from PyQt4 import QtCore, QtGui
 
 from config import QueryConfig
 from termgrid import TermGrid
+from sparql import Sparql
 
 from scroll import Ui_Form
 
@@ -56,7 +57,8 @@ class QueryForm(QtGui.QWidget):
 
   def on_search_released(self):  # Auto connected
   #----------------------------
-    print self.save_as_XML()
+    query = Sparql.create_from_XML(self.as_XML())
+    results = query.execute(self.config.rdfstore)
 
   def on_clear_released(self):   # Auto connected
   #---------------------------
@@ -67,7 +69,7 @@ class QueryForm(QtGui.QWidget):
     filename = QtGui.QFileDialog.getSaveFileName(self, 'Save search', '', '*.xml')
     if filename:
       f = open(filename, 'w')
-      f.write(self.save_as_XML())
+      f.write(self.as_XML())
       f.close()
 
   def on_load_released(self):    # Auto connected
@@ -83,8 +85,8 @@ class QueryForm(QtGui.QWidget):
       alert.setText(str(msg))
       alert.exec_()
 
-  def save_as_XML(self):
-  #---------------------
+  def as_XML(self):
+  #----------------
     xml = [ ]
     xml.append('<query>')
     desc = str(self.ui.description.toPlainText())
@@ -95,7 +97,7 @@ class QueryForm(QtGui.QWidget):
     firstop = len(xml)
     for n, e in enumerate(self._rows):
       if e[1]:
-        t = e[1].save_as_XML()
+        t = e[1].as_XML()
         if t:
           xml.append(' <%s/>' % str(e[0].currentText()).replace(' ', '_'))
           xml.append(' <expr>')

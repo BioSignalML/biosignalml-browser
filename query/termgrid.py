@@ -174,8 +174,8 @@ class TermGrid(QtGui.QFrame):
     copy.setObjectName(name)
     return copy
 
-  def save_as_XML(self):
-  #---------------------
+  def as_XML(self):
+  #----------------
     xml = [ ]
     for r in self._rows:
       prop = str(r[PROPERTY].currentText())
