@@ -22,6 +22,7 @@ class ChartForm(QtGui.QWidget):
     self.ui.timescroll.hide()
     self.ui.chart.setTimeRange(start, duration)
 
+
   def addSignalPlot(self, label, units, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------
     return self.ui.chart.addSignalPlot(label, units, data=data, ymin=ymin, ymax=ymax)
@@ -57,6 +58,10 @@ class ChartForm(QtGui.QWidget):
   #------------------------------------------------
     h = self.ui.timescroll.height()
     self.ui.timescroll.setGeometry(QtCore.QRect(offset-10, bottom+27, width+40, h))
+
+  def on_chart_customContextMenuRequested(self, pos):
+  #--------------------------------------------------
+    self.ui.chart.contextMenu(pos)
 
 
 if __name__ == "__main__":

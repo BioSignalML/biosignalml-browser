@@ -404,6 +404,7 @@ class ChartPlot(ChartWidget):
   def mousePressEvent(self, event):
   #--------------------------------
     pos = event.pos()
+    # check right click etc...
     if pos.y() <= margin_top or (pos.x()-2) <= self._markerpos <= (pos.x()+2):
       self._markerpos = pos.x()
       self._position = self._pos_to_time(self._markerpos)
@@ -429,3 +430,13 @@ class ChartPlot(ChartWidget):
   #-------------------------------
     self._movemarker = False
     self._selecting = False
+
+  def contextMenu(self, pos):
+  #--------------------------
+    menu = QtGui.QMenu()
+    menu.addAction("Zoom")
+    menu.addAction("Annotate")
+    menu.addAction("Export")
+    selected = menu.exec_(self.mapToGlobal(pos))
+    if selected:
+      print selected.text()
