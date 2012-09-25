@@ -287,13 +287,25 @@ class ChartPlot(ChartWidget):
   
   def paintEvent(self, e):
   #-----------------------
-    qp = QtGui.QPainter(self)
+    self._draw(self)
+
+  def save_as_png(self, filename):
+  #-------------------------------
+    output = QtGui.QImage(2000, 800, QtGui.QImage.Format_ARGB32_Premultiplied)
+    #output = QtGui.QImage(self.width(), self.height(), QtGui.QImage.Format_ARGB32_Premultiplied)
+    self._draw(output)
+    output.save(filename, 'PNG')
+
+  def _draw(self, device):
+  #-----------------------
+    qp = QtGui.QPainter()
+    qp.begin(device)
+
     qp.setRenderHint(QtGui.QPainter.Antialiasing)
 
     # Set plotting region as (0, 0) to (1, 1) with origin at bottom left
-    size = self.size()
-    w = size.width()
-    h = size.height()
+    w = device.width()
+    h = device.height()
     self._plot_width  = w - (margin_left + margin_right)
     self._plot_height = h - (margin_top + margin_bottom)
     qp.translate(margin_left, margin_top + self._plot_height)
@@ -332,6 +344,8 @@ class ChartPlot(ChartWidget):
       plot.drawTrace(qp, self._start, self._end, markers=[self._position])
       qp.restore()
 
+    qp.end()
+
 
   def _draw_plot_labels(self, painter):
   #-----------------------------------
@@ -367,6 +381,7 @@ class ChartPlot(ChartWidget):
 
   def _draw_time_grid(self, painter):
   #----------------------------------
+    ypos = painter.paintEngine().paintDevice().height() - 15      ## Needs to track bottom of tick marks
     painter.setPen(QtGui.QPen(gridMinorColour))
     t = self._gridstart
     while t <= self._end:
@@ -379,7 +394,7 @@ class ChartPlot(ChartWidget):
         painter.setPen(QtGui.QPen(gridMajorColour))
         painter.drawLine(QtCore.QPointF(t, -0.01), QtCore.QPointF(t, 1))
         painter.setPen(QtGui.QPen(textColour))
-        drawtext(painter, t, self.height() - 15, str(t), mapY=False)   ## Needs to track bottom of tick marks
+        drawtext(painter, t, ypos, str(t), mapY=False)
       t += self._Xgrid[0]
 
   def _setTimeGrid(self, start, end):
