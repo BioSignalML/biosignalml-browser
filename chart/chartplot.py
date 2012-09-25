@@ -96,11 +96,21 @@ class SignalPlot(object):
     self.label = '%s\n(%s)' % (label, units) if units else label
     self._points = [ ]
     self._path = None
-    
     self._lastpoint = None
-
     self._ymin = self._ymax = None
     if data: self.addData(data, ymin, ymax)
+    else:    self._setYrange()
+
+  def _setYrange(self):
+  #--------------------
+    if self._ymin == self._ymax:
+      if self._ymin: (ymin, ymax) = (self._ymin-self._ymin/2.0, self._ymax+self._ymax/2.0)
+      else:          (ymin, ymax) = (-0.5, 0.5)
+    else:
+      (ymin, ymax) = (self._ymin, self._ymax)
+    self.gridstep = gridspacing(ymax - ymin)[0]
+    self.ymin = self.gridstep*math.floor(ymin/self.gridstep)
+    self.ymax = self.gridstep*math.ceil(ymax/self.gridstep)
 
   def addData(self, data, ymin=None, ymax=None):
   #---------------------------------------------
@@ -108,7 +118,7 @@ class SignalPlot(object):
     if ymax is None: ymax = np.amax(data.data)
     if self._ymin == None or self._ymin > ymin: self._ymin = ymin
     if self._ymax == None or self._ymax < ymax: self._ymax = ymax
-
+    self._setYrange()
     if self._path is None:
       self._path = QtGui.QPainterPath()
     else:
@@ -145,23 +155,16 @@ class SignalPlot(object):
     The painter has been scaled so that (0.0, 1.0) is the
     vertical plotting height.
     """
-    if self._ymin == self._ymax:
-      if self._ymin: (ymin, ymax) = (self._ymin-self._ymin/2.0, self._ymax+self._ymax/2.0)
-      else:          (ymin, ymax) = (-0.5, 0.5)
-    else:
-      (ymin, ymax) = (self._ymin, self._ymax)
-    grid = gridspacing(ymax - ymin)
-    ymin = grid[0]*math.floor(ymin/grid[0])
-    ymax = grid[0]*math.ceil(ymax/grid[0])
-    painter.scale(1.0, 1.0/(ymax - ymin))
-    painter.translate(0.0, -ymin)
-    y = ymin
-    while y < ymax:
+    painter.scale(1.0, 1.0/(self.ymax - self.ymin))
+    painter.translate(0.0, -self.ymin)
+    # draw and label y-gridlines.
+    y = self.ymin
+    while y <= self.ymax:
       painter.setPen(QtGui.QPen(gridMinorColour))
       painter.drawLine(QtCore.QPointF(start, y), QtCore.QPointF(end, y))
       painter.setPen(QtGui.QPen(textColour))
       drawtext(painter, margin_left-20, y, str(y), mapX=False)
-      y += grid[0]
+      y += self.gridstep
       if -1e-10 < y < 1e-10: y = 0.0  #####
     painter.setClipping(True)
     painter.setPen(QtGui.QPen(traceColour))
