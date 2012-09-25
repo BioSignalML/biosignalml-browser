@@ -70,14 +70,18 @@ def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred):
     if mapY: y = pt.y()
   painter.resetTransform()
   metrics = painter.fontMetrics()
+  th = (metrics.xHeight() + metrics.ascent())/2.0  # Compromise...
+  adjust = (len(lines)-1)*metrics.height()  ## lineSpacing()
+  if   (align & alignMiddle) == alignMiddle: ty = y + (th-adjust)/2.0
+  elif (align & alignTop)    == alignTop:    ty = y + th
+  else:                                      ty = y - adjust
   for t in lines:
-    if   (align & alignCentre) == alignCentre: tx = x - metrics.width(t)/2.0
-    elif (align & alignRight)  == alignRight:  tx = x - metrics.width(t)
-    if   (align & alignMiddle) == alignMiddle: ty = y + metrics.ascent()/2.0
-    elif (align & alignTop)    == alignTop:    ty = y + metrics.ascent()
-    centre = QtCore.QPointF(tx, ty)
-    painter.drawText(centre, QtCore.QString.fromUtf8(t))
-    y += metrics.height()
+    tw = metrics.width(t)
+    if   (align & alignCentre) == alignCentre: tx = x - tw/2.0
+    elif (align & alignRight)  == alignRight:  tx = x - tw
+    else:                                      tx = x
+    painter.drawText(QtCore.QPointF(tx, ty), QtCore.QString.fromUtf8(t))
+    ty += metrics.height()          ## lineSpacing()
   painter.setTransform(xfm)
 
 
