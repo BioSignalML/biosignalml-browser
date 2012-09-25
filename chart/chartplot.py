@@ -154,6 +154,10 @@ class SignalPlot(object):
       else:                          j = m
     return i - 1
 
+  def yPosition(self, timepos):
+  #----------------------------
+    return None
+
   def drawTrace(self, painter, start, end, markers=None):
   #------------------------------------------------------
     """
@@ -202,17 +206,32 @@ class EventPlot(object):
   """
   A single event trace.
   """
-  def __init__(self, label, mapping=lambda x: str(x), data=None):
-  #--------------------------------------------------------------
+  def __init__(self, label, mapping=lambda x: (str(x), str(x)), data=None):
+  #------------------------------------------------------------------------
     self.label = label
     self._mapping = mapping
     self._events = [ ]
+    self._eventpos = []
     self.gridheight = 2   ###
     if data: self.addEvents(data)
 
   def yValue(self, time):
   #----------------------
     return None
+
+  def yPosition(self, timepos):
+  #----------------------------
+    timepos = int(timepos+0.5) + 3                          ## "close to"
+    i = 0
+    j = len(self._eventpos)
+    if j == 0 or timepos < self._eventpos[0][0]: return None
+    while i < j:
+      m = (i + j)//2
+      if self._eventpos[m][0] <= timepos: i = m + 1
+      else:                               j = m
+    timepos -= 3
+    if (timepos-3) <= self._eventpos[i-1][0] < (timepos+3): ## "close to"
+      return self._eventpos[i-1][2]
 
   def addData(self, data):
   #-----------------------
@@ -222,8 +241,15 @@ class EventPlot(object):
   #------------------------------------------------------
     painter.setClipping(True)
     painter.setPen(QtGui.QPen(traceColour))
+    self._eventpos = []
     for t, event in self._events:
-      drawtext(painter, t, 0.5, event)
+      if event[0]:
+        painter.setPen(QtGui.QPen(traceColour))
+        painter.drawLine(QtCore.QPointF(t, 0.0), QtCore.QPointF(t, 1.0))
+        painter.setPen(QtGui.QPen(textColour))
+        drawtext(painter, t, 0.5, event[0])
+        xy = painter.transform().map(QtCore.QPointF(t, 0.5))
+        self._eventpos.append( (int(xy.x()+0.5), int(xy.y()+0.5), '\n'.join(event[1].split())) )
 
 
 class ChartPlot(ChartWidget):
@@ -359,7 +385,10 @@ class ChartPlot(ChartWidget):
       painter.translate(0.0, float(plotposition)/plot.gridheight)
       painter.setPen(QtGui.QPen(textColour))
       drawtext(painter, 20, 0.5, plot.label, mapX=False)
+      ytext = plot.yPosition(self._markerpos)
+      if ytext is not None:
         painter.setPen(QtGui.QPen(markerColour))
+        drawtext(painter, margin_left+self._plot_width+25, 0.50, ytext, mapX=False)
       painter.restore()
 
   def _mark_selection(self, painter):

@@ -75,8 +75,8 @@ if __name__ == "__main__":
     ##  chart.annotate(text, t, 0.0, textpos=(t, 1.05))
     if mark in "NLRBAaJSVrFejnE/fQ?":
       if mark == 'N': mark = u'\u2022'  # Unicode bullet
-      return mark
-    return ''
+      return (mark, wfdb.anndesc(int(e)))
+    return ('', '')
 
   logging.basicConfig(format='%(asctime)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
