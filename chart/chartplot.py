@@ -138,6 +138,12 @@ class SignalPlot(object):
     """
     Find the y-value corresponding to a time.
     """
+    i = self._index(time)
+    if i is not None: return self._points[i].y()
+
+
+  def _index(self, time):
+  #----------------------
     i = 0
     j = len(self._points)
     if (time < self._points[0].x()
@@ -146,10 +152,10 @@ class SignalPlot(object):
       m = (i + j)//2
       if self._points[m].x() <= time: i = m + 1
       else:                          j = m
-    return self._points[i - 1].y()
+    return i - 1
 
-  def drawTrace(self, painter, start, end):
-  #----------------------------------------
+  def drawTrace(self, painter, start, end, markers=None):
+  #------------------------------------------------------
     """
     Draw the trace.
 
@@ -179,6 +185,17 @@ class SignalPlot(object):
     #painter.drawPolyline(QtGui.QPolygonF(self._points))
     # But very fast as is, esp. when using OpenGL
 
+    if markers:
+      painter.setPen(QtGui.QPen(markerColour))
+      xfm = painter.transform()
+      for t in markers:
+         i = self._index(t)
+         if i is not None:
+           y = self._points[i].y()
+           xy = xfm.map(QtCore.QPointF(t, y))
+           drawtext(painter, xy.x()+5, xy.y(), str(y), mapX=False, mapY=False, align=alignLeft)
+
+
 
 class EventPlot(object):
 #=======================
@@ -201,8 +218,8 @@ class EventPlot(object):
   #-----------------------
     self._events.extend([ (pt[0], self._mapping(pt[1])) for pt in data.points ])
 
-  def drawTrace(self, painter, start, end):
-  #----------------------------------------
+  def drawTrace(self, painter, start, end, markers=None):
+  #------------------------------------------------------
     painter.setClipping(True)
     painter.setPen(QtGui.QPen(traceColour))
     for t, event in self._events:
@@ -309,10 +326,10 @@ class ChartPlot(ChartWidget):
     plotposition = gridheight
     for plot in self.plots:
       qp.save()
-      plot.drawTrace(qp, self._start, self._end)
       qp.scale(1.0, float(plot.gridheight)/gridheight)
       plotposition -= plot.gridheight
       qp.translate(0.0, float(plotposition)/plot.gridheight)
+      plot.drawTrace(qp, self._start, self._end, markers=[self._position])
       qp.restore()
 
 
@@ -328,10 +345,7 @@ class ChartPlot(ChartWidget):
       painter.translate(0.0, float(plotposition)/plot.gridheight)
       painter.setPen(QtGui.QPen(textColour))
       drawtext(painter, 20, 0.5, plot.label, mapX=False)
-      y = plot.yValue(self._position)
-      if y is not None:
         painter.setPen(QtGui.QPen(markerColour))
-        drawtext(painter, margin_left+self._plot_width+25, 0.50, str(y), mapX=False)
       painter.restore()
 
   def _mark_selection(self, painter):
