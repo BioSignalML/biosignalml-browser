@@ -91,15 +91,16 @@ if __name__ == "__main__":
   viewer1 = ChartForm(start, duration)
   record1 = 'mitdb/102'
   rec1 = hdf5.HDF5Recording.open('/physiobank/database/%s.h5' % record1)
-  for n, s in enumerate(rec1.signals()):
+  sigs = list(rec1.signals())
+  for n, s in enumerate([sigs[0], sigs[2], sigs[1]]):
     if s.rate:                  ###### Need attribute for Signal
-      label = "V5" if n == 0 else "V2" if n == 1 else "S%d" % n  #########
+      label = "V5" if n == 0 else "V2" if n == 2 else "S%d" % n  #########
       units = "mV"
       p = viewer1.addSignalPlot(label, units)
     else:                       ###### or Annotation...
       label = 'atr'   ##########
       p = viewer1.addEventPlot(label, wfdbAnnotation)
-    for d in s.read(rec1.interval(start, duration)): p.addData(d) 
+    for d in s.read(rec1.interval(start, duration)): p.addData(d)
   viewer1.show()
 
   #viewer1.save_chart_as_png('test.png')   ## Needs to be via 'Save' button/menu and file dialog...
