@@ -235,8 +235,8 @@ class ChartPlot(ChartWidget):
     self._movemarker = False
     self._markerpos = 0
     self._selecting = False
-    self._selectstart = -1
-    self._selectend = -1
+    self._selectstart = None
+    self._selectend = None
 
   def setTimeRange(self, start, duration):
   #---------------------------------------
@@ -297,10 +297,11 @@ class ChartPlot(ChartWidget):
     qp.translate(-self._start, 0.0)
     self._draw_time_grid(qp)
     self._mark_selection(qp)
+
     # Position marker
     qp.setPen(QtGui.QPen(markerColour))
     qp.drawLine(QtCore.QPointF(self._position, -0.05), QtCore.QPointF(self._position, 1.0))
-    drawtext(qp, self._position, 20, '%.5g' % self._position, mapY=False)  #### WATCH...!!
+    drawtext(qp, self._position, 10, '%.5g' % self._position, mapY=False)  #### WATCH...!!
 
     # Draw each each trace
     gridheight = 0
@@ -336,16 +337,19 @@ class ChartPlot(ChartWidget):
   def _mark_selection(self, painter):
   #----------------------------------
     if self._selectstart != self._selectend:
-      start = self._pos_to_time(self._selectstart)
-      end = self._pos_to_time(self._selectend)
-      if start < end:
-        t = start
-        start = end
-        end = t
-      painter.fillRect(QtCore.QRectF(start, 0.0, end-start, 1.0), selectionColour)
+      duration = (self._selectend - self._selectstart)
+      painter.setClipping(True)
+      painter.fillRect(QtCore.QRectF(self._selectstart, 0.0, duration, 1.0), selectionColour)
       painter.setPen(QtGui.QPen(selectEdgeColour))
-      painter.drawLine(QtCore.QPointF(start, 0), QtCore.QPointF(start, 1.0))
-      painter.drawLine(QtCore.QPointF(end, 0), QtCore.QPointF(end, 1.0))
+      painter.drawLine(QtCore.QPointF(self._selectstart, 0), QtCore.QPointF(self._selectstart, 1.0))
+      painter.drawLine(QtCore.QPointF(self._selectend, 0), QtCore.QPointF(self._selectend, 1.0))
+      painter.setClipping(False)
+      painter.setPen(QtGui.QPen(textColour))
+      drawtext(painter, self._selectstart, 22, '%.5g' % self._selectstart, mapY=False)  #### WATCH...!!
+      drawtext(painter, self._selectend,   22, '%.5g' % self._selectend,   mapY=False)  #### WATCH...!!
+      painter.setPen(QtGui.QPen(selectEdgeColour))
+      middle = (self._selectend + self._selectstart)/2.0
+      drawtext(painter, middle,            22, '%.5g' % duration,          mapY=False)  #### WATCH...!!
 
   def _draw_time_grid(self, painter):
   #----------------------------------
@@ -433,18 +437,23 @@ class ChartPlot(ChartWidget):
     elif margin_top < pos.y() <= (margin_top + self._plot_height):
 ## Need to be able to clear selection (click inside??), move boundaries (drag edges)
 ## and start selecting another region (drag outside of region ??)
-      self._selectstart = pos.x()
+      self._selectstart = self._pos_to_time(pos.x())
       self._selectend = self._selectstart
       self._selecting = True
     self.update()
 
   def mouseMoveEvent(self, event):
   #-------------------------------
+    pos = event.pos()
     if self._movemarker:
-      self._markerpos = event.pos().x()
+      self._markerpos = pos.x()
       self._position = self._pos_to_time(self._markerpos)
     elif self._selecting:
-      self._selectend = event.pos().x()
+      self._selectend = self._pos_to_time(pos.x())
+      if self._selectstart > self._selectend:
+        t = self._selectstart
+        self._selectstart = self._selectend
+        self._selectend = t
     self.update()
 
   def mouseReleaseEvent(self, event):
