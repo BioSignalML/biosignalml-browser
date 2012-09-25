@@ -112,6 +112,11 @@ class SignalPlot(object):
     self.ymin = self.gridstep*math.floor(ymin/self.gridstep)
     self.ymax = self.gridstep*math.ceil(ymax/self.gridstep)
 
+  @property
+  def gridheight(self):
+  #--------------------
+    return int(math.floor((self.ymax-self.ymin)/self.gridstep + 0.5))
+
   def addData(self, data, ymin=None, ymax=None):
   #---------------------------------------------
     if ymin is None: ymin = np.amin(data.data)
@@ -185,6 +190,7 @@ class EventPlot(object):
     self.label = label
     self._mapping = mapping
     self._events = [ ]
+    self.gridheight = 2   ###
     if data: self.addEvents(data)
 
   def yValue(self, time):
@@ -297,20 +303,28 @@ class ChartPlot(ChartWidget):
     drawtext(qp, self._position, 20, '%.5g' % self._position, mapY=False)  #### WATCH...!!
 
     # Draw each each trace
-    for n, plot in enumerate(self.plots):
+    gridheight = 0
+    for plot in self.plots: gridheight += plot.gridheight
+    plotposition = gridheight
+    for plot in self.plots:
       qp.save()
-      qp.scale(1.0, 1.0/len(self.plots))
-      qp.translate(0.0, len(self.plots)-n-1)
       plot.drawTrace(qp, self._start, self._end)
+      qp.scale(1.0, float(plot.gridheight)/gridheight)
+      plotposition -= plot.gridheight
+      qp.translate(0.0, float(plotposition)/plot.gridheight)
       qp.restore()
 
 
   def _draw_plot_labels(self, painter):
   #-----------------------------------
-    for n, plot in enumerate(self.plots):
+    gridheight = 0
+    for plot in self.plots: gridheight += plot.gridheight
+    plotposition = gridheight
+    for plot in self.plots:
       painter.save()
-      painter.scale(1.0, 1.0/len(self.plots))
-      painter.translate(0.0, len(self.plots)-n-1)
+      painter.scale(1.0, float(plot.gridheight)/gridheight)
+      plotposition -= plot.gridheight
+      painter.translate(0.0, float(plotposition)/plot.gridheight)
       painter.setPen(QtGui.QPen(textColour))
       drawtext(painter, 20, 0.5, plot.label, mapX=False)
       y = plot.yValue(self._position)
