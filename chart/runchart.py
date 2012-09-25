@@ -107,6 +107,9 @@ if __name__ == "__main__":
 
   viewer1.raise_()
 
+
+
+  """
   start = 100
   duration = 500
   viewer2 = ChartForm(start, duration)
@@ -119,5 +122,5 @@ if __name__ == "__main__":
       for d in s.read(rec2.interval(start, duration)): p.addData(d) 
   viewer2.show()
   viewer2.raise_()
-
+  """
   sys.exit(app.exec_())
