@@ -128,10 +128,9 @@ class SignalPlot(object):
       self._path = QtGui.QPainterPath()
     else:
       self._path.drawTo(QtCore.QPointF(data[0][0], data[0][1]))
-
     trace = [ QtCore.QPointF(pt[0], pt[1]) for pt in data.points ]
     self._path.addPolygon(QtGui.QPolygonF(trace))
-    self._points.extend(trace) ## for yValue
+    self._points.extend(trace) ## for yValue lookup
 
   def yValue(self, time):
   #----------------------
@@ -337,7 +336,7 @@ class ChartPlot(ChartWidget):
     qp.translate(margin_left, margin_top + self._plot_height)
     qp.scale(self._plot_width, -self._plot_height)
 
-    self._markerpos = self._time_to_pos(self._position)    # Have reset markerpos here for resizes
+    self._markerpos = self._time_to_pos(self._position)    # Used by resize
 
     qp.setClipRect(0, 0, 1, 1)
     qp.setClipping(False)
