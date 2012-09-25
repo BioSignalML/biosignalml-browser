@@ -31,6 +31,9 @@ class ChartForm(QtGui.QWidget):
   #----------------------------------------------------------------
     return self.ui.chart.addEventPlot(label, mapping, data=data)
 
+  def save_chart_as_png(self, filename):
+  #-------------------------------------
+    self.ui.chart.save_as_png(filename)
 
   def resizeEvent(self, e):
   #------------------------
@@ -98,6 +101,9 @@ if __name__ == "__main__":
       p = viewer1.addEventPlot(label, wfdbAnnotation)
     for d in s.read(rec1.interval(start, duration)): p.addData(d) 
   viewer1.show()
+
+  #viewer1.save_chart_as_png('test.png')   ## Needs to be via 'Save' button/menu and file dialog...
+
   viewer1.raise_()
 
   start = 100
