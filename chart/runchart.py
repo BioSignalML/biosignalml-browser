@@ -3,7 +3,7 @@ import logging
 
 from PyQt4 import QtCore, QtGui
 
-from chart import Ui_Form
+from ui.chart import Ui_Form
 
 import biosignalml.formats.hdf5 as hdf5
 import biosignalml.formats.edf  as edf
