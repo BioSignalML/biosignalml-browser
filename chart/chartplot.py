@@ -512,8 +512,8 @@ class ChartPlot(ChartWidget):
   #----------------------------
     self._timezoom = scale
     self._duration = self.duration/scale
-    newstart = self._position - self._duration/2.0
-    newend = self._position + self._duration/2.0
+    newstart = (self.start + self.end - self._duration)/2.0
+    newend = newstart + self._duration
     if newstart < self.start:
       newstart = self.start
       newend = newstart + self._duration
