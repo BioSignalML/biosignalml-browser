@@ -19,6 +19,7 @@ margin_bottom = 40
 traceColour      = QtGui.QColor('green')
 textColour       = QtGui.QColor('darkBlue')
 markerColour     = QtGui.QColor('red')
+marker2Colour    = QtGui.QColor(0xCC, 0x55, 0x00)  ## 'burnt orange'
 gridMinorColour  = QtGui.QColor(128, 128, 255, 63)
 gridMajorColour  = QtGui.QColor(0,     0, 128, 63)
 selectionColour  = QtGui.QColor(220, 255, 255)
@@ -189,9 +190,9 @@ class SignalPlot(object):
     # But very fast as is, esp. when using OpenGL
 
     if markers:
-      painter.setPen(QtGui.QPen(markerColour))
       xfm = painter.transform()
-      for t in markers:
+      for n, t in enumerate(markers):
+         painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
          i = self._index(t)
          if i is not None:
            y = self._points[i].y()
@@ -272,11 +273,9 @@ class ChartPlot(ChartWidget):
     self.setPalette(QtGui.QPalette(QtGui.QColor('black'), QtGui.QColor('white')))
 ##    self.setAutoFillBackground(True)  ##
     self.plots = []
-    self._position = 0
     self._timezoom = 1.0
-    self._movemarker = False
-    self._markerpos = 0
-    self._selecting = False
+    self._markers = []  # List of [xpos, time] pairs
+    self._marker = -1   # Index of marker being dragged
     self._selectstart = None
     self._selectend = None
 
@@ -287,7 +286,7 @@ class ChartPlot(ChartWidget):
     self.duration = duration
     self._setTimeGrid(self.start, self.end)
     self._duration = self.duration
-    self._position = self._start  ##  + self._duration/2.0
+    self._markers = [ [0, self._start], [0, self.start] ]  ##  Two markers
 
   def addSignalPlot(self, label, units, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------
@@ -336,7 +335,7 @@ class ChartPlot(ChartWidget):
     qp.translate(margin_left, margin_top + self._plot_height)
     qp.scale(self._plot_width, -self._plot_height)
 
-    self._markerpos = self._time_to_pos(self._position)    # Used by resize
+    for m in self._markers: m[0] = self._time_to_pos(m[1])
 
     qp.setClipRect(0, 0, 1, 1)
     qp.setClipping(False)
@@ -352,12 +351,19 @@ class ChartPlot(ChartWidget):
     self._draw_time_grid(qp)
     self._mark_selection(qp)
 
-    # Position marker
-    qp.setPen(QtGui.QPen(markerColour))
-    qp.drawLine(QtCore.QPointF(self._position, -0.05), QtCore.QPointF(self._position, 1.0))
-    drawtext(qp, self._position, 10, '%.5g' % self._position, mapY=False)  #### WATCH...!!
-
     # Draw each each trace
+    # Position markers
+    for n, m in enumerate(self._markers):
+      qp.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
+      qp.drawLine(QtCore.QPointF(m[1], -0.05), QtCore.QPointF(m[1], 1.05))
+      drawtext(qp, m[1], 10, '%.5g' % m[1], mapY=False)  #### WATCH...!!
+      if n > 0 and m[1] != last[1]:
+        qp.setPen(QtGui.QPen(textColour))
+        width = last[1] - m[1]
+        if width < 0: width = -width
+        drawtext(qp, (last[1]+m[1])/2.0, 10, '%.5g' % width, mapY=False)  #### WATCH...!!
+      last = m
+
     gridheight = 0
     for plot in self.plots: gridheight += plot.gridheight
     plotposition = gridheight
@@ -384,10 +390,11 @@ class ChartPlot(ChartWidget):
       painter.translate(0.0, float(plotposition)/plot.gridheight)
       painter.setPen(QtGui.QPen(textColour))
       drawtext(painter, 20, 0.5, plot.label, mapX=False)
-      ytext = plot.yPosition(self._markerpos)
-      if ytext is not None:
-        painter.setPen(QtGui.QPen(markerColour))
-        drawtext(painter, margin_left+self._plot_width+25, 0.50, ytext, mapX=False)
+      for n, m in enumerate(self._markers):
+        ytext = plot.yPosition(m[0])
+        if ytext is not None:
+          painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
+          drawtext(painter, margin_left+self._plot_width+25, 0.50, ytext, mapX=False)
       painter.restore()
 
   def _mark_selection(self, painter):
@@ -463,7 +470,9 @@ class ChartPlot(ChartWidget):
       newstart = newend - self._duration
     # Now update slider's position to reflect _start _position _end
     self._setTimeGrid(newstart, newend)
-    self._markerpos = self._time_to_pos(self._position)
+
+    #for m in self._markers: m[0] = self._time_to_pos(m[1])
+    #self._markerpos = self._time_to_pos(self._position)   # Done in paint()
     self.update()
 
   def setTimeScroll(self, scrollbar):
@@ -479,18 +488,29 @@ class ChartPlot(ChartWidget):
     start = (self.start
            + scrollbar.value()*float(self.duration)/(scrollbar.maximum()+scrollbar.pageStep()))
     self._setTimeGrid(start, start + self._duration)
-    if self._position < self._start: self._position = self._start
-    if self._position > self._end: self._position = self._end
+    for m in self._markers:                       ## But markers need to scroll...
+      if m[1] < self._start: m[1] = self._start
+      if m[1] > self._end: m[1] = self._end
     self.update()
 
   def mousePressEvent(self, event):
   #--------------------------------
     pos = event.pos()
+    xpos = pos.x()
     # check right click etc...
-    if pos.y() <= margin_top or (pos.x()-2) <= self._markerpos <= (pos.x()+2):
-      self._markerpos = pos.x()
-      self._position = self._pos_to_time(self._markerpos)
-      self._movemarker = True
+    marker = None
+    if pos.y() <= margin_top:
+      self._marker = 0
+      marker = self._markers[0]
+    else:
+      for n, m in enumerate(self._markers):
+        if (xpos-2) <= m[0] <= (xpos+2):
+          self._marker = n
+          marker = m
+          break
+    if marker:
+      marker[0] = xpos
+      marker[1] = self._pos_to_time(marker[0])
     elif margin_top < pos.y() <= (margin_top + self._plot_height):
 ## Need to be able to clear selection (click inside??), move boundaries (drag edges)
 ## and start selecting another region (drag outside of region ??)
@@ -501,10 +521,10 @@ class ChartPlot(ChartWidget):
 
   def mouseMoveEvent(self, event):
   #-------------------------------
-    pos = event.pos()
-    if self._movemarker:
-      self._markerpos = pos.x()
-      self._position = self._pos_to_time(self._markerpos)
+    xpos = event.pos().x()
+    if self._marker >= 0:
+      self._markers[self._marker][0] = xpos
+      self._markers[self._marker][1] = self._pos_to_time(xpos)
     elif self._selecting:
       self._selectend = self._pos_to_time(pos.x())
       if self._selectstart > self._selectend:
@@ -514,8 +534,8 @@ class ChartPlot(ChartWidget):
     self.update()
 
   def mouseReleaseEvent(self, event):
-  #-------------------------------
-    self._movemarker = False
+  #----------------------------------
+    self._marker = -1
     self._selecting = False
 
   def contextMenu(self, pos):
