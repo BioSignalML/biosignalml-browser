@@ -21,9 +21,8 @@ class QueryConfig(object):
     self.rdfstore = None
 
     self._propdata = {
-      'Text': PropertyValue('text:stem',
-                            [ Relation('has word', 'text_word'),
-                              Relation('no word',  'text_noword') ],
+      'Text': PropertyValue('bif:contains',
+                            [ Relation('contains', 'text_word') ],
                             'text'),
       'Event': PropertyValue('bsml:event',
                             [ Relation('has type', 'uri_match'),
