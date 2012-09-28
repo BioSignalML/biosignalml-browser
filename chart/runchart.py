@@ -3,7 +3,7 @@ import logging
 
 from PyQt4 import QtCore, QtGui
 
-from ui.chart import Ui_Form
+from ui.chart      import Ui_Chart
 from ui.controller import Ui_Controller
 
 import biosignalml.formats.hdf5 as hdf5
@@ -17,7 +17,7 @@ class ChartForm(QtGui.QWidget):
   def __init__(self, start, duration, parent=None):
   #------------------------------------------------
     QtGui.QWidget.__init__(self, parent)
-    self.ui = Ui_Form()
+    self.ui = Ui_Chart()
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
     self.ui.timescroll.hide()
