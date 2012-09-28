@@ -152,7 +152,7 @@
   <customwidget>
    <class>ChartFrame</class>
    <extends>QFrame</extends>
-   <header>chartframe.h</header>
+   <header>widgets.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
