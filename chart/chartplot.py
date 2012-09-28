@@ -308,7 +308,9 @@ class ChartPlot(ChartWidget):
   def appendData(self, id, data):
   #------------------------------
     n = self._plots.get(id, -1)
-    if n >= 0: self._plotlist[n][2].appendData(data)
+    if n >= 0:
+      self._plotlist[n][2].appendData(data)
+      self.update()
 
   def setPlotVisible(self, id, visible=True):
   #------------------------------------------
