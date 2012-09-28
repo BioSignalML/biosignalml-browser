@@ -36,6 +36,10 @@ class ChartForm(QtGui.QWidget):
   #------------------------------
     self.ui.chart.appendData(id, data)
 
+  def setPlotVisible(self, id, visible=True):
+  #------------------------------------------
+    self.ui.chart.setVisible(id, visible)
+
   def orderPlots(self, ids):
   #-------------------------
     self.ui.chart.orderPlots(ids)

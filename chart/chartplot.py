@@ -310,6 +310,13 @@ class ChartPlot(ChartWidget):
     n = self._plots.get(id, -1)
     if n >= 0: self._plotlist[n][2].appendData(data)
 
+  def setPlotVisible(self, id, visible=True):
+  #------------------------------------------
+    n = self._plots.get(id, -1)
+    if n >= 0:
+      self._plotlist[n][1] = visible
+      self.update()
+
   def plotOrder(self):
   #-------------------
     """ Get list of plot ids in display order. """
