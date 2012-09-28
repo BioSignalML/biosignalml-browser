@@ -32,8 +32,8 @@ class ChartForm(QtGui.QWidget):
   #------------------------------------------------------------------------------------
     self.ui.chart.addEventPlot(id, label, mapping, visible=visible, data=data)
 
-  def appendData(self, id, data):
-  #------------------------------
+  def appendPlotData(self, id, data):
+  #----------------------------------
     self.ui.chart.appendData(id, data)
 
   def setPlotVisible(self, id, visible=True):
@@ -172,7 +172,7 @@ class Controller(QtGui.QWidget):
         self.viewer.addEventPlot(n, label, wfdbAnnotation)
 
       for d in s.read(recording.interval(start, duration)):
-        self.viewer.appendData(n, d)
+        self.viewer.appendPlotData(n, d)
 
    self.viewer.orderPlots(order if order else [])  # via controller??
 
