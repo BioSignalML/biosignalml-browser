@@ -278,6 +278,8 @@ class ChartPlot(ChartWidget):
     self._marker = -1   # Index of marker being dragged
     self._selectstart = None
     self._selectend = None
+    self._selecting = False
+    self._selectmove = None
 
   def setTimeRange(self, start, duration):
   #---------------------------------------
@@ -336,6 +338,9 @@ class ChartPlot(ChartWidget):
     qp.scale(self._plot_width, -self._plot_height)
 
     for m in self._markers: m[0] = self._time_to_pos(m[1])
+    if self._selectstart is not None:
+      self._selectend[0] = self._time_to_pos(self._selectend[1])
+      self._selectstart[0] = self._time_to_pos(self._selectstart[1])
 
     qp.setClipRect(0, 0, 1, 1)
     qp.setClipping(False)
@@ -400,19 +405,20 @@ class ChartPlot(ChartWidget):
   def _mark_selection(self, painter):
   #----------------------------------
     if self._selectstart != self._selectend:
-      duration = (self._selectend - self._selectstart)
+      duration = (self._selectend[1] - self._selectstart[1])
       painter.setClipping(True)
-      painter.fillRect(QtCore.QRectF(self._selectstart, 0.0, duration, 1.0), selectionColour)
+      painter.fillRect(QtCore.QRectF(self._selectstart[1], 0.0, duration, 1.0), selectionColour)
       painter.setPen(QtGui.QPen(selectEdgeColour))
-      painter.drawLine(QtCore.QPointF(self._selectstart, 0), QtCore.QPointF(self._selectstart, 1.0))
-      painter.drawLine(QtCore.QPointF(self._selectend, 0), QtCore.QPointF(self._selectend, 1.0))
+      painter.drawLine(QtCore.QPointF(self._selectstart[1], 0), QtCore.QPointF(self._selectstart[1], 1.0))
+      painter.drawLine(QtCore.QPointF(self._selectend[1],   0), QtCore.QPointF(self._selectend[1],   1.0))
       painter.setClipping(False)
       painter.setPen(QtGui.QPen(textColour))
-      drawtext(painter, self._selectstart, 22, '%.5g' % self._selectstart, mapY=False)  #### WATCH...!!
-      drawtext(painter, self._selectend,   22, '%.5g' % self._selectend,   mapY=False)  #### WATCH...!!
+      drawtext(painter, self._selectstart[1], 22, '%.5g' % self._selectstart[1], mapY=False)  #### WATCH...!!
+      drawtext(painter, self._selectend[1],   22, '%.5g' % self._selectend[1],   mapY=False)  #### WATCH...!!
       painter.setPen(QtGui.QPen(selectEdgeColour))
-      middle = (self._selectend + self._selectstart)/2.0
-      drawtext(painter, middle,            22, '%.5g' % duration,          mapY=False)  #### WATCH...!!
+      middle = (self._selectend[1] + self._selectstart[1])/2.0
+      if duration < 0: duration = -duration
+      drawtext(painter, middle, 22, '%.5g' % duration, mapY=False)  #### WATCH...!!
 
   def _draw_time_grid(self, painter):
   #----------------------------------
@@ -512,10 +518,21 @@ class ChartPlot(ChartWidget):
       marker[0] = xpos
       marker[1] = self._pos_to_time(marker[0])
     elif margin_top < pos.y() <= (margin_top + self._plot_height):
-## Need to be able to clear selection (click inside??), move boundaries (drag edges)
+## Need to be able to clear selection (click inside??)
 ## and start selecting another region (drag outside of region ??)
-      self._selectstart = self._pos_to_time(pos.x())
-      self._selectend = self._selectstart
+      if self._selectstart is None:
+        self._selectstart = [xpos, self._pos_to_time(xpos)]
+        self._selectend = self._selectstart
+      elif (xpos-2) <= self._selectstart[0] <= (xpos+2):
+        end = self._selectend
+        self._selectend = self._selectstart
+        self._selectstart = end
+      elif ((self._selectstart[0]+2) < xpos < (self._selectend[0]-2)
+         or (self._selectend[0]+2) < xpos < (self._selectstart[0]-2)):
+        self._selectmove = xpos
+      elif not ((xpos-2) <= self._selectend[0] <= (xpos+2)):
+        self._selectstart = [xpos, self._pos_to_time(xpos)]
+        self._selectend = self._selectstart
       self._selecting = True
     self.update()
 
@@ -526,17 +543,22 @@ class ChartPlot(ChartWidget):
       self._markers[self._marker][0] = xpos
       self._markers[self._marker][1] = self._pos_to_time(xpos)
     elif self._selecting:
-      self._selectend = self._pos_to_time(pos.x())
-      if self._selectstart > self._selectend:
-        t = self._selectstart
-        self._selectstart = self._selectend
-        self._selectend = t
+      if self._selectmove is None:
+        self._selectend = [xpos, self._pos_to_time(xpos)]
+      else:
+        delta = xpos - self._selectmove
+        self._selectmove = xpos
+        self._selectend[0] += delta
+        self._selectend[1] = self._pos_to_time(self._selectend[0])
+        self._selectstart[0] += delta
+        self._selectstart[1] = self._pos_to_time(self._selectstart[0])
     self.update()
 
   def mouseReleaseEvent(self, event):
   #----------------------------------
     self._marker = -1
     self._selecting = False
+    self._selectmove = None
 
   def contextMenu(self, pos):
   #--------------------------
