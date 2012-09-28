@@ -99,7 +99,7 @@ class SignalPlot(object):
     self._path = None
     self._lastpoint = None
     self._ymin = self._ymax = None
-    if data: self.addData(data, ymin, ymax)
+    if data: self.appendData(data, ymin, ymax)
     else:    self._setYrange()
 
   def _setYrange(self):
@@ -118,8 +118,8 @@ class SignalPlot(object):
   #--------------------
     return int(math.floor((self.ymax-self.ymin)/self.gridstep + 0.5))
 
-  def addData(self, data, ymin=None, ymax=None):
-  #---------------------------------------------
+  def appendData(self, data, ymin=None, ymax=None):
+  #------------------------------------------------
     if ymin is None: ymin = np.amin(data.data)
     if ymax is None: ymax = np.amax(data.data)
     if self._ymin == None or self._ymin > ymin: self._ymin = ymin
@@ -213,7 +213,7 @@ class EventPlot(object):
     self._events = [ ]
     self._eventpos = []
     self.gridheight = 2   ###
-    if data: self.addEvents(data)
+    if data: self.appendData(data)
 
   def yValue(self, time):
   #----------------------
@@ -233,8 +233,8 @@ class EventPlot(object):
     if (timepos-3) <= self._eventpos[i-1][0] < (timepos+3): ## "close to"
       return self._eventpos[i-1][2]
 
-  def addData(self, data):
-  #-----------------------
+  def appendData(self, data):
+  #--------------------------
     self._events.extend([ (pt[0], self._mapping(pt[1])) for pt in data.points ])
 
   def drawTrace(self, painter, start, end, markers=None):
@@ -272,7 +272,8 @@ class ChartPlot(ChartWidget):
       QtGui.QWidget.__init__(self, parent)
     self.setPalette(QtGui.QPalette(QtGui.QColor('black'), QtGui.QColor('white')))
 ##    self.setAutoFillBackground(True)  ##
-    self.plots = []
+    self._plots = {}        # id --> index in plotlist
+    self._plotlist = []     # [id, visible, plot] triples as a list
     self._timezoom = 1.0
     self._markers = []  # List of [xpos, time] pairs
     self._marker = -1   # Index of marker being dragged
@@ -290,20 +291,63 @@ class ChartPlot(ChartWidget):
     self._duration = self.duration
     self._markers = [ [0, self._start], [0, self.start] ]  ##  Two markers
 
-  def addSignalPlot(self, label, units, data=None, ymin=None, ymax=None):
-  #----------------------------------------------------------------------
+  def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
+  #----------------------------------------------------------------------------------------
     plot = SignalPlot(label, units, data, ymin, ymax)
-    self.plots.append(plot)      ## Can now increase our size...
+    self._plots[id] = len(self._plotlist)
+    self._plotlist.append([id, visible, plot])
     self.update()
-    return plot
 
-  def addEventPlot(self, label, mapping=lambda x: str(x), data=None):
-  #----------------------------------------------------------------
+  def addEventPlot(self, id, label, mapping=lambda x: str(x), visible=True, data=None):
+  #------------------------------------------------------------------------------------
     plot = EventPlot(label, mapping, data)
-    self.plots.append(plot)      ## Can now increase our size...
+    self._plots[id] = len(self._plotlist)
+    self._plotlist.append([id, visible, plot])
     self.update()
-    return plot
 
+  def appendData(self, id, data):
+  #------------------------------
+    n = self._plots.get(id, -1)
+    if n >= 0: self._plotlist[n][2].appendData(data)
+
+  def plotOrder(self):
+  #-------------------
+    """ Get list of plot ids in display order. """
+    return [ p[0] for p in self._plotlist ]
+
+  def orderPlots(self, ids):
+  #-------------------------
+    """
+    Reorder display to match id list.
+
+    The display position of plots is changed to match the order
+    of ids in the list. Plots with ids not in the list are not
+    moved. Unknown ids are ignored.
+    """
+    order = []
+    plots = []
+    for id in ids:
+      n = self._plots.get(id, -1)
+      if n >= 0:
+        order.append(n)
+        plots.append(self._plotlist[n])
+    for i, n in enumerate(sorted(order)):
+      self._plotlist[n] = plots[i]
+      self._plots[plots[i][0]] = n
+    self.update()
+
+  def swapPlots(self, id1, id2):
+  #-----------------------------
+    """ Exchange the position of the two plots in the display. """
+    n1 = self._plots.get(id1, -1)
+    n2 = self._plots.get(id2, -1)
+    if n1 >= 0 and n2 >= 0:
+      p1 = self._plotlist[n1]
+      self._plots[id1] = n2
+      self._plotlist[n1] = self._plotlist[n2]
+      self._plots[id2] = n1
+      self._plotlist[n2] = p1
+    self.update()
 
   def resizeEvent(self, e):
   #-----------------------
@@ -356,7 +400,6 @@ class ChartPlot(ChartWidget):
     self._draw_time_grid(qp)
     self._mark_selection(qp)
 
-    # Draw each each trace
     # Position markers
     for n, m in enumerate(self._markers):
       qp.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
@@ -369,15 +412,17 @@ class ChartPlot(ChartWidget):
         drawtext(qp, (last[1]+m[1])/2.0, 10, '%.5g' % width, mapY=False)  #### WATCH...!!
       last = m
 
+    # Draw each each visible trace
+    plots = [ p[2] for p in self._plotlist if p[1] ]
     gridheight = 0
-    for plot in self.plots: gridheight += plot.gridheight
+    for plot in plots: gridheight += plot.gridheight
     plotposition = gridheight
-    for plot in self.plots:
+    for plot in plots:
       qp.save()
       qp.scale(1.0, float(plot.gridheight)/gridheight)
       plotposition -= plot.gridheight
       qp.translate(0.0, float(plotposition)/plot.gridheight)
-      plot.drawTrace(qp, self._start, self._end, markers=[self._position])
+      plot.drawTrace(qp, self._start, self._end, markers=[m[1] for m in self._markers])
       qp.restore()
 
     qp.end()
@@ -385,10 +430,11 @@ class ChartPlot(ChartWidget):
 
   def _draw_plot_labels(self, painter):
   #-----------------------------------
+    plots = [ p[2] for p in self._plotlist if p[1] ]
     gridheight = 0
-    for plot in self.plots: gridheight += plot.gridheight
+    for plot in plots: gridheight += plot.gridheight
     plotposition = gridheight
-    for plot in self.plots:
+    for plot in plots:
       painter.save()
       painter.scale(1.0, float(plot.gridheight)/gridheight)
       plotposition -= plot.gridheight
