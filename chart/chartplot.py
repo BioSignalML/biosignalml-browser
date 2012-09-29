@@ -159,8 +159,8 @@ class SignalPlot(object):
   #----------------------------
     return None
 
-  def drawTrace(self, painter, start, end, markers=None):
-  #------------------------------------------------------
+  def drawTrace(self, painter, start, end, endlabels=False, labelfreq=1, markers=None):
+  #------------------------------------------------------------------------------------
     """
     Draw the trace.
 
@@ -174,14 +174,18 @@ class SignalPlot(object):
     painter.scale(1.0, 1.0/(self.ymax - self.ymin))
     painter.translate(0.0, -self.ymin)
     # draw and label y-gridlines.
+    n = 0
     y = self.ymin
     while y <= self.ymax:
       painter.setPen(QtGui.QPen(gridMinorColour))
       painter.drawLine(QtCore.QPointF(start, y), QtCore.QPointF(end, y))
-      painter.setPen(QtGui.QPen(textColour))
-      drawtext(painter, margin_left-20, y, str(y), mapX=False)
+      if (endlabels or self.ymin < y < self.ymax) and (n % labelfreq) == 0:
+        painter.drawLine(QtCore.QPointF(start-0.005*(end-start), y), QtCore.QPointF(start, y))
+        painter.setPen(QtGui.QPen(textColour))
+        drawtext(painter, MARGIN_LEFT-20, y, str(y), mapX=False)    # Label grid
       y += self.gridstep
       if -1e-10 < y < 1e-10: y = 0.0  #####
+      n += 1
     painter.setClipping(True)
     painter.setPen(QtGui.QPen(traceColour))
     # Could find start/end indices and only draw segment
@@ -238,8 +242,8 @@ class EventPlot(object):
   #--------------------------
     self._events.extend([ (pt[0], self._mapping(pt[1])) for pt in data.points ])
 
-  def drawTrace(self, painter, start, end, markers=None):
-  #------------------------------------------------------
+  def drawTrace(self, painter, start, end, markers=None, **kwds):
+  #--------------------------------------------------------------
     painter.setClipping(True)
     painter.setPen(QtGui.QPen(traceColour))
     self._eventpos = []
@@ -427,14 +431,17 @@ class ChartPlot(ChartWidget):
     gridheight = 0
     for plot in plots: gridheight += plot.gridheight
     plotposition = gridheight
+    labelfreq = 10/(self._plot_height/(gridheight + 1)) + 1
     for plot in plots:
       qp.save()
       qp.scale(1.0, float(plot.gridheight)/gridheight)
       plotposition -= plot.gridheight
       qp.translate(0.0, float(plotposition)/plot.gridheight)
-      plot.drawTrace(qp, self._start, self._end, markers=[m[1] for m in self._markers])
+      plot.drawTrace(qp, self._start, self._end,
+        labelfreq = labelfreq,
+        markers=[m[1] for m in self._markers])
       qp.restore()
-
+    # Done all drawing
     qp.end()
 
 
