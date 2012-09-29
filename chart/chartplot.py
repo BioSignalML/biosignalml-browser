@@ -129,7 +129,7 @@ class SignalPlot(object):
     if self._path is None:
       self._path = QtGui.QPainterPath()
     else:
-      self._path.drawTo(QtCore.QPointF(data[0][0], data[0][1]))
+      self._path.lineTo(QtCore.QPointF(data[0][0], data[0][1]))
     trace = [ QtCore.QPointF(pt[0], pt[1]) for pt in data.points ]
     self._path.addPolygon(QtGui.QPolygonF(trace))
     self._points.extend(trace) ## for yValue lookup
