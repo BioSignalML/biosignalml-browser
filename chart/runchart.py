@@ -88,16 +88,18 @@ class ChartForm(QtGui.QWidget):
 class SignalInfo(QtCore.QAbstractTableModel):
 #============================================
 
-  HEADER = [ '', 'Label', 'Uri' ]
+  rowVisible = QtCore.pyqtSignal(str, bool)   # id, state
+  rowMoved = QtCore.pyqtSignal(str, str)      # from_id, to_id
 
-  def __init__(self, *args, **kwds):
-  #---------------------------------
+  HEADER    = [ '', 'Label', 'Uri' ]
+  ID_COLUMN = 2                               # Uri is ID
+
+
+  def __init__(self, recording, *args, **kwds):
+  #--------------------------------------------
     QtCore.QAbstractTableModel.__init__(self, *args, **kwds)
-    self._rows = [ [True,  'Signal 1', 'http://example.org/signal/1'],
-                   [True,  'Signal 2', 'http://example.org/signal/2'],
-                   [False, 'Signal 3', 'http://example.org/signal/3'],
-                   [True,  'Signal 4', 'http://example.org/signal/4'],
-                 ]
+    self._rows = [ [True, s.label, str(s.uri)] for n, s in enumerate(recording.signals()) ]
+
 
   def rowCount(self, parent=None):
   #-------------------------------
@@ -109,15 +111,21 @@ class SignalInfo(QtCore.QAbstractTableModel):
 
   def headerData(self, section, orientation, role):
   #------------------------------------------------
-    if role == QtCore.Qt.DisplayRole:
-      if orientation == QtCore.Qt.Horizontal:
+    if orientation == QtCore.Qt.Horizontal:
+      if role == QtCore.Qt.DisplayRole:
         return self.HEADER[section]
+      elif role == QtCore.Qt.TextAlignmentRole:
+        return QtCore.Qt.AlignLeft
+      elif role == QtCore.Qt.FontRole:
+        font = QtGui.QFont(QtGui.QApplication.font())
+        font.setBold(True)
+        return font
 
   def data(self, index, role):
   #---------------------------
     if   role == QtCore.Qt.DisplayRole:
       if index.column() != 0:
-        return self._rows[index.row()][index.column()]
+        return str(self._rows[index.row()][index.column()])
       else:
         return QtCore.QVariant()
     elif role == QtCore.Qt.CheckStateRole:
@@ -128,6 +136,7 @@ class SignalInfo(QtCore.QAbstractTableModel):
   #-------------------------------------
     if role == QtCore.Qt.CheckStateRole and index.column() == 0:
       self._rows[index.row()][0] = (value == QtCore.Qt.Checked)
+      self.rowVisible.emit(self._rows[index.row()][self.ID_COLUMN], (value == QtCore.Qt.Checked))
       self.dataChanged.emit(index, index)
       return True
     return False
@@ -135,12 +144,16 @@ class SignalInfo(QtCore.QAbstractTableModel):
   def moveRow(self, sourceindex, sourcerow, destindex, destrow):
   #-------------------------------------------------------------
     data = self._rows[sourcerow]
+    from_id = data[self.ID_COLUMN]
     if sourcerow > destrow:        # Moving up
+      to_id = self._rows[destrow][self.ID_COLUMN]
       self._rows[destrow+1:sourcerow+1] = self._rows[destrow:sourcerow]
       self._rows[destrow] = data
     elif (sourcerow+1) < destrow:  # Moving down
+      to_id = self._rows[destrow-1][self.ID_COLUMN]
       self._rows[sourcerow:destrow-1] = self._rows[sourcerow+1:destrow]
       self._rows[destrow-1] = data
+    self.rowMoved.emit(from_id, to_id)
 
   def flags(self, index):
   #-----------------------
@@ -149,6 +162,12 @@ class SignalInfo(QtCore.QAbstractTableModel):
     else:
       return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
+  def setVisibility(self, visible):
+  #--------------------------------
+    for r in xrange(len(self._rows)):
+      self.setData(self.createIndex(r, 0),
+                   QtCore.Qt.Checked if visible else QtCore.Qt.Unchecked,
+                   QtCore.Qt.CheckStateRole)
 
 
 class Controller(QtGui.QWidget):
