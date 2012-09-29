@@ -561,9 +561,22 @@ class ChartPlot(ChartWidget):
     xpos = pos.x()
     # check right click etc...
     marker = None
-      self._marker = 0
-      marker = self._markers[0]
     if pos.y() <= MARGIN_TOP:
+      mpos = sorted([ (m[0], n) for n, m in enumerate(self._markers) ])
+      if   xpos <= mpos[0][0]:
+        self._marker = mpos[0][1]
+      elif xpos >= mpos[-1][0]:
+        self._marker = mpos[-1][1]
+      else:
+        for n, m in enumerate(mpos[:-1]):
+          mid = (m[0] + mpos[n+1][0])/2.0
+          if xpos <= mid:
+            self._marker = m[1]
+            break
+          elif xpos <= mpos[n+1][0]:
+            self._marker = mpos[n+1][1]
+            break ;
+      marker = self._markers[self._marker]
     else:
       for n, m in enumerate(self._markers):
         if (xpos-2) <= m[0] <= (xpos+2):
