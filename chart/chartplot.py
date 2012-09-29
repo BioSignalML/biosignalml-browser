@@ -106,7 +106,7 @@ class SignalPlot(object):
   def _setYrange(self):
   #--------------------
     if self._ymin == self._ymax:
-      if self._ymin: (ymin, ymax) = (self._ymin-self._ymin/2.0, self._ymax+self._ymax/2.0)
+      if self._ymin: (ymin, ymax) = (self._ymin-abs(self._ymin)/2.0, self._ymax+abs(self._ymax)/2.0)
       else:          (ymin, ymax) = (-0.5, 0.5)
     else:
       (ymin, ymax) = (self._ymin, self._ymax)
