@@ -73,12 +73,16 @@ class SignalTable(QtGui.QTableView):
   #-------------------------------
     row = self.rowAt(event.pos().y())
     if self._selectedrow >= 0 and row >= 0 and self._selectedrow != row:
+      dest = row if (row < self._selectedrow) else (row + 1)
+      source = self._selectedrow
+      model = self.model()
       index = QtCore.QModelIndex()
-      self.model().moveRow(index, self._selectedrow,
-                           index, row if (row < self._selectedrow) else row + 1)
-      self._selectedrow = row
-      self.selectRow(row)
-    self.update()
+      if model.beginMoveRows(index, source , source, index, dest):
+        model.moveRow(index, source, index, dest)
+        model.endMoveRows()
+        self._selectedrow = row
+        self.selectRow(row)
+        self.update()
 
   def mouseReleaseEvent(self, event):
   #----------------------------------
