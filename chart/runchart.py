@@ -201,9 +201,10 @@ class Controller(QtGui.QWidget):
     self.model.setVisibility(state)
 
 
+    """
 
-    # Connect with signals/slots....
 
+    # Go to repo to get details....
     for n, s in enumerate(recording.signals()):
       if s.rate:                  ###### Need attribute for Signal
         label = "V5" if n == 0 else "V2" if n == 1 else "S%d" % n  #########
@@ -211,12 +212,13 @@ class Controller(QtGui.QWidget):
         self.viewer.addSignalPlot(n, label, units)
       else:                       ###### or Annotation...
         label = 'atr'   ##########
+        ## Where does annotation come from ??
         self.viewer.addEventPlot(n, label, wfdbAnnotation)
 
       for d in s.read(recording.interval(start, duration)):
         self.viewer.appendPlotData(n, d)
+    """
 
-   self.viewer.orderPlots(order if order else [])  # via controller??
 
 
 
