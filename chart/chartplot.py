@@ -98,7 +98,8 @@ class SignalPlot(object):
     self._points = [ ]
     self._path = None
     self._lastpoint = None
-    self._ymin = self._ymax = None
+    self._ymin = ymin
+    self._ymax = ymax
     if data: self.appendData(data, ymin, ymax)
     else:    self._setYrange()
 
