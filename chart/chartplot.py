@@ -350,17 +350,21 @@ class ChartPlot(ChartWidget):
       self._plots[plots[i][0]] = n
     self.update()
 
-  def swapPlots(self, id1, id2):
-  #-----------------------------
-    """ Exchange the position of the two plots in the display. """
-    n1 = self._plots.get(id1, -1)
-    n2 = self._plots.get(id2, -1)
-    if n1 >= 0 and n2 >= 0:
-      p1 = self._plotlist[n1]
-      self._plots[id1] = n2
-      self._plotlist[n1] = self._plotlist[n2]
-      self._plots[id2] = n1
-      self._plotlist[n2] = p1
+  def movePlot(self, from_id, to_id):
+  #----------------------------------
+    """ Move a plot, shifting others up or down."""
+    n = self._plots.get(str(from_id), -1)
+    m = self._plots.get(str(to_id), -1)
+    if n >= 0 and m >= 0 and n != m:
+      p = self._plotlist[n]
+      if n > m:   # shift up
+        self._plotlist[m+1:n+1] = self._plotlist[m:n]
+        for i in xrange(m+1, n+1): self._plots[self._plotlist[i][0]] = i
+      else:       # shift down
+        self._plotlist[n:m] = self._plotlist[n+1:m+1]
+        for i in xrange(n, m): self._plots[self._plotlist[i][0]] = i
+      self._plotlist[m] = p
+      self._plots[str(from_id)] = m
     self.update()
 
   def resizeEvent(self, e):
