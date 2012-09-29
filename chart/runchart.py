@@ -175,13 +175,32 @@ class Controller(QtGui.QWidget):
 
   def __init__(self, recording, start, duration, order=None, parent=None):
   #-----------------------------------------------------------------------
-    QtGui.QWidget.__init__(self, parent)
+    QtGui.QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
-    self.controller.signals.setModel(SignalInfo(recording, order))
+
+    self.model = SignalInfo(recording)
+    self.controller.signals.setModel(self.model)
+    self.controller.signals.setColumnWidth(0, 25)
+
+    self.viewer = ChartForm(start, duration)
+    self.model.rowVisible.connect(self.viewer.setPlotVisible)
+    self.model.rowMoved.connect(self.viewer.movePlot)
+
+    segment = recording.interval(start, duration)
+    for n, s in enumerate(recording.signals()):
+      self.viewer.addSignalPlot(s.uri, s.label, s.units) ## , ymin=s.minValue, ymax=s.maxValue)
+      for d in s.read(segment): self.viewer.appendPlotData(s.uri, d)
+
+    self.viewer.showMaximized()
+    self.viewer.raise_()
 
 
-    self.viewer = ChartForm(start, duration, self)
+  def on_allsignals_toggled(self, state):
+  #--------------------------------------
+    self.model.setVisibility(state)
+
+
 
     # Connect with signals/slots....
 
