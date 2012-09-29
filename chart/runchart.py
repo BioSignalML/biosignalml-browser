@@ -44,6 +44,10 @@ class ChartForm(QtGui.QWidget):
   #-------------------------
     self.ui.chart.orderPlots(ids)
 
+  def movePlot(self, from_id, to_id):
+  #----------------------------------
+    self.ui.chart.movePlot(from_id, to_id)
+
   def save_chart_as_png(self, filename):
   #-------------------------------------
     self.ui.chart.save_as_png(filename)
