@@ -450,10 +450,10 @@ class ChartPlot(ChartWidget):
       plotposition -= plot.gridheight
       painter.translate(0.0, float(plotposition)/plot.gridheight)
       painter.setPen(QtGui.QPen(textColour))
-      drawtext(painter, 20, 0.5, plot.label, mapX=False)
+      drawtext(painter, (MARGIN_LEFT-40)/2, 0.5, plot.label, mapX=False)  # Signal label
       for n, m in enumerate(self._markers):
         ytext = plot.yPosition(m[0])
-        if ytext is not None:
+        if ytext is not None:                             # Write event descriptions on RHS
           painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
           drawtext(painter, MARGIN_LEFT+self._plot_width+25, 0.50, ytext, mapX=False)
       painter.restore()
