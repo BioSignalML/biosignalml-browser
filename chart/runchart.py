@@ -236,21 +236,51 @@ if __name__ == "__main__":
       return (mark, wfdb.anndesc(int(e)))
     return ('', '')
 
+
+
   logging.basicConfig(format='%(asctime)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
 
   app = QtGui.QApplication(sys.argv)
 
 
+  start = 100
+  duration = 500
+
+  record2 = 'swa49.edf'
+  recording = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/%s' % record2)
+  ctlr = Controller(recording, start, duration)
+
+  ctlr.show()
+  ctlr.raise_()
+  ctlr.viewer.raise_()
+
+#  viewer = ChartForm(recording, start, duration)
+
+#  ctlr.model.rowVisible.connect(viewer.setPlotVisible)
+#  ctlr.model.rowMoved.connect(viewer.movePlot)
+
+  #ctlr.model.setOrder(order)  ###
+  #viewer.orderPlots(order if order else [])  # via controller??
+  # also set what signals are initially visible...
+
+
+#  segment = recording.interval(start, duration)
+#  for n, s in enumerate(recording.signals()):
+#    viewer.addSignalPlot(s.uri, s.label, s.units) ## , ymin=s.minValue, ymax=s.maxValue)
+#    for d in s.read(segment): viewer.appendPlotData(s.uri, d)
+#
+#  viewer.show()
+#  viewer.raise_()
+
+
+  """
   record1 = 'mitdb/102'
   rec1 = hdf5.HDF5Recording.open('/physiobank/database/%s.h5' % record1)
   ctl1 = Controller(rec1, 90, 20, [0, 2, 1])
   ctl1.show()
   ctl1.raise_()
 
-  """
-  record1 = 'mitdb/102'
-  rec1 = hdf5.HDF5Recording.open('/physiobank/database/%s.h5' % record1)
   for n, s in enumerate(rec1.signals()):
     if s.rate:                  ###### Need attribute for Signal
       label = "V5" if n == 0 else "V2" if n == 1 else "S%d" % n  #########
@@ -280,7 +310,7 @@ if __name__ == "__main__":
     if 17 <= n and s.rate:
       logging.debug("Adding plot for %s", s.label)
       p = viewer2.addSignalPlot(s.label, s.units, ymin=s.minValue, ymax=s.maxValue)
-      for d in s.read(rec2.interval(start, duration)): p.addData(d) 
+      for d in s.read(rec2.interval(start, duration)): p.addData(d)
   viewer2.show()
   viewer2.raise_()
   """
