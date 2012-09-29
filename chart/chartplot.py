@@ -9,11 +9,11 @@ from PyQt4 import QtOpenGL
 ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
 
 
-# Margins of plotting region within chart, in pixesl
-margin_left   = 80
-margin_right  = 60
-margin_top    = 30
-margin_bottom = 40
+# Margins of plotting region within chart, in pixels
+MARGIN_LEFT   = 110
+MARGIN_RIGHT  = 80
+MARGIN_TOP    = 30
+MARGIN_BOTTOM = 40
 
 
 traceColour      = QtGui.QColor('green')
@@ -360,8 +360,8 @@ class ChartPlot(ChartWidget):
 
   def resizeEvent(self, e):
   #-----------------------
-    self.chartPosition.emit(self.pos().x() + margin_left,
-                            self.width() - (margin_left + margin_right),
+    self.chartPosition.emit(self.pos().x() + MARGIN_LEFT,
+                            self.width() - (MARGIN_LEFT + MARGIN_RIGHT),
                             self.pos().y() + self.height())
   
   def paintEvent(self, e):
@@ -385,9 +385,9 @@ class ChartPlot(ChartWidget):
     # Set plotting region as (0, 0) to (1, 1) with origin at bottom left
     w = device.width()
     h = device.height()
-    self._plot_width  = w - (margin_left + margin_right)
-    self._plot_height = h - (margin_top + margin_bottom)
-    qp.translate(margin_left, margin_top + self._plot_height)
+    self._plot_width  = w - (MARGIN_LEFT + MARGIN_RIGHT)
+    self._plot_height = h - (MARGIN_TOP + MARGIN_BOTTOM)
+    qp.translate(MARGIN_LEFT, MARGIN_TOP + self._plot_height)
     qp.scale(self._plot_width, -self._plot_height)
 
     for m in self._markers: m[0] = self._time_to_pos(m[1])
@@ -454,7 +454,7 @@ class ChartPlot(ChartWidget):
         ytext = plot.yPosition(m[0])
         if ytext is not None:
           painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
-          drawtext(painter, margin_left+self._plot_width+25, 0.50, ytext, mapX=False)
+          drawtext(painter, MARGIN_LEFT+self._plot_width+25, 0.50, ytext, mapX=False)
       painter.restore()
 
   def _mark_selection(self, painter):
@@ -508,14 +508,14 @@ class ChartPlot(ChartWidget):
 
   def _pos_to_time(self, pos):
   #---------------------------  
-    time = self._start + float(self._duration)*(pos - margin_left)/self._plot_width
+    time = self._start + float(self._duration)*(pos - MARGIN_LEFT)/self._plot_width
     if time < self._start: time = self._start
     if time > self._end: time = self._end
     return time
 
   def _time_to_pos(self, time):
   #---------------------------  
-    return margin_left + (time - self._start)*self._plot_width/float(self._duration)
+    return MARGIN_LEFT + (time - self._start)*self._plot_width/float(self._duration)
 
   def setTimeZoom(self, scale):
   #----------------------------
@@ -560,9 +560,9 @@ class ChartPlot(ChartWidget):
     xpos = pos.x()
     # check right click etc...
     marker = None
-    if pos.y() <= margin_top:
       self._marker = 0
       marker = self._markers[0]
+    if pos.y() <= MARGIN_TOP:
     else:
       for n, m in enumerate(self._markers):
         if (xpos-2) <= m[0] <= (xpos+2):
@@ -572,7 +572,7 @@ class ChartPlot(ChartWidget):
     if marker:
       marker[0] = xpos
       marker[1] = self._pos_to_time(marker[0])
-    elif margin_top < pos.y() <= (margin_top + self._plot_height):
+    elif MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height):
 ## Need to be able to clear selection (click inside??)
 ## and start selecting another region (drag outside of region ??)
       if self._selectstart is None:
