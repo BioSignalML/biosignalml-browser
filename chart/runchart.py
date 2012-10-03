@@ -183,6 +183,8 @@ class Controller(QtGui.QWidget):
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
 
+    self.controller.title.setText(str(recording.uri))
+
     self.model = SignalInfo(recording)
     self.controller.signals.setModel(self.model)
     self.controller.signals.setColumnWidth(0, 25)
@@ -235,6 +237,10 @@ class Controller(QtGui.QWidget):
 if __name__ == "__main__":
 #=========================
 
+  from biosignalml.rdf.sparqlstore import Virtuoso
+  from biosignalml.repository import BSMLStore
+
+
   def wfdbAnnotation(e):
   #---------------------
     import wfdb
@@ -257,10 +263,13 @@ if __name__ == "__main__":
   start = 100
   duration = 500
 
-  record2 = 'swa49.edf'
-  recording = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/%s' % record2)
-  ctlr = Controller(recording, start, duration)
+  store = BSMLStore('http://devel.biosignalml.org', Virtuoso('http://localhost:8890'))
+  recording = store.get_recording_with_signals(sys.argv[1])
+  if recording is None:
+    print "Unknown recording"
+    sys.exit(1)
 
+  ctlr = Controller(recording, start, duration, annotator=wfdbAnnotation)
   ctlr.show()
   ctlr.raise_()
   ctlr.viewer.raise_()
