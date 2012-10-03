@@ -8,7 +8,7 @@ from ui.controller import Ui_Controller
 
 import biosignalml.formats.hdf5 as hdf5
 import biosignalml.formats.edf  as edf
-
+import biosignalml.units.ontology as uom
 
 
 class ChartForm(QtGui.QWidget):
@@ -177,8 +177,8 @@ class SignalInfo(QtCore.QAbstractTableModel):
 class Controller(QtGui.QWidget):
 #===============================
 
-  def __init__(self, recording, start, duration, order=None, parent=None):
-  #-----------------------------------------------------------------------
+  def __init__(self, recording, start, duration, order=None, annotator=None, parent=None):
+  #---------------------------------------------------------------------------------------
     QtGui.QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
@@ -194,7 +194,12 @@ class Controller(QtGui.QWidget):
 
     segment = recording.interval(start, duration)
     for n, s in enumerate(recording.signals()):
-      self.viewer.addSignalPlot(s.uri, s.label, s.units) ## , ymin=s.minValue, ymax=s.maxValue)
+      if str(s.units) == str(uom.UNITS.AnnotationData.uri):
+        self.viewer.addEventPlot(s.uri, s.label, annotator)
+      else:
+        try: units = uom.RESOURCES[str(s.units)].label
+        except: units = str(s.units)
+        self.viewer.addSignalPlot(s.uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
       for d in s.read(segment): self.viewer.appendPlotData(s.uri, d)
 
     self.viewer.showMaximized()
