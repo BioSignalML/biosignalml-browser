@@ -214,21 +214,12 @@ class Controller(QtGui.QWidget):
 
 
     """
-
-
-    # Go to repo to get details....
     for n, s in enumerate(recording.signals()):
       if s.rate:                  ###### Need attribute for Signal
-        label = "V5" if n == 0 else "V2" if n == 1 else "S%d" % n  #########
-        units = "mV"
         self.viewer.addSignalPlot(n, label, units)
       else:                       ###### or Annotation...
-        label = 'atr'   ##########
         ## Where does annotation come from ??
         self.viewer.addEventPlot(n, label, wfdbAnnotation)
-
-      for d in s.read(recording.interval(start, duration)):
-        self.viewer.appendPlotData(n, d)
     """
 
 
@@ -257,66 +248,42 @@ if __name__ == "__main__":
   logging.basicConfig(format='%(asctime)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
 
+  if len(sys.argv) <= 1:
+    print "Usage: %s recording_uri [start] [duration]" % sys.argv[0]
+    sys.exit(1)
+
   app = QtGui.QApplication(sys.argv)
-
-
-  start = 100
-  duration = 500
-
   store = BSMLStore('http://devel.biosignalml.org', Virtuoso('http://localhost:8890'))
   recording = store.get_recording_with_signals(sys.argv[1])
   if recording is None:
     print "Unknown recording"
     sys.exit(1)
 
+  if len(sys.argv) >= 3:
+    try:
+      start = float(sys.argv[2])
+    except:
+      print "Invalid start time"
+      sys.exit(1)
+  else:
+    start = 0.0
+
+  if len(sys.argv) >= 4:
+    try:
+      duration = float(sys.argv[3])
+    except:
+      print "Invalid duration"
+      sys.exit(1)
+  else:
+    duration = 60.0
+
   ctlr = Controller(recording, start, duration, annotator=wfdbAnnotation)
+
   ctlr.show()
   ctlr.raise_()
   ctlr.viewer.raise_()
 
-#  viewer = ChartForm(recording, start, duration)
-
-#  ctlr.model.rowVisible.connect(viewer.setPlotVisible)
-#  ctlr.model.rowMoved.connect(viewer.movePlot)
-
-  #ctlr.model.setOrder(order)  ###
-  #viewer.orderPlots(order if order else [])  # via controller??
-  # also set what signals are initially visible...
-
-
-#  segment = recording.interval(start, duration)
-#  for n, s in enumerate(recording.signals()):
-#    viewer.addSignalPlot(s.uri, s.label, s.units) ## , ymin=s.minValue, ymax=s.maxValue)
-#    for d in s.read(segment): viewer.appendPlotData(s.uri, d)
-#
-#  viewer.show()
-#  viewer.raise_()
-
-
-  """
-  record1 = 'mitdb/102'
-  rec1 = hdf5.HDF5Recording.open('/physiobank/database/%s.h5' % record1)
-  ctl1 = Controller(rec1, 90, 20, [0, 2, 1])
-  ctl1.show()
-  ctl1.raise_()
-
-  for n, s in enumerate(rec1.signals()):
-    if s.rate:                  ###### Need attribute for Signal
-      label = "V5" if n == 0 else "V2" if n == 1 else "S%d" % n  #########
-      units = "mV"
-      viewer1.addSignalPlot(n, label, units)
-    else:                       ###### or Annotation...
-      label = 'atr'   ##########
-      viewer1.addEventPlot(n, label, wfdbAnnotation)
-    for d in s.read(rec1.interval(start, duration)):
-      viewer1.appendData(n, d)
-
-  viewer1.orderPlots([0, 2, 1])
-  viewer1.show()
-
   #viewer1.save_chart_as_png('test.png')   ## Needs to be via 'Save' button/menu and file dialog...
-
-  """
 
 
   """
