@@ -10,16 +10,16 @@ ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QW
 
 
 # Margins of plotting region within chart, in pixels
-MARGIN_LEFT   = 110
+MARGIN_LEFT   = 120
 MARGIN_RIGHT  = 80
 MARGIN_TOP    = 30
-MARGIN_BOTTOM = 40
+MARGIN_BOTTOM = 50
 
 
 traceColour      = QtGui.QColor('green')
 selectedColour   = QtGui.QColor('red')
 textColour       = QtGui.QColor('darkBlue')
-markerColour     = QtGui.QColor('red')
+markerColour     = QtGui.QColor('blue')
 marker2Colour    = QtGui.QColor(0xCC, 0x55, 0x00)  ## 'burnt orange'
 gridMinorColour  = QtGui.QColor(128, 128, 255, 63)
 gridMajorColour  = QtGui.QColor(0,     0, 128, 63)
