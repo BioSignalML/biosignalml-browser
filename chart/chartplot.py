@@ -17,6 +17,7 @@ MARGIN_BOTTOM = 40
 
 
 traceColour      = QtGui.QColor('green')
+selectedColour   = QtGui.QColor('red')
 textColour       = QtGui.QColor('darkBlue')
 markerColour     = QtGui.QColor('red')
 marker2Colour    = QtGui.QColor(0xCC, 0x55, 0x00)  ## 'burnt orange'
@@ -95,6 +96,7 @@ class SignalPlot(object):
   def __init__(self, label, units, data=None, ymin=None, ymax=None):
   #-----------------------------------------------------------------
     self.label = '%s\n(%s)' % (label, units) if units else label
+    self.selected = False
     self._points = [ ]
     self._path = None
     self._lastpoint = None
@@ -187,7 +189,7 @@ class SignalPlot(object):
       if -1e-10 < y < 1e-10: y = 0.0  #####
       n += 1
     painter.setClipping(True)
-    painter.setPen(QtGui.QPen(traceColour))
+    painter.setPen(QtGui.QPen(traceColour if not self.selected else selectedColour))
     # Could find start/end indices and only draw segment
     # rather than rely on clipping...
     painter.drawPath(self._path)
@@ -214,6 +216,7 @@ class EventPlot(object):
   def __init__(self, label, mapping=lambda x: (str(x), str(x)), data=None):
   #------------------------------------------------------------------------
     self.label = label
+    self.selected = False
     self._mapping = mapping
     self._events = [ ]
     self._eventpos = []
@@ -245,11 +248,10 @@ class EventPlot(object):
   def drawTrace(self, painter, start, end, markers=None, **kwds):
   #--------------------------------------------------------------
     painter.setClipping(True)
-    painter.setPen(QtGui.QPen(traceColour))
     self._eventpos = []
     for t, event in self._events:
       if event[0]:
-        painter.setPen(QtGui.QPen(traceColour))
+        painter.setPen(QtGui.QPen(traceColour if not self.selected else selectedColour))
         painter.drawLine(QtCore.QPointF(t, 0.0), QtCore.QPointF(t, 1.0))
         painter.setPen(QtGui.QPen(textColour))
         drawtext(painter, t, 0.5, event[0])
@@ -365,6 +367,12 @@ class ChartPlot(ChartWidget):
         for i in xrange(n, m): self._plots[self._plotlist[i][0]] = i
       self._plotlist[m] = p
       self._plots[str(from_id)] = m
+    self.update()
+
+  def plotSelected(self, row):
+  #---------------------------
+    for n, p in enumerate(self._plotlist):
+      p[2].selected = (n == row)
     self.update()
 
   def resizeEvent(self, e):

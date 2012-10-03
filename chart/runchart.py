@@ -48,6 +48,10 @@ class ChartForm(QtGui.QWidget):
   #----------------------------------
     self.ui.chart.movePlot(from_id, to_id)
 
+  def plotSelected(self, row):
+  #---------------------------
+    self.ui.chart.plotSelected(row)
+
   def save_chart_as_png(self, filename):
   #-------------------------------------
     self.ui.chart.save_as_png(filename)
@@ -186,6 +190,7 @@ class Controller(QtGui.QWidget):
     self.viewer = ChartForm(start, duration)
     self.model.rowVisible.connect(self.viewer.setPlotVisible)
     self.model.rowMoved.connect(self.viewer.movePlot)
+    self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
 
     segment = recording.interval(start, duration)
     for n, s in enumerate(recording.signals()):

@@ -47,6 +47,8 @@ class SignalItem(QtGui.QStyledItemDelegate):
 class SignalTable(QtGui.QTableView):
 #====================================
 
+  rowSelected = QtCore.pyqtSignal(int)   # row, -1 means clear
+
   def __init__(self, *args, **kwds):
   #---------------------------------
     QtGui.QTableView.__init__(self, *args, **kwds)
@@ -65,8 +67,10 @@ class SignalTable(QtGui.QTableView):
     if row >= 0:
       self.selectRow(row)
       self._selectedrow = row
+      self.rowSelected.emit(row)
     else:
       self.clearSelection()
+      self.rowSelected.emit(-1)
     self.update()
 
   def mouseMoveEvent(self, event):
