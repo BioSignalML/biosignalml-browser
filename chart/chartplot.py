@@ -64,6 +64,7 @@ def gridspacing(w):
 
 def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred):
 #---------------------------------------------------------------------------
+  if not text: return
   lines = text.split('\n')
   xfm = painter.transform()
   if mapX or mapY:
