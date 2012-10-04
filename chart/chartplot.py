@@ -570,9 +570,9 @@ class ChartPlot(ChartWidget):
     start = (self.start
            + scrollbar.value()*float(self.duration)/(scrollbar.maximum()+scrollbar.pageStep()))
     self._setTimeGrid(start, start + self._duration)
-    for m in self._markers:                       ## But markers need to scroll...
-      if m[1] < self._start: m[1] = self._start
-      if m[1] > self._end: m[1] = self._end
+#    for m in self._markers:                       ## But markers need to scroll...
+#      if m[1] < self._start: m[1] = self._start
+#      if m[1] > self._end: m[1] = self._end
     self.update()
 
   def mousePressEvent(self, event):
