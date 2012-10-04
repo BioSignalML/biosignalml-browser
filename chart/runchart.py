@@ -182,14 +182,18 @@ class Controller(QtGui.QWidget):
     QtGui.QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
-
-    self.controller.title.setText(str(recording.uri))
+    self.setWindowTitle(str(recording.uri))
+##    self.controller.title.setText('')  ##  starttime, duration, .... str(recording.uri))
+    self.controller.description.setHtml('<p>'
+                                    + '</p><p>'.join([str(a.comment) for a in recording.annotations])
+                                    +   '</p>')
 
     self.model = SignalInfo(recording)
     self.controller.signals.setModel(self.model)
     self.controller.signals.setColumnWidth(0, 25)
 
     self.viewer = ChartForm(start, duration)
+    self.viewer.setWindowTitle(str(recording.uri))
     self.model.rowVisible.connect(self.viewer.setPlotVisible)
     self.model.rowMoved.connect(self.viewer.movePlot)
     self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
@@ -276,6 +280,9 @@ if __name__ == "__main__":
       sys.exit(1)
   else:
     duration = 60.0
+
+  recording.annotations = [ store.get_annotation(ann, recording.graph_uri)
+                              for ann in store.annotations(recording.uri, recording.graph_uri) ]
 
   ctlr = Controller(recording, start, duration, annotator=wfdbAnnotation)
 
