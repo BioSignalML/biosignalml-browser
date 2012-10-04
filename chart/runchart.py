@@ -21,7 +21,13 @@ class ChartForm(QtGui.QWidget):
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
     self.ui.timescroll.hide()
+    self.setTimeRange(start, duration)
+
+
+  def setTimeRange(self, start, duration):
+  #---------------------------------------
     self.ui.chart.setTimeRange(start, duration)
+    self.ui.chart.setTimeScroll(self.ui.timescroll)
 
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
@@ -51,6 +57,10 @@ class ChartForm(QtGui.QWidget):
   def plotSelected(self, row):
   #---------------------------
     self.ui.chart.plotSelected(row)
+
+  def resetPlots(self):
+  #--------------------
+    self.ui.chart.resetPlots()
 
   def save_chart_as_png(self, filename):
   #-------------------------------------
@@ -180,6 +190,7 @@ class Controller(QtGui.QWidget):
   def __init__(self, recording, start, duration, order=None, annotator=None, parent=None):
   #---------------------------------------------------------------------------------------
     QtGui.QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
+
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
     self.setWindowTitle(str(recording.uri))
@@ -187,6 +198,9 @@ class Controller(QtGui.QWidget):
     self.controller.description.setHtml('<p>'
                                     + '</p><p>'.join([str(a.comment) for a in recording.annotations])
                                     +   '</p>')
+    self._start = start
+    self._duration = duration
+    self._recording = recording
 
     self.model = SignalInfo(recording)
     self.controller.signals.setModel(self.model)
@@ -198,24 +212,71 @@ class Controller(QtGui.QWidget):
     self.model.rowMoved.connect(self.viewer.movePlot)
     self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
 
-    segment = recording.interval(start, duration)
-    for n, s in enumerate(recording.signals()):
+    self._setupSlider()
+
+    interval = recording.interval(start, duration)
+    for s in recording.signals():
       if str(s.units) == str(uom.UNITS.AnnotationData.uri):
         self.viewer.addEventPlot(s.uri, s.label, annotator)
       else:
         try: units = uom.RESOURCES[str(s.units)].label
         except: units = str(s.units)
         self.viewer.addSignalPlot(s.uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
-      for d in s.read(segment): self.viewer.appendPlotData(s.uri, d)
+      for d in s.read(interval): self.viewer.appendPlotData(s.uri, d)
+
+    # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
 
     self.viewer.showMaximized()
     self.viewer.raise_()
 
+  def _setupSlider(self):
+  #----------------------
+    duration = self._recording.duration
+    if duration == 0: return
+    sb = self.controller.segment
+    sb.setMinimum(0)
+    scrollwidth = 1000
+    sb.setPageStep(scrollwidth*self._duration/duration)
+    sb.setMaximum(scrollwidth - sb.pageStep())
+    sb.setValue(scrollwidth*self._start/duration)
+
+    self.controller.rec_start.setText(str(0.0))               ## But need HH:MM:SS
+    self.controller.rec_posn.setText(str(self._start))
+    self.controller.rec_end.setText(str(recording.duration))  ## But need HH:MM:SS
+
+  def _sliderMoved(self):
+  #----------------------
+    sb = self.controller.segment
+    width = sb.maximum() + sb.pageStep() - sb.minimum()
+    newstart = sb.value()*self._recording.duration/float(width)
+    self.controller.rec_posn.setText(str(newstart))
+    if not self.controller.segment.isSliderDown() and newstart != self._start:
+      self.viewer.resetPlots()
+      interval = self._recording.interval(newstart, self._duration)
+      for s in recording.signals():
+        for d in s.read(interval):
+          self.viewer.appendPlotData(s.uri, d)
+      self.viewer.setTimeRange(newstart, self._duration)
+      self._start = newstart
+
+  def on_segment_valueChanged(self, position):
+  #-------------------------------------------
+    self._sliderMoved()
+    # Sluggish if large data segments with tracking...
+  # Tracking is on, show time at slider posiotion
+  # But also catch slider released and use this to refresh chart data...
+
+  def on_segment_sliderReleased(self):
+  #-----------------------------------
+    self._sliderMoved()
 
   def on_allsignals_toggled(self, state):
   #--------------------------------------
     self.model.setVisibility(state)
 
+
+  #def keyPressEvent(self, event):   ## Also need to do so in chart...
+  #------------------------------    ## And send us hide/show messages or keys
 
     """
     for n, s in enumerate(recording.signals()):
@@ -248,7 +309,6 @@ if __name__ == "__main__":
     return ('', '')
 
 
-
   logging.basicConfig(format='%(asctime)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
 
@@ -263,6 +323,7 @@ if __name__ == "__main__":
     print "Unknown recording"
     sys.exit(1)
 
+  ## Replace following with Python arg parser...
   if len(sys.argv) >= 3:
     try:
       start = float(sys.argv[2])

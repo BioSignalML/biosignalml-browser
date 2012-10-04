@@ -98,13 +98,17 @@ class SignalPlot(object):
   #-----------------------------------------------------------------
     self.label = '%s\n(%s)' % (label, units) if units else label
     self.selected = False
+    self._ymin = ymin
+    self._ymax = ymax
+    self.reset()
+    if data: self.appendData(data, ymin, ymax)
+    else:    self._setYrange()
+
+  def reset(self):
+  #---------------
     self._points = [ ]
     self._path = None
     self._lastpoint = None
-    self._ymin = ymin
-    self._ymax = ymax
-    if data: self.appendData(data, ymin, ymax)
-    else:    self._setYrange()
 
   def _setYrange(self):
   #--------------------
@@ -145,7 +149,6 @@ class SignalPlot(object):
     i = self._index(time)
     if i is not None: return self._points[i].y()
 
-
   def _index(self, time):
   #----------------------
     i = 0
@@ -174,6 +177,7 @@ class SignalPlot(object):
     The painter has been scaled so that (0.0, 1.0) is the
     vertical plotting height.
     """
+    if self._path is None: return
     painter.scale(1.0, 1.0/(self.ymax - self.ymin))
     painter.translate(0.0, -self.ymin)
     # draw and label y-gridlines.
@@ -219,10 +223,14 @@ class EventPlot(object):
     self.label = label
     self.selected = False
     self._mapping = mapping
-    self._events = [ ]
-    self._eventpos = []
+    self.reset()
     self.gridheight = 2   ###
     if data: self.appendData(data)
+
+  def reset(self):
+  #---------------
+    self._events = [ ]
+    self._eventpos = []
 
   def yValue(self, time):
   #----------------------
@@ -248,6 +256,7 @@ class EventPlot(object):
 
   def drawTrace(self, painter, start, end, markers=None, **kwds):
   #--------------------------------------------------------------
+    if not self._events: return
     painter.setClipping(True)
     self._eventpos = []
     for t, event in self._events:
@@ -295,9 +304,8 @@ class ChartPlot(ChartWidget):
     self.start = start
     self.end = start + duration
     self.duration = duration
-    self._setTimeGrid(self.start, self.end)
-    self._duration = self.duration
-    self._markers = [ [0, self._start], [0, self.start] ]  ##  Two markers
+    self.setTimeZoom(self._timezoom)    # Keep existing zoom
+    self._markers = [ [0, self._start], [0, self._start] ]  ##  Two markers
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
@@ -375,6 +383,10 @@ class ChartPlot(ChartWidget):
     for n, p in enumerate(self._plotlist):
       p[2].selected = (n == row)
     self.update()
+
+  def resetPlots(self):
+  #--------------------
+    for p in self._plotlist: p[2].reset()
 
   def resizeEvent(self, e):
   #-----------------------
@@ -552,7 +564,6 @@ class ChartPlot(ChartWidget):
       newstart = newend - self._duration
     # Now update slider's position to reflect _start _position _end
     self._setTimeGrid(newstart, newend)
-
     #for m in self._markers: m[0] = self._time_to_pos(m[1])
     #self._markerpos = self._time_to_pos(self._position)   # Done in paint()
     self.update()
