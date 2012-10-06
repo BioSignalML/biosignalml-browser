@@ -180,6 +180,7 @@ class SignalPlot(object):
     #painter.drawPolyline(QtGui.QPolygonF(self._points))
     # But very fast as is, esp. when using OpenGL
 
+    painter.setClipping(False)
     if markers:
       xfm = painter.transform()
       for n, t in enumerate(markers):
