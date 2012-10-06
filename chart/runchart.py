@@ -208,8 +208,10 @@ class Controller(QtGui.QWidget):
 
   def __init__(self, recording, start, duration, order=None, annotator=None, parent=None):
   #---------------------------------------------------------------------------------------
-    QtGui.QWidget.__init__(self, parent, QtCore.Qt.WindowStaysOnTopHint)
-
+    QtGui.QWidget.__init__(self, parent, QtCore.Qt.CustomizeWindowHint
+                                       | QtCore.Qt.WindowMinMaxButtonsHint
+                           #           | QtCore.Qt.WindowStaysOnTopHint
+                          )
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
 
