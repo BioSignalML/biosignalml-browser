@@ -164,7 +164,8 @@ class SignalPlot(object):
     while y <= self.ymax:
       painter.setPen(QtGui.QPen(gridMinorColour))
       painter.drawLine(QtCore.QPointF(start, y), QtCore.QPointF(end, y))
-      if (endlabels or self.ymin < y < self.ymax) and (n % labelfreq) == 0:
+      if ((endlabels or self.ymin < y < self.ymax)
+       and (self.gridheight/labelfreq) > 1 and (n % labelfreq) == 0):
         painter.drawLine(QtCore.QPointF(start-0.005*(end-start), y), QtCore.QPointF(start, y))
         painter.setPen(QtGui.QPen(textColour))
         drawtext(painter, MARGIN_LEFT-20, y, str(y), mapX=False)    # Label grid
@@ -425,7 +426,7 @@ class ChartPlot(ChartWidget):
     gridheight = 0
     for plot in plots: gridheight += plot.gridheight
     plotposition = gridheight
-    labelfreq = 10/(self._plot_height/(gridheight + 1)) + 1
+    labelfreq = int(10.0/(float(self._plot_height)/(gridheight + 1))) + 1
     for plot in plots:
       qp.save()
       qp.scale(1.0, float(plot.gridheight)/gridheight)
@@ -562,6 +563,8 @@ class ChartPlot(ChartWidget):
 
   def mousePressEvent(self, event):
   #--------------------------------
+    if event.button() != QtCore.Qt.LeftButton:
+      return
     pos = event.pos()
     xpos = pos.x()
     # check right click etc...
