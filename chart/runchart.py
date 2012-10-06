@@ -10,6 +10,8 @@ import biosignalml.formats.hdf5 as hdf5
 import biosignalml.formats.edf  as edf
 import biosignalml.units.ontology as uom
 
+from nrange import NumericRange
+
 
 class ChartForm(QtGui.QWidget):
 #==============================
@@ -201,6 +203,11 @@ class Controller(QtGui.QWidget):
 
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
+
+    self.controller.rec_posn = QtGui.QLabel(self)
+    self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+    self.controller.rec_posn.resize(self.controller.rec_start.size())
+
     self.setWindowTitle(str(recording.uri))
 ##    self.controller.title.setText('')  ##  starttime, duration, .... str(recording.uri))
     self.controller.description.setHtml('<p>'
@@ -237,27 +244,47 @@ class Controller(QtGui.QWidget):
     self.viewer.showMaximized()
     self.viewer.raise_()
 
+  def showEvent(self, event):
+  #--------------------------
+#    if self.controller.rec_posn.pos().y() == 0:  # After laying out controller
+    self._setSliderTimePosn(self._start)
+    QtGui.QWidget.showEvent(self, event)
+
+  def _setSliderTime(self, label, time):
+  #-------------------------------------
+    ## Show as HH:MM:SS
+    label.setText(str(self._sliderrange.map(time)))
+
+  def _setSliderTimePosn(self, time):
+  #----------------------------------
+    self._setSliderTime(self.controller.rec_posn, time)
+    sb = self.controller.segment
+    self.controller.rec_posn.move(  ## 44 = approx width of scroll end arrows
+      sb.pos().x() + (sb.width()-44)*time/self._recording.duration,
+      self.controller.rec_start.pos().y() - 12
+      )
+
   def _setupSlider(self):
   #----------------------
     duration = self._recording.duration
     if duration == 0: return
+    self._sliderrange = NumericRange(0.0, duration)
     sb = self.controller.segment
     sb.setMinimum(0)
-    scrollwidth = 1000
+    scrollwidth = 10000
     sb.setPageStep(scrollwidth*self._duration/duration)
     sb.setMaximum(scrollwidth - sb.pageStep())
     sb.setValue(scrollwidth*self._start/duration)
-
-    self.controller.rec_start.setText(str(0.0))               ## But need HH:MM:SS
-    self.controller.rec_posn.setText(str(self._start))
-    self.controller.rec_end.setText(str(recording.duration))  ## But need HH:MM:SS
+    self._setSliderTime(self.controller.rec_start, 0.0)
+    self._setSliderTime(self.controller.rec_end, duration)
 
   def _sliderMoved(self):
   #----------------------
     sb = self.controller.segment
+    duration = self._recording.duration
     width = sb.maximum() + sb.pageStep() - sb.minimum()
-    newstart = sb.value()*self._recording.duration/float(width)
-    self.controller.rec_posn.setText(str(newstart))
+    newstart = sb.value()*duration/float(width)
+    self._setSliderTimePosn(newstart)
     if not self.controller.segment.isSliderDown() and newstart != self._start:
       self.viewer.resetPlots()
       interval = self._recording.interval(newstart, self._duration)
