@@ -257,6 +257,7 @@ class ChartPlot(ChartWidget):
   """
 
   chartPosition = QtCore.pyqtSignal(int, int, int)
+  updateTimeScroll = QtCore.pyqtSignal(bool)
 
   def __init__(self, parent):
   #--------------------------
@@ -640,10 +641,20 @@ class ChartPlot(ChartWidget):
 
   def contextMenu(self, pos):
   #--------------------------
-    menu = QtGui.QMenu()
-    menu.addAction("Zoom")
-    menu.addAction("Annotate")
-    menu.addAction("Export")
-    selected = menu.exec_(self.mapToGlobal(pos))
-    if selected:
-      print selected.text()
+    if (self._selectstart != self._selectend
+     and self._selectstart[0] < pos.x() < self._selectend[0]
+     and MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)):
+      menu = QtGui.QMenu()
+      menu.addAction("Zoom")
+      menu.addAction("Annotate")
+      menu.addAction("Export")
+      item = menu.exec_(self.mapToGlobal(pos))
+      if item:
+        if item.text() == 'Zoom':
+          self._duration = self._selectend[1] - self._selectstart[1]
+          self._timezoom = self.duration/self._duration
+          # Now update slider's position to reflect _start _position _end
+          self._setTimeGrid(self._selectstart[1], self._selectend[1])
+          self.updateTimeScroll.emit(self._timezoom > 1.0)
+        self._selectend = self._selectstart
+        self.update()

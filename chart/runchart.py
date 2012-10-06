@@ -20,15 +20,14 @@ class ChartForm(QtGui.QWidget):
     self.ui = Ui_Chart()
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
+    self.ui.chart.updateTimeScroll.connect(self.position_timescroll)
     self.ui.timescroll.hide()
     self.setTimeRange(start, duration)
-
 
   def setTimeRange(self, start, duration):
   #---------------------------------------
     self.ui.chart.setTimeRange(start, duration)
     self.ui.chart.setTimeScroll(self.ui.timescroll)
-
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
@@ -74,13 +73,22 @@ class ChartForm(QtGui.QWidget):
   #----------------------------------------------
     self.ui.chart.moveTimeScroll(self.ui.timescroll)
 
+  def position_timescroll(self, visible):
+  #--------------------------------------
+    self.ui.chart.setTimeScroll(self.ui.timescroll)
+    self.ui.timescroll.setVisible(visible)
+
   def on_timezoom_currentIndexChanged(self, index):
   #------------------------------------------------
     if isinstance(index, int):
       scale = [1.0, 2.0, 5.0, 10.0][index]
       self.ui.chart.setTimeZoom(scale)
-      self.ui.chart.setTimeScroll(self.ui.timescroll)
-      self.ui.timescroll.setVisible(index > 0)
+      self.position_timescroll(index > 0)
+
+  def position_timescroll(self, visible):
+  #--------------------------------------
+    self.ui.chart.setTimeScroll(self.ui.timescroll)
+    self.ui.timescroll.setVisible(visible)
 
   def on_frame_frameResize(self, geometry):
   #----------------------------------------
