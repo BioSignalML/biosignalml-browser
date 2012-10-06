@@ -190,7 +190,6 @@ class SignalPlot(object):
            drawtext(painter, xy.x()+5, xy.y(), str(y), mapX=False, mapY=False, align=alignLeft)
 
 
-
 class EventPlot(object):
 #=======================
   """
@@ -276,14 +275,6 @@ class ChartPlot(ChartWidget):
     self._selectend = None
     self._selecting = False
     self._selectmove = None
-
-  def setTimeRange(self, start, duration):
-  #---------------------------------------
-    self.start = start
-    self.end = start + duration
-    self.duration = duration
-    self.setTimeZoom(self._timezoom)    # Keep existing zoom
-    self._markers = [ [0, self._start], [0, self._start] ]  ##  Two markers
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
@@ -447,7 +438,6 @@ class ChartPlot(ChartWidget):
     # Done all drawing
     qp.end()
 
-
   def _draw_plot_labels(self, painter):
   #-----------------------------------
     plots = [ p[2] for p in self._plotlist if p[1] ]
@@ -525,6 +515,14 @@ class ChartPlot(ChartWidget):
   def _time_to_pos(self, time):
   #---------------------------  
     return MARGIN_LEFT + (time - self._start)*self._plot_width/float(self._duration)
+
+  def setTimeRange(self, start, duration):
+  #---------------------------------------
+    self.start = start
+    self.end = start + duration
+    self.duration = duration
+    self.setTimeZoom(self._timezoom)    # Keep existing zoom
+    self._markers = [ [0, self._start], [0, self._start] ]  ##  Two markers
 
   def setTimeZoom(self, scale):
   #----------------------------
