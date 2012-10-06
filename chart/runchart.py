@@ -364,11 +364,14 @@ if __name__ == "__main__":
     sys.exit(1)
 
   app = QtGui.QApplication(sys.argv)
-  store = BSMLStore('http://devel.biosignalml.org', Virtuoso('http://localhost:8890'))
-  recording = store.get_recording_with_signals(sys.argv[1])
-  if recording is None:
-    print "Unknown recording"
-    sys.exit(1)
+
+  repo = (sys.argv[1] != 'edf')   ########
+  if repo:
+    store = BSMLStore('http://devel.biosignalml.org', Virtuoso('http://localhost:8890'))
+    recording = store.get_recording_with_signals(sys.argv[1])
+    if recording is None:
+      print "Unknown recording"
+      sys.exit(1)
 
   ## Replace following with Python arg parser...
   if len(sys.argv) >= 3:
@@ -389,10 +392,15 @@ if __name__ == "__main__":
   else:
     duration = 60.0
 
-  recording.annotations = [ store.get_annotation(ann, recording.graph_uri)
-                              for ann in store.annotations(recording.uri, recording.graph_uri) ]
-
-  ctlr = Controller(recording, start, duration, annotator=wfdbAnnotation)
+  if repo:     #######
+    recording.annotations = [ store.get_annotation(ann, recording.graph_uri)
+                                for ann in store.annotations(recording.uri, recording.graph_uri) ]
+    ctlr = Controller(recording, start, duration, annotator=wfdbAnnotation)
+  else:        #######
+    record2 = 'swa49.edf'
+    rec2 = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/%s' % record2)
+    rec2.annotations = [ ]
+    ctlr = Controller(rec2, start, duration)
 
   ctlr.show()
   ctlr.raise_()
@@ -400,19 +408,4 @@ if __name__ == "__main__":
 
   #viewer1.save_chart_as_png('test.png')   ## Needs to be via 'Save' button/menu and file dialog...
 
-
-  """
-  start = 100
-  duration = 500
-  viewer2 = ChartForm(start, duration)
-  record2 = 'swa49.edf'
-  rec2 = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/%s' % record2)
-  for n, s in enumerate(rec2.signals()):
-    if 17 <= n and s.rate:
-      logging.debug("Adding plot for %s", s.label)
-      p = viewer2.addSignalPlot(s.label, s.units, ymin=s.minValue, ymax=s.maxValue)
-      for d in s.read(rec2.interval(start, duration)): p.addData(d)
-  viewer2.show()
-  viewer2.raise_()
-  """
   sys.exit(app.exec_())
