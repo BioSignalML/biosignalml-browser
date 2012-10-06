@@ -5,6 +5,7 @@ import numpy as np
 from PyQt4 import QtCore, QtGui
 from PyQt4 import QtOpenGL
 
+from nrange import NumericRange
 ##ChartWidget = QtGui.QWidget       # Hangs if > 64K points
 ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
 
@@ -35,31 +36,6 @@ alignBottom      = 0x08
 alignMiddle      = 0x0C
 alignCentred     = 0x0F
 
-
-def gridspacing(w):
-#==================
-  """
-  Calculate spacing of major and minor grid points.
-  
-  Major spacing is selected to be either 1, 2, or 5, multipled by
-  a power of ten; minor spacing is respectively 0.2, 0.5 or 1.0.
-
-  Spacing is chosen so that around 10 major grid points span the
-  interval.
-
-  :param w: The width of the interval.
-  :return: A tuple with (major, minor) spacing.
-  """
-  if   w < 0.0:  w = -w
-  elif w == 0.0: raise ValueError("Grid cannot have zero width")
-  l = math.log10(w)
-  f = math.floor(l)
-  x = l - f     # Normalised between 0.0 and 1.0
-  scale = math.pow(10.0, f)
-  if   x < 0.15: return ( 1*scale/10, 0.02*scale)  # The '/10' appears to
-  elif x < 0.50: return ( 2*scale/10, 0.05*scale)  # minimise rounding errors
-  elif x < 0.85: return ( 5*scale/10, 0.10*scale)
-  else:          return (10*scale/10, 0.20*scale)
 
 
 def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred):
@@ -117,14 +93,16 @@ class SignalPlot(object):
       else:          (ymin, ymax) = (-0.5, 0.5)
     else:
       (ymin, ymax) = (self._ymin, self._ymax)
-    self.gridstep = gridspacing(ymax - ymin)[0]
-    self.ymin = self.gridstep*math.floor(ymin/self.gridstep)
-    self.ymax = self.gridstep*math.ceil(ymax/self.gridstep)
+
+    self._range = NumericRange(ymin, ymax)
+    self.gridstep = self._range.major
+    self.ymin = self._range.start
+    self.ymax = self._range.end
 
   @property
   def gridheight(self):
   #--------------------
-    return int(math.floor((self.ymax-self.ymin)/self.gridstep + 0.5))
+    return self._range.major_size
 
   def appendData(self, data, ymin=None, ymax=None):
   #------------------------------------------------
@@ -190,7 +168,7 @@ class SignalPlot(object):
         painter.drawLine(QtCore.QPointF(start-0.005*(end-start), y), QtCore.QPointF(start, y))
         painter.setPen(QtGui.QPen(textColour))
         drawtext(painter, MARGIN_LEFT-20, y, str(y), mapX=False)    # Label grid
-      y += self.gridstep
+      y += self._range.major
       if -1e-10 < y < 1e-10: y = 0.0  #####
       n += 1
     painter.setClipping(True)
@@ -207,7 +185,7 @@ class SignalPlot(object):
          painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
          i = self._index(t)
          if i is not None:
-           y = self._points[i].y()
+           y = self._range.map(self._points[i].y())
            xy = xfm.map(QtCore.QPointF(t, y))
            drawtext(painter, xy.x()+5, xy.y(), str(y), mapX=False, mapY=False, align=alignLeft)
 
@@ -443,12 +421,12 @@ class ChartPlot(ChartWidget):
     for n, m in enumerate(self._markers):
       qp.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
       qp.drawLine(QtCore.QPointF(m[1], -0.05), QtCore.QPointF(m[1], 1.05))
-      drawtext(qp, m[1], 10, '%.5g' % m[1], mapY=False)  #### WATCH...!!
+      drawtext(qp, m[1], 10, str(self._timeRange.map(m[1])), mapY=False)
       if n > 0 and m[1] != last[1]:
         qp.setPen(QtGui.QPen(textColour))
         width = last[1] - m[1]
         if width < 0: width = -width
-        drawtext(qp, (last[1]+m[1])/2.0, 10, '%.5g' % width, mapY=False)  #### WATCH...!!
+        drawtext(qp, (last[1]+m[1])/2.0, 10, str(self._timeRange.map(width)), mapY=False)
       last = m
 
     # Draw each each visible trace
@@ -501,36 +479,34 @@ class ChartPlot(ChartWidget):
       painter.drawLine(QtCore.QPointF(self._selectend[1],   0), QtCore.QPointF(self._selectend[1],   1.0))
       painter.setClipping(False)
       painter.setPen(QtGui.QPen(textColour))
-      drawtext(painter, self._selectstart[1], 22, '%.5g' % self._selectstart[1], mapY=False)  #### WATCH...!!
-      drawtext(painter, self._selectend[1],   22, '%.5g' % self._selectend[1],   mapY=False)  #### WATCH...!!
+      drawtext(painter, self._selectstart[1], 22, str(self._timeRange.map(self._selectstart[1])), mapY=False)
+      drawtext(painter, self._selectend[1],   22, str(self._timeRange.map(self._selectend[1])),   mapY=False)
       painter.setPen(QtGui.QPen(selectEdgeColour))
       middle = (self._selectend[1] + self._selectstart[1])/2.0
       if duration < 0: duration = -duration
-      drawtext(painter, middle, 22, '%.5g' % duration, mapY=False)  #### WATCH...!!
+      drawtext(painter, middle, 22, str(self._timeRange.map(duration)), mapY=False)
 
   def _draw_time_grid(self, painter):
   #----------------------------------
     ypos = painter.paintEngine().paintDevice().height() - 15      ## Needs to track bottom of tick marks
     painter.setPen(QtGui.QPen(gridMinorColour))
-    t = self._gridstart
+    t = self._timeRange.start
     while t <= self._end:
       if self._start <= t <= self._end:
         painter.drawLine(QtCore.QPointF(t, 0), QtCore.QPointF(t, 1))
-      t += self._Xgrid[1]
-    t = self._gridstart
+      t += self._timeRange.minor
+    t = self._timeRange.start
     while t <= self._end:
       if self._start <= t <= self._end:
         painter.setPen(QtGui.QPen(gridMajorColour))
         painter.drawLine(QtCore.QPointF(t, -0.01), QtCore.QPointF(t, 1))
         painter.setPen(QtGui.QPen(textColour))
         drawtext(painter, t, ypos, str(t), mapY=False)
-      t += self._Xgrid[0]
+      t += self._timeRange.major
 
   def _setTimeGrid(self, start, end):
   #----------------------------------
-    grid = gridspacing(end - start)
-    self._gridstart = grid[0]*math.floor(start/grid[0])
-    self._Xgrid = grid
+    self._timeRange = NumericRange(start, end)
     self._start = start
     self._end = end
 
