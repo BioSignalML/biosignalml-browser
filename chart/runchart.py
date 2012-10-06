@@ -13,6 +13,14 @@ import biosignalml.units.ontology as uom
 from nrange import NumericRange
 
 
+def abbreviate_uri(prefix, uri):
+#===============================
+  if str(uri).startswith(str(prefix)):
+    return str(uri)[len(str(prefix)):]
+  else:
+    return str(uri)
+
+
 class ChartForm(QtGui.QWidget):
 #==============================
 
@@ -122,7 +130,8 @@ class SignalInfo(QtCore.QAbstractTableModel):
   def __init__(self, recording, *args, **kwds):
   #--------------------------------------------
     QtCore.QAbstractTableModel.__init__(self, *args, **kwds)
-    self._rows = [ [True, s.label, str(s.uri)] for n, s in enumerate(recording.signals()) ]
+    self._rows = [ [True, s.label, abbreviate_uri(recording.uri, s.uri)]
+                     for n, s in enumerate(recording.signals()) ]
 
 
   def rowCount(self, parent=None):
@@ -231,16 +240,16 @@ class Controller(QtGui.QWidget):
 
     interval = recording.interval(start, duration)
     for s in recording.signals():
+      uri = abbreviate_uri(recording.uri, s.uri)
       if str(s.units) == str(uom.UNITS.AnnotationData.uri):
-        self.viewer.addEventPlot(s.uri, s.label, annotator)
+        self.viewer.addEventPlot(uri, s.label, annotator)
       else:
         try: units = uom.RESOURCES[str(s.units)].label
         except: units = str(s.units)
-        self.viewer.addSignalPlot(s.uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
-      for d in s.read(interval): self.viewer.appendPlotData(s.uri, d)
+        self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
+      for d in s.read(interval): self.viewer.appendPlotData(uri, d)
 
     # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
-
     self.viewer.showMaximized()
     self.viewer.raise_()
 
@@ -288,9 +297,10 @@ class Controller(QtGui.QWidget):
     if not self.controller.segment.isSliderDown() and newstart != self._start:
       self.viewer.resetPlots()
       interval = self._recording.interval(newstart, self._duration)
-      for s in recording.signals():
+      for s in self._recording.signals():
+        uri = abbreviate_uri(recording.uri, s.uri)
         for d in s.read(interval):
-          self.viewer.appendPlotData(s.uri, d)
+          self.viewer.appendPlotData(uri, d)
       self.viewer.setTimeRange(newstart, self._duration)
       self._start = newstart
 
