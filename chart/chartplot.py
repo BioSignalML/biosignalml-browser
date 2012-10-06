@@ -6,6 +6,8 @@ from PyQt4 import QtCore, QtGui
 from PyQt4 import QtOpenGL
 
 from nrange import NumericRange
+from annotation import Annotation
+
 ##ChartWidget = QtGui.QWidget       # Hangs if > 64K points
 ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
 
@@ -657,5 +659,9 @@ class ChartPlot(ChartWidget):
           # Now update slider's position to reflect _start _position _end
           self._setTimeGrid(self._selectstart[1], self._selectend[1])
           self.updateTimeScroll.emit(self._timezoom > 1.0)
+        elif item.text() == 'Annotate':
+          dialog = Annotation(self._selectstart[1], self._selectend[1], self)
+          result = dialog.exec_()
+          print 'Annotate', result
         self._selectend = self._selectstart
         self.update()
