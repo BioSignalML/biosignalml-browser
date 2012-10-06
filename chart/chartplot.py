@@ -635,9 +635,10 @@ class ChartPlot(ChartWidget):
 
   def mouseReleaseEvent(self, event):
   #----------------------------------
-    self._marker = -1
-    self._selecting = False
-    self._selectmove = None
+    if event.button() == QtCore.Qt.LeftButton:
+      self._marker = -1
+      self._selecting = False
+      self._selectmove = None
 
   def contextMenu(self, pos):
   #--------------------------
