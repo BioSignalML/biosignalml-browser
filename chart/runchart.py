@@ -300,7 +300,7 @@ class Controller(QtGui.QWidget):
       self.viewer.resetPlots()
       interval = self._recording.interval(newstart, self._duration)
       for s in self._recording.signals():
-        uri = abbreviate_uri(recording.uri, s.uri)
+        uri = abbreviate_uri(self._recording.uri, s.uri)
         for d in s.read(interval):
           self.viewer.appendPlotData(uri, d)
       self.viewer.setTimeRange(newstart, self._duration)
