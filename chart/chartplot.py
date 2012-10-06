@@ -261,8 +261,8 @@ class ChartPlot(ChartWidget):
   chartPosition = QtCore.pyqtSignal(int, int, int)
   updateTimeScroll = QtCore.pyqtSignal(bool)
 
-  def __init__(self, parent):
-  #--------------------------
+  def __init__(self, parent=None):
+  #-------------------------------
     if ChartWidget == QtOpenGL.QGLWidget:
       QtOpenGL.QGLWidget.__init__(self,
         QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers),
