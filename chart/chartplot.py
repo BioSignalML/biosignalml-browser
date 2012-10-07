@@ -499,6 +499,8 @@ class ChartPlot(ChartWidget):
         painter.setPen(QtGui.QPen(textColour))
         drawtext(painter, t, ypos, str(t), mapY=False)
       t += self._timeRange.major
+    drawtext(painter, MARGIN_LEFT+self._plot_width+40, ypos,
+             'Time\n(secs)', mapX=False, mapY=False)
 
   def _setTimeGrid(self, start, end):
   #----------------------------------
