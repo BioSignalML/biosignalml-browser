@@ -11,6 +11,17 @@ import biosignalml.formats.edf  as edf
 import biosignalml.units.ontology as uom
 
 from nrange import NumericRange
+def wfdbAnnotation(e):
+#=====================
+  import wfdb
+  mark = wfdb.annstr(int(e))
+  ##  text = "Pacing on" if t < 100 else "Pacing off"   ########
+  ##  chart.annotate(text, t, 0.0, textpos=(t, 1.05))
+  if mark in "NLRBAaJSVrFejnE/fQ?":
+    if mark == 'N': mark = u'\u2022'  # Unicode bullet
+    return (mark, wfdb.anndesc(int(e)))
+  return ('', '')
+
 
 
 def signal_uri(signal):
@@ -206,8 +217,8 @@ class SignalInfo(QtCore.QAbstractTableModel):
 class Controller(QtGui.QWidget):
 #===============================
 
-  def __init__(self, recording, start, duration, order=None, annotator=None, parent=None):
-  #---------------------------------------------------------------------------------------
+  def __init__(self, store, rec_uri, start, duration, parent=None):
+  #----------------------------------------------------------------
     QtGui.QWidget.__init__(self, parent, QtCore.Qt.CustomizeWindowHint
                                        | QtCore.Qt.WindowMinMaxButtonsHint
                            #           | QtCore.Qt.WindowStaysOnTopHint
@@ -215,33 +226,44 @@ class Controller(QtGui.QWidget):
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
 
+    self._graphstore = store
+
+    if rec_uri == 'edf':         ##################
+      self._recording = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/swa49.edf')
+      self._recording.graph_uri = None
+    else:                        ##################
+      self._recording = store.get_recording_with_signals(rec_uri)
+
+    annotator = wfdbAnnotation   ##################
+
+    if self._recording is None: raise IOError("Unknown recording: %s" % rec_uri)
+    self._start = start
+    self._duration = duration
+
     self.controller.rec_posn = QtGui.QLabel(self)
     self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
     self.controller.rec_posn.resize(self.controller.rec_start.size())
 
-    self.setWindowTitle(str(recording.uri))
+    self.setWindowTitle(str(self._recording.uri))
 ##    self.controller.title.setText('')  ##  starttime, duration, .... str(recording.uri))
     self.controller.description.setHtml('<p>'
                                     + '</p><p>'.join([str(a.comment) for a in recording.annotations])
                                     +   '</p>')
-    self._start = start
-    self._duration = duration
-    self._recording = recording
 
-    self.model = SignalInfo(recording)
+    self.model = SignalInfo(self._recording)
     self.controller.signals.setModel(self.model)
     self.controller.signals.setColumnWidth(0, 25)
 
     self.viewer = ChartForm(start, duration)
-    self.viewer.setWindowTitle(str(recording.uri))
+    self.viewer.setWindowTitle(str(self._recording.uri))
     self.model.rowVisible.connect(self.viewer.setPlotVisible)
     self.model.rowMoved.connect(self.viewer.movePlot)
     self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
 
     self._setupSlider()
 
-    interval = recording.interval(start, duration)
-    for s in recording.signals():
+    interval = self._recording.interval(start, duration)
+    for s in self._recording.signals():
       uri = signal_uri(s)
       if str(s.units) == str(uom.UNITS.AnnotationData.uri):
         self.viewer.addEventPlot(uri, s.label, annotator)
@@ -324,16 +346,6 @@ class Controller(QtGui.QWidget):
   #def keyPressEvent(self, event):   ## Also need to do so in chart...
   #------------------------------    ## And send us hide/show messages or keys
 
-    """
-    for n, s in enumerate(recording.signals()):
-      if s.rate:                  ###### Need attribute for Signal
-        self.viewer.addSignalPlot(n, label, units)
-      else:                       ###### or Annotation...
-        ## Where does annotation come from ??
-        self.viewer.addEventPlot(n, label, wfdbAnnotation)
-    """
-
-
 
 
 if __name__ == "__main__":
@@ -342,37 +354,16 @@ if __name__ == "__main__":
   from biosignalml.rdf.sparqlstore import Virtuoso
   from biosignalml.repository import BSMLStore
 
-
-  def wfdbAnnotation(e):
-  #---------------------
-    import wfdb
-    mark = wfdb.annstr(int(e))
-    ##  text = "Pacing on" if t < 100 else "Pacing off"   ########
-    ##  chart.annotate(text, t, 0.0, textpos=(t, 1.05))
-    if mark in "NLRBAaJSVrFejnE/fQ?":
-      if mark == 'N': mark = u'\u2022'  # Unicode bullet
-      return (mark, wfdb.anndesc(int(e)))
-    return ('', '')
-
-
   logging.basicConfig(format='%(asctime)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
 
+  ## Replace following with Python arg parser...
   if len(sys.argv) <= 1:
     print "Usage: %s recording_uri [start] [duration]" % sys.argv[0]
     sys.exit(1)
 
-  app = QtGui.QApplication(sys.argv)
+  rec_uri = sys.argv[1]
 
-  repo = (sys.argv[1] != 'edf')   ########
-  if repo:
-    store = BSMLStore('http://devel.biosignalml.org', Virtuoso('http://localhost:8890'))
-    recording = store.get_recording_with_signals(sys.argv[1])
-    if recording is None:
-      print "Unknown recording"
-      sys.exit(1)
-
-  ## Replace following with Python arg parser...
   if len(sys.argv) >= 3:
     try:
       start = float(sys.argv[2])
@@ -391,15 +382,14 @@ if __name__ == "__main__":
   else:
     duration = 60.0
 
-  if repo:     #######
-    recording.annotations = [ store.get_annotation(ann, recording.graph_uri)
-                                for ann in store.annotations(recording.uri, recording.graph_uri) ]
-    ctlr = Controller(recording, start, duration, annotator=wfdbAnnotation)
-  else:        #######
-    record2 = 'swa49.edf'
-    rec2 = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/%s' % record2)
-    rec2.annotations = [ ]
-    ctlr = Controller(rec2, start, duration)
+  app = QtGui.QApplication(sys.argv)
+
+  store = BSMLStore('http://devel.biosignalml.org', Virtuoso('http://localhost:8890'))
+  try:
+    ctlr = Controller(store, rec_uri, start, duration)
+  except IOError, msg:
+    print str(msg)
+    sys.exit(1)
 
   ctlr.show()
   ctlr.raise_()
