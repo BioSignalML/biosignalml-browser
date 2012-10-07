@@ -274,8 +274,8 @@ class ChartPlot(ChartWidget):
     self._plots = {}        # id --> index in plotlist
     self._plotlist = []     # [id, visible, plot] triples as a list
     self._timezoom = 1.0
-    self._markers = []  # List of [xpos, time] pairs
-    self._marker = -1   # Index of marker being dragged
+    self._markers = [ ]     # List of [xpos, time] pairs
+    self._marker = -1       # Index of marker being dragged
     self._selectstart = None
     self._selectend = None
     self._selecting = False
@@ -403,9 +403,7 @@ class ChartPlot(ChartWidget):
     qp.setClipping(False)
     qp.setPen(QtGui.QPen(gridMajorColour))
     qp.drawRect(0, 0, 1, 1)
-
-    # Plot labels before time transforms
-    self._draw_plot_labels(qp)
+    labelxfm = qp.transform()  # before time transforms
 
     # Now transform to time co-ordinates
     qp.scale(1.0/(self._end - self._start), 1.0)
@@ -440,6 +438,9 @@ class ChartPlot(ChartWidget):
         labelfreq = labelfreq,
         markers=[m[1] for m in self._markers])
       qp.restore()
+    # Now have event labels
+    qp.setTransform(labelxfm)
+    self._draw_plot_labels(qp)
     # Done all drawing
     qp.end()
 
@@ -564,6 +565,11 @@ class ChartPlot(ChartWidget):
 #      if m[1] < self._start: m[1] = self._start
 #      if m[1] > self._end: m[1] = self._end
     self.update()
+
+  def setMarker(self, time):
+  #-------------------------
+    self._markers[0][0] = self._time_to_pos(time)
+    self._markers[0][1] = time
 
   def mousePressEvent(self, event):
   #--------------------------------

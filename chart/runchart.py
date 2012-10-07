@@ -75,6 +75,10 @@ class ChartForm(QtGui.QWidget):
     self.ui.chart.setTimeRange(start, duration)
     self.ui.chart.setTimeScroll(self.ui.timescroll)
 
+  def setMarker(self, time):
+  #-------------------------
+    self.ui.chart.setMarker(time)
+
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
     self.ui.chart.addSignalPlot(id, label, units, visible=visible, data=data, ymin=ymin, ymax=ymax)
@@ -327,7 +331,7 @@ class Controller(QtGui.QWidget):
   def showEvent(self, event):
   #--------------------------
 #    if self.controller.rec_posn.pos().y() == 0:  # After laying out controller
-    self._setSliderTimePosn(self._start)
+    self._adjust_layout()
     QtGui.QWidget.showEvent(self, event)
 
   def _setSliderTime(self, label, time):
@@ -335,14 +339,20 @@ class Controller(QtGui.QWidget):
     ## Show as HH:MM:SS
     label.setText(str(self._sliderrange.map(time)))
 
-  def _setSliderTimePosn(self, time):
-  #----------------------------------
+  def _showSliderTime(self, time):
+  #-------------------------------
     self._setSliderTime(self.controller.rec_posn, time)
     sb = self.controller.segment
     self.controller.rec_posn.move(  ## 44 = approx width of scroll end arrows
       sb.pos().x() + (sb.width()-44)*time/self._recording.duration,
       self.controller.rec_start.pos().y() - 12
       )
+
+  def _setSliderValue(self, time):
+  #-------------------------------
+    sb = self.controller.segment
+    width = sb.maximum() + sb.pageStep() - sb.minimum()
+    sb.setValue(width*time/self._recording.duration)
 
   def _setupSlider(self):
   #----------------------
@@ -364,15 +374,20 @@ class Controller(QtGui.QWidget):
     duration = self._recording.duration
     width = sb.maximum() + sb.pageStep() - sb.minimum()
     newstart = sb.value()*duration/float(width)
-    self._setSliderTimePosn(newstart)
-    if not self.controller.segment.isSliderDown() and newstart != self._start:
+    self._showSliderTime(newstart)
+    if not self.controller.segment.isSliderDown():
+      self._moveViewer(newstart)
+
+  def _moveViewer(self, start):
+  #----------------------------
+    if start != self._start:
       self.viewer.resetPlots()
-      interval = self._recording.interval(newstart, self._duration)
+      interval = self._recording.interval(start, self._duration)
       for s in self._recording.signals():
         for d in s.read(interval):
-      self.viewer.setTimeRange(newstart, self._duration)
-      self._start = newstart
           self.viewer.appendPlotData(signal_uri(s), d)
+      self.viewer.setTimeRange(start, self._duration)
+      self._start = start
 
   def on_segment_valueChanged(self, position):
   #-------------------------------------------
@@ -388,6 +403,17 @@ class Controller(QtGui.QWidget):
   def on_allsignals_toggled(self, state):
   #--------------------------------------
     self.model.setVisibility(state)
+
+  def on_annotations_doubleClicked(self, index):
+  #---------------------------------------------
+    source = index.model().mapToSource(index)
+    time = source.model().createIndex(source.row(), 0).data().toString()
+    if time != '':
+      start = max(0.0, float(time) - self._duration/4.0)
+      self._moveViewer(start)
+      self._setSliderValue(start)
+      self._showSliderTime(start)
+      self.viewer.setMarker(float(time))
 
 
   def on_events_currentIndexChanged(self, index):
