@@ -13,12 +13,12 @@ import biosignalml.units.ontology as uom
 from nrange import NumericRange
 
 
-def abbreviate_uri(prefix, uri):
-#===============================
-  if str(uri).startswith(str(prefix)):
-    return str(uri)[len(str(prefix)):]
-  else:
-    return str(uri)
+def signal_uri(signal):
+#======================
+  prefix = str(signal.recording.uri)
+  uri = str(signal.uri)
+  if uri.startswith(prefix): return uri[len(prefix):]
+  else:                      return uri
 
 
 class ChartForm(QtGui.QWidget):
@@ -130,7 +130,7 @@ class SignalInfo(QtCore.QAbstractTableModel):
   def __init__(self, recording, *args, **kwds):
   #--------------------------------------------
     QtCore.QAbstractTableModel.__init__(self, *args, **kwds)
-    self._rows = [ [True, s.label, abbreviate_uri(recording.uri, s.uri)]
+    self._rows = [ [True, s.label, signal_uri(s)]
                      for n, s in enumerate(recording.signals()) ]
 
 
@@ -242,7 +242,7 @@ class Controller(QtGui.QWidget):
 
     interval = recording.interval(start, duration)
     for s in recording.signals():
-      uri = abbreviate_uri(recording.uri, s.uri)
+      uri = signal_uri(s)
       if str(s.units) == str(uom.UNITS.AnnotationData.uri):
         self.viewer.addEventPlot(uri, s.label, annotator)
       else:
@@ -300,11 +300,10 @@ class Controller(QtGui.QWidget):
       self.viewer.resetPlots()
       interval = self._recording.interval(newstart, self._duration)
       for s in self._recording.signals():
-        uri = abbreviate_uri(self._recording.uri, s.uri)
         for d in s.read(interval):
-          self.viewer.appendPlotData(uri, d)
       self.viewer.setTimeRange(newstart, self._duration)
       self._start = newstart
+          self.viewer.appendPlotData(signal_uri(s), d)
 
   def on_segment_valueChanged(self, position):
   #-------------------------------------------
