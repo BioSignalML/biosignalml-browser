@@ -11,6 +11,9 @@ import biosignalml.formats.edf  as edf
 import biosignalml.units.ontology as uom
 
 from nrange import NumericRange
+from table import SortedTable
+
+
 def wfdbAnnotation(e):
 #=====================
   import wfdb
@@ -22,6 +25,28 @@ def wfdbAnnotation(e):
     return (mark, wfdb.anndesc(int(e)))
   return ('', '')
 
+PREFIXES = {
+  'bsml': 'http://www.biosignalml.org/ontologies/2011/04/biosignalml#',
+  'dct':  'http://purl.org/dc/terms/',
+  'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+  'pbank':	'http://www.biosignalml.org/ontologies/examples/physiobank#',
+
+  'repo': 'http://devel.biosignalml.org/resource/',
+  }
+
+def abbreviate_uri(uri):
+#=======================
+  v = str(uri)
+  for pfx, ns in PREFIXES.iteritems():
+    if v.startswith(ns): return '%s:%s' % (pfx, v[len(ns):])
+  return v
+
+def expand_uri(uri):
+#===================
+  v = str(uri)
+  for pfx, ns in PREFIXES.iteritems():
+    if v.startswith(pfx+':'): return ns + v[len(pfx)+1:]
+  return v
 
 
 def signal_uri(signal):
@@ -246,9 +271,22 @@ class Controller(QtGui.QWidget):
 
     self.setWindowTitle(str(self._recording.uri))
 ##    self.controller.title.setText('')  ##  starttime, duration, .... str(recording.uri))
-    self.controller.description.setHtml('<p>'
-                                    + '</p><p>'.join([str(a.comment) for a in recording.annotations])
-                                    +   '</p>')
+
+    self._annotation_table = SortedTable(['', 'Start', 'End', 'Type', 'Annotation'],
+                  [ ['', '', '', 'Annotation', str(a.comment)]
+                      for a in [ store.get_annotation(ann, self._recording.graph_uri)
+                        for ann in store.annotations(rec_uri, self._recording.graph_uri) ]],
+                  parent=self)
+    self.controller.annotations.setModel(self._annotation_table)
+    self.controller.annotations.setColumnHidden(0, True)
+
+    self._event_type = None
+    self._event_rows = None
+    self.controller.events.addItem('None')
+    self.controller.events.insertItems(1, [abbreviate_uri(etype)
+      for etype in store.eventtypes(rec_uri, self._recording.graph_uri)])
+    self.controller.events.addItem('All')
+    self._event_type = 'None'
 
     self.model = SignalInfo(self._recording)
     self.controller.signals.setModel(self.model)
@@ -276,6 +314,15 @@ class Controller(QtGui.QWidget):
     # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
     self.viewer.showMaximized()
     self.viewer.raise_()
+
+  def _adjust_layout(self):
+  #------------------------
+    self.controller.annotations.resizeCells()
+    self._showSliderTime(self._start)
+
+  def resizeEvent(self, event):
+  #----------------------------
+    self._adjust_layout()
 
   def showEvent(self, event):
   #--------------------------
@@ -341,6 +388,26 @@ class Controller(QtGui.QWidget):
   def on_allsignals_toggled(self, state):
   #--------------------------------------
     self.model.setVisibility(state)
+
+
+  def on_events_currentIndexChanged(self, index):
+  #----------------------------------------------
+    if (self._event_type is None      # Setting up
+     or not isinstance(index, QtCore.QString)): return
+    if self._event_rows is not None:
+      self._annotation_table.removeRows(self._event_rows)
+    if index == 'None':
+      self._event_rows = None
+      return
+    if index == 'All': etype = None
+    else: etype = expand_uri(index)
+    self._event_rows = self._annotation_table.appendRows(
+      [ [ event.time, self._sliderrange.map(event.time), event.duration, 'Event', abbreviate_uri(event.eventtype) ]
+           for event in [ self._graphstore.get_event(evt, self._recording.graph_uri)
+              for evt in self._graphstore.events(rec_uri, eventtype=etype,
+                                                 graph_uri=self._recording.graph_uri) ]
+      ])
+    self._adjust_layout()
 
 
   #def keyPressEvent(self, event):   ## Also need to do so in chart...

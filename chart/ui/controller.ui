@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>459</width>
-    <height>456</height>
+    <width>448</width>
+    <height>590</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,32 +43,29 @@
       </spacer>
      </item>
      <item>
-      <widget class="QCheckBox" name="events">
+      <widget class="QLabel" name="label_4">
        <property name="font">
         <font>
          <weight>75</weight>
          <bold>true</bold>
         </font>
        </property>
-       <property name="layoutDirection">
-        <enum>Qt::RightToLeft</enum>
-       </property>
        <property name="text">
-        <string>Show Events: </string>
-       </property>
-       <property name="tristate">
-        <bool>false</bool>
+        <string>Events:</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="events"/>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="AnnotationView" name="annotations">
+    <widget class="TableView" name="annotations">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
-       <verstretch>3</verstretch>
+       <verstretch>0</verstretch>
       </sizepolicy>
      </property>
     </widget>
@@ -198,7 +195,7 @@
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
-       <verstretch>4</verstretch>
+       <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="showGrid">
@@ -246,9 +243,9 @@
    <header>signaltable.h</header>
   </customwidget>
   <customwidget>
-   <class>AnnotationView</class>
+   <class>TableView</class>
    <extends>QTableView</extends>
-   <header>annotationview.h</header>
+   <header>table.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
