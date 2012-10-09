@@ -439,8 +439,15 @@ class Controller(QtGui.QWidget):
   #---------------------------------------------
     source = index.model().mapToSource(index)
     time = source.model().createIndex(source.row(), 0).data().toString()
+    duration = source.model().createIndex(source.row(), 3).data().toString()
     if time != '':
-      start = max(0.0, float(time) - self._duration/4.0)
+      if duration != '':
+        duration = float(duration)
+        start = max(0.0, float(time) - duration/2.0)
+        end = min(float(time) + duration + duration/2.0, self._recording.duration)
+        self._duration = end - start
+      else:
+        start = max(0.0, float(time) - self._duration/4.0)
       self._moveViewer(start)
       self._setSliderValue(start)
       self._showSliderTime(start)
