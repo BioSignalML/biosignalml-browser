@@ -40,9 +40,10 @@ class NumericRange(object):
     self.end = self.major*math.ceil(end/self.major)
     self.major_size = int(math.floor((self.end-self.start)/self.major + 0.5))
 
-  def map(self, a):
-  #----------------
-    return self.quanta*math.floor((a + self.quanta/2.0)/self.quanta)
+  def map(self, a, extra=0):
+  #-------------------------
+    q = self.quanta/float(math.pow(10, extra))
+    return q*math.floor((a + q/2.0)/q)
 
 
 if __name__ == '__main__':
