@@ -260,6 +260,7 @@ class ChartPlot(ChartWidget):
 
   chartPosition = QtCore.pyqtSignal(int, int, int)
   updateTimeScroll = QtCore.pyqtSignal(bool)
+  annotationAdded = QtCore.pyqtSignal(float, float, str)
 
   def __init__(self, parent=None):
   #-------------------------------
@@ -669,7 +670,9 @@ class ChartPlot(ChartWidget):
           self.updateTimeScroll.emit(self._timezoom > 1.0)
         elif item.text() == 'Annotate':
           dialog = Annotation(self._selectstart[1], self._selectend[1], self)
-          result = dialog.exec_()
-          print 'Annotate', result
         self._selectend = self._selectstart
         self.update()
+            if dialog.exec_():
+              self.annotationAdded.emit(self._timeRange.map(self._selectstart[1]),
+                                        self._timeRange.map(self._selectend[1]),
+                                        dialog.annotation())

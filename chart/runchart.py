@@ -435,6 +435,18 @@ class Controller(QtGui.QWidget):
       ])
     self._adjust_layout()
 
+  def annotationAdded(self, start, end, text):
+  #-------------------------------------------
+    text = str(text).strip()
+    if text:
+      annotation = model.Annotation.Event(self._recording.uri.make_uri(),
+                                          self._recording,
+                                          self._recording.interval(start, end),
+                                          text = text)
+      self._graphstore.extend_recording(self._recording, annotation)
+      self._annotation_table.appendRows( [ self._make_ann_times(start, end)
+                                         + ['Annotation', annotation.comment ] ] )
+
 
   #def keyPressEvent(self, event):   ## Also need to do so in chart...
   #------------------------------    ## And send us hide/show messages or keys
