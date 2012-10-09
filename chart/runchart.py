@@ -367,7 +367,7 @@ class Controller(QtGui.QWidget):
   def _setSliderTime(self, label, time):
   #-------------------------------------
     ## Show as HH:MM:SS
-    label.setText(str(self._sliderrange.map(time)))
+    label.setText(str(self._timerange.map(time)))
 
   def _showSliderTime(self, time):
   #-------------------------------
@@ -388,7 +388,6 @@ class Controller(QtGui.QWidget):
   #----------------------
     duration = self._recording.duration
     if duration == 0: return
-    self._sliderrange = NumericRange(0.0, duration)
     sb = self.controller.segment
     sb.setMinimum(0)
     scrollwidth = 10000
@@ -460,7 +459,9 @@ class Controller(QtGui.QWidget):
     if index == 'All': etype = None
     else: etype = expand_uri(index)
     self._event_rows = self._annotation_table.appendRows(
-      [ [ event.time, self._sliderrange.map(event.time), event.duration, 'Event', abbreviate_uri(event.eventtype) ]
+      [ [ event.time, self._timerange.map(event.time),
+                      self._timerange.map(event.time+event.duration) if event.duration else '',
+                      event.duration, 'Event', abbreviate_uri(event.eventtype) ]
            for event in [ self._graphstore.get_event(evt, self._recording.graph_uri)
               for evt in self._graphstore.events(rec_uri, eventtype=etype,
                                                  graph_uri=self._recording.graph_uri) ]
