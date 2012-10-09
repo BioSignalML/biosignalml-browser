@@ -172,13 +172,11 @@ class SignalInfo(QtCore.QAbstractTableModel):
   HEADER    = [ '', 'Label', 'Uri' ]
   ID_COLUMN = 2                               # Uri is ID
 
-
   def __init__(self, recording, *args, **kwds):
   #--------------------------------------------
     QtCore.QAbstractTableModel.__init__(self, *args, **kwds)
     self._rows = [ [True, s.label, signal_uri(s)]
                      for n, s in enumerate(recording.signals()) ]
-
 
   def rowCount(self, parent=None):
   #-------------------------------
@@ -272,16 +270,14 @@ class Controller(QtGui.QWidget):
     annotator = wfdbAnnotation   ##################
 
     if self._recording is None: raise IOError("Unknown recording: %s" % rec_uri)
-    self._start = start
-    self._duration = duration
-
-    self.controller.rec_posn = QtGui.QLabel(self)
-    self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
-    self.controller.rec_posn.resize(self.controller.rec_start.size())
-
     self.setWindowTitle(str(self._recording.uri))
 ##    self.controller.title.setText('')  ##  starttime, duration, .... str(recording.uri))
 
+    self._start = start
+    self._duration = duration
+    self.controller.rec_posn = QtGui.QLabel(self)
+    self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+    self.controller.rec_posn.resize(self.controller.rec_start.size())
     self._timerange = NumericRange(0.0, duration)
 
     self._annotations = [ ]      # tuple(uri, start, end, text)
@@ -452,7 +448,6 @@ class Controller(QtGui.QWidget):
       self._showSliderTime(start)
       self.viewer.setMarker(float(time))
 
-
   def on_events_currentIndexChanged(self, index):
   #----------------------------------------------
     if (self._event_type is None      # Setting up
@@ -494,6 +489,7 @@ class Controller(QtGui.QWidget):
 
   #def keyPressEvent(self, event):   ## Also need to do so in chart...
   #------------------------------    ## And send us hide/show messages or keys
+  #  pass
 
 
 
