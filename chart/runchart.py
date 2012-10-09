@@ -310,7 +310,7 @@ class Controller(QtGui.QWidget):
     self.controller.signals.setModel(self.model)
     self.controller.signals.setColumnWidth(0, 25)
 
-    self.viewer = ChartForm(start, duration)
+    self.viewer = ChartForm(self._start, self._duration)
     self.viewer.setWindowTitle(str(self._recording.uri))
     self.model.rowVisible.connect(self.viewer.setPlotVisible)
     self.model.rowMoved.connect(self.viewer.movePlot)
@@ -319,8 +319,7 @@ class Controller(QtGui.QWidget):
     self.viewer.ui.chart.exportRecording.connect(self.exportRecording)
 
     self._setupSlider()
-
-    interval = self._recording.interval(start, duration)
+    interval = self._recording.interval(self._start, self._duration)
     for s in self._recording.signals():
       uri = signal_uri(s)
       if str(s.units) == str(uom.UNITS.AnnotationData.uri):
