@@ -16,19 +16,21 @@ ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QW
 # Margins of plotting region within chart, in pixels
 MARGIN_LEFT   = 120
 MARGIN_RIGHT  = 80
-MARGIN_TOP    = 30
-MARGIN_BOTTOM = 50
+MARGIN_TOP    = 70
+MARGIN_BOTTOM = 36
 
 
 traceColour      = QtGui.QColor('green')
-selectedColour   = QtGui.QColor('red')
+selectedColour   = QtGui.QColor('red')             ## When signal is selected in controller
 textColour       = QtGui.QColor('darkBlue')
 markerColour     = QtGui.QColor('blue')
 marker2Colour    = QtGui.QColor(0xCC, 0x55, 0x00)  ## 'burnt orange'
 gridMinorColour  = QtGui.QColor(128, 128, 255, 63)
 gridMajorColour  = QtGui.QColor(0,     0, 128, 63)
-selectionColour  = QtGui.QColor(220, 255, 255)
-selectEdgeColour = QtGui.QColor(  0, 255, 255)
+selectionColour  = QtGui.QColor(220, 255, 255)     ## Of selected region
+selectEdgeColour = QtGui.QColor('cyan')
+selectTimeColour = QtGui.QColor('black')
+selectLenColour  = QtGui.QColor('darkRed')
 
 ANN_LINE_WIDTH   = 6
 ANN_LINE_GAP     = 2
@@ -42,7 +44,6 @@ alignTop         = 0x04
 alignBottom      = 0x08
 alignMiddle      = 0x0C
 alignCentred     = 0x0F
-
 
 
 def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred):
@@ -263,7 +264,6 @@ class ChartPlot(ChartWidget):
   and all sharing the same X-axis (time axis).
 
   """
-
   chartPosition = QtCore.pyqtSignal(int, int, int)
   updateTimeScroll = QtCore.pyqtSignal(bool)
   annotationAdded = QtCore.pyqtSignal(float, float, str)
@@ -396,43 +396,37 @@ class ChartPlot(ChartWidget):
 
     qp.setRenderHint(QtGui.QPainter.Antialiasing)
 
-    # Set plotting region as (0, 0) to (1, 1) with origin at bottom left
     w = device.width()
     h = device.height()
     self._plot_width  = w - (MARGIN_LEFT + MARGIN_RIGHT)
     self._plot_height = h - (MARGIN_TOP + MARGIN_BOTTOM)
-    qp.translate(MARGIN_LEFT, MARGIN_TOP + self._plot_height)
-    qp.scale(self._plot_width, -self._plot_height)
 
+    # Set pixel positions of markers and selected region for
+    # use in mouse events.
     for m in self._markers: m[0] = self._time_to_pos(m[1])
     if self._selectstart is not None:
       self._selectend[0] = self._time_to_pos(self._selectend[1])
       self._selectstart[0] = self._time_to_pos(self._selectstart[1])
 
+    # Set plotting region as (0, 0) to (1, 1) with origin at bottom left
+    qp.translate(MARGIN_LEFT, MARGIN_TOP + self._plot_height)
+    qp.scale(self._plot_width, -self._plot_height)
     qp.setClipRect(0, 0, 1, 1)
     qp.setClipping(False)
     qp.setPen(QtGui.QPen(gridMajorColour))
     qp.drawRect(0, 0, 1, 1)
-    labelxfm = qp.transform()  # before time transforms
+
+    labelxfm = qp.transform()       # before time transforms
 
     # Now transform to time co-ordinates
     qp.scale(1.0/(self._end - self._start), 1.0)
     qp.translate(-self._start, 0.0)
     self._draw_time_grid(qp)
-    self._mark_selection(qp)
 
-    # Position markers
-    for n, m in enumerate(self._markers):
-      qp.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
-      qp.drawLine(QtCore.QPointF(m[1], -0.05), QtCore.QPointF(m[1], 1.05))
-      drawtext(qp, m[1], 10, str(self._timeRange.map(m[1])), mapY=False)
-      if n > 0 and m[1] != last[1]:
-        qp.setPen(QtGui.QPen(textColour))
-        width = last[1] - m[1]
-        if width < 0: width = -width
-        drawtext(qp, (last[1]+m[1])/2.0, 10, str(self._timeRange.map(width)), mapY=False)
-      last = m
+    self._showSelectionRegion(qp)   # Highlight selected region
     self._showAnnotations(qp)       # Show annotations
+    self._showSelectionTimes(qp)    # Time labels on top of annotation bars
+    self._showTimeMarkers(qp)       # Position markers
 
     # Draw each each visible trace
     plots = [ p[2] for p in self._plotlist if p[1] ]
@@ -449,11 +443,11 @@ class ChartPlot(ChartWidget):
         labelfreq = labelfreq,
         markers=[m[1] for m in self._markers])
       qp.restore()
-    # Now have event labels
+    # Event labels have now been assigned (by drawTrace())
+    # so can show them
     qp.setTransform(labelxfm)
     self._draw_plot_labels(qp)
-    # Done all drawing
-    qp.end()
+    qp.end()                     # Done all drawing
 
   def _draw_plot_labels(self, painter):
   #-----------------------------------
@@ -475,8 +469,8 @@ class ChartPlot(ChartWidget):
           drawtext(painter, MARGIN_LEFT+self._plot_width+25, 0.50, ytext, mapX=False)
       painter.restore()
 
-  def _mark_selection(self, painter):
-  #----------------------------------
+  def _showSelectionRegion(self, painter):
+  #---------------------------------------
     if self._selectstart != self._selectend:
       duration = (self._selectend[1] - self._selectstart[1])
       painter.setClipping(True)
@@ -485,33 +479,45 @@ class ChartPlot(ChartWidget):
       painter.drawLine(QtCore.QPointF(self._selectstart[1], 0), QtCore.QPointF(self._selectstart[1], 1.0))
       painter.drawLine(QtCore.QPointF(self._selectend[1],   0), QtCore.QPointF(self._selectend[1],   1.0))
       painter.setClipping(False)
-      painter.setPen(QtGui.QPen(textColour))
-      drawtext(painter, self._selectstart[1], 22, str(self._timeRange.map(self._selectstart[1])), mapY=False)
-      drawtext(painter, self._selectend[1],   22, str(self._timeRange.map(self._selectend[1])),   mapY=False)
-      painter.setPen(QtGui.QPen(selectEdgeColour))
+
+  def _showSelectionTimes(self, painter):
+  #--------------------------------------
+    if self._selectstart != self._selectend:
+      duration = (self._selectend[1] - self._selectstart[1])
+      ypos = MARGIN_TOP - 8
+      painter.setPen(QtGui.QPen(selectTimeColour))
+      drawtext(painter, self._selectstart[1], ypos, str(self._timeRange.map(self._selectstart[1])), mapY=False)
+      drawtext(painter, self._selectend[1],   ypos, str(self._timeRange.map(self._selectend[1])),   mapY=False)
+      painter.setPen(QtGui.QPen(selectLenColour))
       middle = (self._selectend[1] + self._selectstart[1])/2.0
       if duration < 0: duration = -duration
-      drawtext(painter, middle, 22, str(self._timeRange.map(duration)), mapY=False)
+      drawtext(painter, middle, ypos, str(self._timeRange.map(duration)), mapY=False)
 
   def _draw_time_grid(self, painter):
   #----------------------------------
-    ypos = painter.paintEngine().paintDevice().height() - 15      ## Needs to track bottom of tick marks
+    xfm = painter.transform()
+    painter.resetTransform()
+    ypos = MARGIN_TOP + self._plot_height
     painter.setPen(QtGui.QPen(gridMinorColour))
     t = self._timeRange.start
     while t <= self._end:
       if self._start <= t <= self._end:
-        painter.drawLine(QtCore.QPointF(t, 0), QtCore.QPointF(t, 1))
+        painter.drawLine(QtCore.QPoint(self._time_to_pos(t), MARGIN_TOP),
+          QtCore.QPoint(self._time_to_pos(t), ypos))
       t += self._timeRange.minor
     t = self._timeRange.start
     while t <= self._end:
       if self._start <= t <= self._end:
         painter.setPen(QtGui.QPen(gridMajorColour))
-        painter.drawLine(QtCore.QPointF(t, -0.01), QtCore.QPointF(t, 1))
+        painter.drawLine(QtCore.QPoint(self._time_to_pos(t), MARGIN_TOP),
+          QtCore.QPoint(self._time_to_pos(t), ypos+5))
         painter.setPen(QtGui.QPen(textColour))
-        drawtext(painter, t, ypos, str(t), mapY=False)
+        drawtext(painter, self._time_to_pos(t), ypos+18, str(t),
+          mapX=False, mapY=False)
       t += self._timeRange.major
-    drawtext(painter, MARGIN_LEFT+self._plot_width+40, ypos,
+    drawtext(painter, MARGIN_LEFT+self._plot_width+40, ypos+18,
              'Time\n(secs)', mapX=False, mapY=False)
+    painter.setTransform(xfm)
 
   def _setTimeGrid(self, start, end):
   #----------------------------------
@@ -519,10 +525,25 @@ class ChartPlot(ChartWidget):
     self._start = start
     self._end = end
 
-#  def setTimePos(self, position):        # 0 -- 1.0
-#  #--------------------------------
-##    self._position = self._start + self._duration*position
-#    self.update()
+  def _showTimeMarkers(self, painter):
+  #-----------------------------------
+    xfm = painter.transform()
+    painter.resetTransform()
+    for n, m in enumerate(self._markers):
+      ypos = MARGIN_TOP - 20
+      painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
+      painter.drawLine(QtCore.QPoint(m[0], ypos + 6),
+        QtCore.QPoint(m[0], MARGIN_TOP+self._plot_height+10))
+      drawtext(painter, m[0], ypos, str(self._timeRange.map(m[1])),
+        mapX=False, mapY=False)
+      if n > 0 and m[1] != last[1]:
+        painter.setPen(QtGui.QPen(textColour))
+        width = last[1] - m[1]
+        if width < 0: width = -width
+        drawtext(painter, (last[0]+m[0])/2.0, ypos, str(self._timeRange.map(width)),
+          mapX=False, mapY=False)
+      last = m
+    painter.setTransform(xfm)
 
   def _showAnnotations(self, painter):
   #-----------------------------------
@@ -593,7 +614,6 @@ class ChartPlot(ChartWidget):
     # Now update slider's position to reflect _start _position _end
     self._setTimeGrid(newstart, newend)
     #for m in self._markers: m[0] = self._time_to_pos(m[1])
-    #self._markerpos = self._time_to_pos(self._position)   # Done in paint()
     self.update()
 
   def setTimeScroll(self, scrollbar):
