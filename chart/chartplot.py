@@ -1,5 +1,6 @@
 import math
 import logging
+import collections
 import numpy as np
 
 from PyQt4 import QtCore, QtGui
@@ -29,6 +30,10 @@ gridMajorColour  = QtGui.QColor(0,     0, 128, 63)
 selectionColour  = QtGui.QColor(220, 255, 255)
 selectEdgeColour = QtGui.QColor(  0, 255, 255)
 
+ANN_LINE_WIDTH   = 6
+ANN_LINE_GAP     = 2
+ANN_COLOURS      = [ QtGui.QColor('red'),     QtGui.QColor('blue'),     QtGui.QColor('magenta'),
+                     QtGui.QColor('darkRed'), QtGui.QColor('darkBlue'), QtGui.QColor('cyan') ]
 
 alignLeft        = 0x01
 alignRight       = 0x02
@@ -272,6 +277,7 @@ class ChartPlot(ChartWidget):
     else:
       QtGui.QWidget.__init__(self, parent)
     self.setPalette(QtGui.QPalette(QtGui.QColor('black'), QtGui.QColor('white')))
+    self.setMouseTracking(True)
 ##    self.setAutoFillBackground(True)  ##
     self._plots = {}        # id --> index in plotlist
     self._plotlist = []     # [id, visible, plot] triples as a list
@@ -282,6 +288,8 @@ class ChartPlot(ChartWidget):
     self._selectend = None
     self._selecting = False
     self._selectmove = None
+    self._mousebutton = None
+    self._annotations = collections.OrderedDict()  # id --> to tuple(start, end, comment)
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
@@ -363,6 +371,12 @@ class ChartPlot(ChartWidget):
   def resetPlots(self):
   #--------------------
     for p in self._plotlist: p[2].reset()
+    self._annotations = collections.OrderedDict()
+
+  def addAnnotation(self, id, start, end, text):
+  #---------------------------------------------
+    if end > self.start and start < self.end:
+      self._annotations[str(id)] = (start, end, text)
 
   def resizeEvent(self, e):
   #-----------------------
@@ -417,6 +431,7 @@ class ChartPlot(ChartWidget):
         if width < 0: width = -width
         drawtext(qp, (last[1]+m[1])/2.0, 10, str(self._timeRange.map(width)), mapY=False)
       last = m
+    self._showAnnotations(qp)       # Show annotations
 
     # Draw each each visible trace
     plots = [ p[2] for p in self._plotlist if p[1] ]
@@ -508,6 +523,41 @@ class ChartPlot(ChartWidget):
 ##    self._position = self._start + self._duration*position
 #    self.update()
 
+  def _showAnnotations(self, painter):
+  #-----------------------------------
+    xfm = painter.transform()
+    painter.resetTransform()
+    right_side = MARGIN_LEFT + self._plot_width
+    line_space = ANN_LINE_WIDTH + ANN_LINE_GAP
+    ann_top = line_space*len(self._annotations)  # Draw bottom lines first
+    annotations = list(self._annotations.itervalues())
+
+    # Could now sort (into time order), start from top, and not
+    # step down if prev. end <= new start
+    # Need to save y-pos for finding tool tip...
+
+    annotations.reverse()
+    for n, ann in enumerate(annotations):
+      xstart = self._time_to_pos(ann[0])
+      xend = self._time_to_pos(ann[1])
+      pen = QtGui.QPen(ANN_COLOURS[(len(annotations)-n-1) % len(ANN_COLOURS)])
+      pen.setCapStyle(QtCore.Qt.FlatCap)
+      pen.setWidth(1)
+      painter.setPen(pen)
+      if self._start < ann[0] < self._end:
+        painter.drawLine(QtCore.QPoint(xstart, ann_top-ANN_LINE_WIDTH/2),
+                         QtCore.QPoint(xstart, MARGIN_TOP+self._plot_height))
+      if self._start < ann[1] < self._end:
+        painter.drawLine(QtCore.QPoint(xend, ann_top-ANN_LINE_WIDTH/2),
+                         QtCore.QPoint(xend, MARGIN_TOP+self._plot_height))
+      if xstart < right_side and MARGIN_LEFT < xend:
+        pen.setWidth(ANN_LINE_WIDTH)
+        painter.setPen(pen)
+        painter.drawLine(QtCore.QPoint(max(MARGIN_LEFT, xstart), ann_top),
+                         QtCore.QPoint(min(xend, right_side), ann_top))
+      ann_top -= line_space
+    painter.setTransform(xfm)
+
   def _pos_to_time(self, pos):
   #---------------------------  
     time = self._start + float(self._duration)*(pos - MARGIN_LEFT)/self._plot_width
@@ -570,8 +620,8 @@ class ChartPlot(ChartWidget):
 
   def mousePressEvent(self, event):
   #--------------------------------
-    if event.button() != QtCore.Qt.LeftButton:
-      return
+    self._mousebutton = event.button()
+    if self._mousebutton != QtCore.Qt.LeftButton: return
     pos = event.pos()
     xpos = pos.x()
     # check right click etc...
@@ -623,9 +673,27 @@ class ChartPlot(ChartWidget):
   def mouseMoveEvent(self, event):
   #-------------------------------
     xpos = event.pos().x()
-    if self._marker >= 0:
+    ypos = event.pos().y()
+    tooltip = False
+    if self._mousebutton is None:
+      # We reversed order so top time bar is overwrites
+      # lower ones.
+      line_space = ANN_LINE_WIDTH + ANN_LINE_GAP
+      ann_top = line_space*len(self._annotations)
+      annotations = list(self._annotations.itervalues())
+      annotations.reverse()
+      for ann in annotations:
+        if (MARGIN_LEFT < xpos < (MARGIN_LEFT + self._plot_width)
+         and self._time_to_pos(ann[0]) < xpos < self._time_to_pos(ann[1])
+         and (ann_top - ANN_LINE_WIDTH/2) < ypos < (ann_top + ANN_LINE_WIDTH)):
+          QtGui.QToolTip.showText(event.globalPos(), ann[2])
+          tooltip = True
+          break
+        ann_top -= line_space
+    elif self._marker >= 0:
       self._markers[self._marker][0] = xpos
       self._markers[self._marker][1] = self._pos_to_time(xpos)
+      self.update()
     elif self._selecting:
       if self._selectmove is None:
         self._selectend = [xpos, self._pos_to_time(xpos)]
@@ -636,17 +704,20 @@ class ChartPlot(ChartWidget):
         self._selectend[1] = self._pos_to_time(self._selectend[0])
         self._selectstart[0] += delta
         self._selectstart[1] = self._pos_to_time(self._selectstart[0])
-    self.update()
+      self.update()
+    if not tooltip: QtGui.QToolTip.showText(event.globalPos(), '')
 
   def mouseReleaseEvent(self, event):
   #----------------------------------
-    if event.button() == QtCore.Qt.LeftButton:
+    if self._mousebutton == QtCore.Qt.LeftButton:
       self._marker = -1
       self._selecting = False
       self._selectmove = None
+    self._mousebutton = None
 
   def contextMenu(self, pos):
   #--------------------------
+    self._mousebutton = None
     if (MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)
      and MARGIN_LEFT < pos.x() <= (MARGIN_LEFT + self._plot_width)):
       menu = QtGui.QMenu()

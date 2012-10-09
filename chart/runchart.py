@@ -87,6 +87,10 @@ class ChartForm(QtGui.QWidget):
   #------------------------------------------------------------------------------------
     self.ui.chart.addEventPlot(id, label, mapping, visible=visible, data=data)
 
+  def addAnnotation(self, id, start, end, text):
+  #---------------------------------------------
+    self.ui.chart.addAnnotation(id, start, end, text)
+
   def appendPlotData(self, id, data):
   #----------------------------------
     self.ui.chart.appendData(id, data)
@@ -276,11 +280,19 @@ class Controller(QtGui.QWidget):
     self.setWindowTitle(str(self._recording.uri))
 ##    self.controller.title.setText('')  ##  starttime, duration, .... str(recording.uri))
 
-    self._annotation_table = SortedTable(['', 'Start', 'End', 'Type', 'Annotation'],
-                  [ ['', '', '', 'Annotation', str(a.comment)]
-                      for a in [ store.get_annotation(ann, self._recording.graph_uri)
-                        for ann in store.annotations(rec_uri, self._recording.graph_uri) ]],
-                  parent=self)
+    self._timerange = NumericRange(0.0, duration)
+
+    self._annotations = [ ]      # tuple(uri, start, end, text)
+    for a in [store.get_annotation(ann, self._recording.graph_uri)
+                for ann in store.annotations(rec_uri, self._recording.graph_uri)]:
+      annstart = a.time.start if a.time is not None else None
+      annend   = a.time.end   if a.time is not None else None
+      if a.comment: self._annotations.append( (a.uri, annstart, annend, str(a.comment)) )
+      for t in a.tags:
+        self._annotations.append( (a.uri, annstart, annend, abbreviate_uri(t)) )
+    self._annotation_table = SortedTable(['', 'Start', 'End', 'Duration',  'Type', 'Annotation'],
+                                         [ self._make_ann_times(a[1], a[2]) + ['Annotation', a[3]]
+                                             for a in self._annotations ], parent=self)
     self.controller.annotations.setModel(self._annotation_table)
     self.controller.annotations.setColumnHidden(0, True)
 
@@ -314,10 +326,24 @@ class Controller(QtGui.QWidget):
         except: units = str(s.units)
         self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
       for d in s.read(interval): self.viewer.appendPlotData(uri, d)
+    for a in self._annotations:  # tuple(uri, start, end, text)
+      if a[1] is not None: self.viewer.addAnnotation(*a)
 
     # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
     self.viewer.showMaximized()
     self.viewer.raise_()
+
+  def _make_ann_times(self, start, end):
+  #-------------------------------------
+    if start is None:
+      return ['', '', '', '']
+    else:
+      nstart = self._timerange.map(start, 1)  # Normalise for display
+      if end is not None:
+        nend = self._timerange.map(end, 1)
+        return [ start, nstart, nend, nend - nstart ]
+      else:
+        return [ start, nstart, '', '' ]
 
   def _adjust_layout(self):
   #------------------------
@@ -388,6 +414,8 @@ class Controller(QtGui.QWidget):
           self.viewer.appendPlotData(signal_uri(s), d)
       self.viewer.setTimeRange(start, self._duration)
       self._start = start
+      for a in self._annotations:  # tuple(uri, start, end, text)
+        if a[1] is not None: self.viewer.addAnnotation(*a)
 
   def on_segment_valueChanged(self, position):
   #-------------------------------------------
@@ -446,6 +474,7 @@ class Controller(QtGui.QWidget):
       self._graphstore.extend_recording(self._recording, annotation)
       self._annotation_table.appendRows( [ self._make_ann_times(start, end)
                                          + ['Annotation', annotation.comment ] ] )
+      self.viewer.addAnnotation(annotation.uri, start, end, text)
 
   def exportRecording(self, start, end):
   #-------------------------------------
