@@ -374,13 +374,6 @@ class ChartPlot(ChartWidget):
   #-----------------------
     self._draw(self)
 
-  def save_as_png(self, filename):
-  #-------------------------------
-    output = QtGui.QImage(2000, 800, QtGui.QImage.Format_ARGB32_Premultiplied)
-    #output = QtGui.QImage(self.width(), self.height(), QtGui.QImage.Format_ARGB32_Premultiplied)
-    self._draw(output)
-    output.save(filename, 'PNG')
-
   def _draw(self, device):
   #-----------------------
     qp = QtGui.QPainter()
@@ -654,25 +647,24 @@ class ChartPlot(ChartWidget):
 
   def contextMenu(self, pos):
   #--------------------------
-    if (self._selectstart != self._selectend
-     and self._selectstart[0] < pos.x() < self._selectend[0]
-     and MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)):
+    if (MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)
+     and MARGIN_LEFT < pos.x() <= (MARGIN_LEFT + self._plot_width)):
       menu = QtGui.QMenu()
-      menu.addAction("Zoom")
-      menu.addAction("Annotate")
-      menu.addAction("Export")
-      item = menu.exec_(self.mapToGlobal(pos))
-      if item:
-        if item.text() == 'Zoom':
-          self._duration = self._selectend[1] - self._selectstart[1]
-          self._timezoom = self.duration/self._duration
-          # Now update slider's position to reflect _start _position _end
-          self._setTimeGrid(self._selectstart[1], self._selectend[1])
-          self.updateTimeScroll.emit(self._timezoom > 1.0)
-        elif item.text() == 'Annotate':
-          dialog = Annotation(self._selectstart[1], self._selectend[1], self)
-        self._selectend = self._selectstart
-        self.update()
+      if (self._selectstart != self._selectend
+       and self._selectstart[0] < pos.x() < self._selectend[0]):
+        menu.addAction("Zoom")
+        menu.addAction("Annotate")
+        menu.addAction("Export")
+        item = menu.exec_(self.mapToGlobal(pos))
+        if item:
+          if item.text() == 'Zoom':
+            self._duration = self._selectend[1] - self._selectstart[1]
+            self._timezoom = self.duration/self._duration
+            # Now update slider's position to reflect _start _position _end
+            self._setTimeGrid(self._selectstart[1], self._selectend[1])
+            self.updateTimeScroll.emit(self._timezoom > 1.0)
+          elif item.text() == 'Annotate':
+            dialog = Annotation(self._selectstart[1], self._selectend[1], self)
             if dialog.exec_():
               self.annotationAdded.emit(self._timeRange.map(self._selectstart[1]),
                                         self._timeRange.map(self._selectend[1]),
@@ -680,3 +672,14 @@ class ChartPlot(ChartWidget):
           elif item.text() == 'Export':
             self.exportRecording.emit(self._timeRange.map(self._selectstart[1]),
                                       self._timeRange.map(self._selectend[1]))
+          self._selectend = self._selectstart
+          self.update()
+      else:
+        menu.addAction("Save as PNG")
+        item = menu.exec_(self.mapToGlobal(pos))
+        if item:
+          filename = QtGui.QFileDialog.getSaveFileName(self, 'Save chart', '', '*.png')
+          if filename:
+            output = QtGui.QImage(self.width(), self.height(), QtGui.QImage.Format_ARGB32_Premultiplied)
+            self._draw(output)
+            output.save(filename, 'PNG')
