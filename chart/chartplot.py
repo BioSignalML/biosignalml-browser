@@ -253,6 +253,7 @@ class EventPlot(object):
         drawtext(painter, t, 0.5, event[0])
         xy = painter.transform().map(QtCore.QPointF(t, 0.5))
         self._eventpos.append( (int(xy.x()+0.5), int(xy.y()+0.5), '\n'.join(event[1].split())) )
+    painter.setClipping(False)
 
 
 class ChartPlot(ChartWidget):
