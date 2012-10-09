@@ -8,6 +8,8 @@ from ui.controller import Ui_Controller
 
 import biosignalml.formats.hdf5 as hdf5
 import biosignalml.formats.edf  as edf
+
+import biosignalml.model
 import biosignalml.units.ontology as uom
 
 from nrange import NumericRange
@@ -469,10 +471,10 @@ class Controller(QtGui.QWidget):
   #-------------------------------------------
     text = str(text).strip()
     if text:
-      annotation = model.Annotation.Event(self._recording.uri.make_uri(),
-                                          self._recording,
-                                          self._recording.interval(start, end),
-                                          text = text)
+      annotation = biosignalml.model.Annotation.Event(self._recording.uri.make_uri(),
+                                                      self._recording,
+                                                      self._recording.interval(start, end),
+                                                      text = text)
       self._graphstore.extend_recording(self._recording, annotation)
       self._annotation_table.appendRows( [ self._make_ann_times(start, end)
                                          + ['Annotation', annotation.comment ] ] )
