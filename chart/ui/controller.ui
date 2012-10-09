@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>448</width>
-    <height>590</height>
+    <width>695</width>
+    <height>584</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -65,7 +65,7 @@
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
+       <verstretch>2</verstretch>
       </sizepolicy>
      </property>
     </widget>
@@ -168,8 +168,8 @@
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>20</width>
-       <height>10</height>
+       <width>14</width>
+       <height>13</height>
       </size>
      </property>
     </spacer>
@@ -195,7 +195,7 @@
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
+       <verstretch>1</verstretch>
       </sizepolicy>
      </property>
      <property name="showGrid">
