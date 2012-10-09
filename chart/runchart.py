@@ -334,7 +334,7 @@ class Controller(QtGui.QWidget):
       if a[1] is not None: self.viewer.addAnnotation(*a)
 
     # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
-    self.viewer.showMaximized()
+    self.viewer.show()
     self.viewer.raise_()
 
   def _make_ann_times(self, start, end):
