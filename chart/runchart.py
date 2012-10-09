@@ -447,6 +447,10 @@ class Controller(QtGui.QWidget):
       self._annotation_table.appendRows( [ self._make_ann_times(start, end)
                                          + ['Annotation', annotation.comment ] ] )
 
+  def exportRecording(self, start, end):
+  #-------------------------------------
+    print 'export', start, end
+
 
   #def keyPressEvent(self, event):   ## Also need to do so in chart...
   #------------------------------    ## And send us hide/show messages or keys

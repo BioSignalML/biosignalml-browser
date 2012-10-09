@@ -261,6 +261,7 @@ class ChartPlot(ChartWidget):
   chartPosition = QtCore.pyqtSignal(int, int, int)
   updateTimeScroll = QtCore.pyqtSignal(bool)
   annotationAdded = QtCore.pyqtSignal(float, float, str)
+  exportRecording = QtCore.pyqtSignal(float, float)
 
   def __init__(self, parent=None):
   #-------------------------------
@@ -676,3 +677,6 @@ class ChartPlot(ChartWidget):
               self.annotationAdded.emit(self._timeRange.map(self._selectstart[1]),
                                         self._timeRange.map(self._selectend[1]),
                                         dialog.annotation())
+          elif item.text() == 'Export':
+            self.exportRecording.emit(self._timeRange.map(self._selectstart[1]),
+                                      self._timeRange.map(self._selectend[1]))
