@@ -498,12 +498,12 @@ class ChartPlot(ChartWidget):
       duration = (self._selectend[1] - self._selectstart[1])
       ypos = MARGIN_TOP - 8
       painter.setPen(QtGui.QPen(selectTimeColour))
-      drawtext(painter, self._selectstart[1], ypos, str(self._timeRange.map(self._selectstart[1])), mapY=False)
-      drawtext(painter, self._selectend[1],   ypos, str(self._timeRange.map(self._selectend[1])),   mapY=False)
+      drawtext(painter, self._selectstart[1], ypos, str(self._selectstart[1]), mapY=False)
+      drawtext(painter, self._selectend[1],   ypos, str(self._selectend[1]),   mapY=False)
       painter.setPen(QtGui.QPen(selectLenColour))
       middle = (self._selectend[1] + self._selectstart[1])/2.0
       if duration < 0: duration = -duration
-      drawtext(painter, middle, ypos, str(self._timeRange.map(duration)), mapY=False)
+      drawtext(painter, middle, ypos, str(duration), mapY=False)
 
   def _draw_time_grid(self, painter):
   #----------------------------------
@@ -546,13 +546,13 @@ class ChartPlot(ChartWidget):
       painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
       painter.drawLine(QtCore.QPoint(m[0], ypos + 6),
         QtCore.QPoint(m[0], MARGIN_TOP+self._plot_height+10))
-      drawtext(painter, m[0], ypos, str(self._timeRange.map(m[1])),
+      drawtext(painter, m[0], ypos, str(m[1]),
         mapX=False, mapY=False)
       if n > 0 and m[1] != last[1]:
         painter.setPen(QtGui.QPen(textColour))
         width = last[1] - m[1]
         if width < 0: width = -width
-        drawtext(painter, (last[0]+m[0])/2.0, ypos, str(self._timeRange.map(width)),
+        drawtext(painter, (last[0]+m[0])/2.0, ypos, str(width),
           mapX=False, mapY=False)
       last = m
     painter.setTransform(xfm)
@@ -628,7 +628,7 @@ class ChartPlot(ChartWidget):
     time = self._start + float(self._duration)*(pos - MARGIN_LEFT)/self._plot_width
     if time < self._start: time = self._start
     if time > self._end: time = self._end
-    return time
+    return self._timeRange.map(time)
 
   def _time_to_pos(self, time):
   #---------------------------  
@@ -680,7 +680,7 @@ class ChartPlot(ChartWidget):
   def setMarker(self, time):
   #-------------------------
     self._markers[0][0] = self._time_to_pos(time)
-    self._markers[0][1] = time
+    self._markers[0][1] = self._timeRange.map(time)
 
   def mousePressEvent(self, event):
   #--------------------------------
@@ -688,6 +688,7 @@ class ChartPlot(ChartWidget):
     if self._mousebutton != QtCore.Qt.LeftButton: return
     pos = event.pos()
     xpos = pos.x()
+    xtime = self._pos_to_time(xpos)
     # check right click etc...
     marker = None
     if pos.y() <= MARGIN_TOP:
@@ -714,12 +715,12 @@ class ChartPlot(ChartWidget):
           break
     if marker:
       marker[0] = xpos
-      marker[1] = self._pos_to_time(marker[0])
+      marker[1] = xtime
     elif MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height):
 ## Need to be able to clear selection (click inside??)
 ## and start selecting another region (drag outside of region ??)
       if self._selectstart is None:
-        self._selectstart = [xpos, self._pos_to_time(xpos)]
+        self._selectstart = [xpos, xtime]
         self._selectend = self._selectstart
       elif (xpos-2) <= self._selectstart[0] <= (xpos+2):
         end = self._selectend
@@ -729,7 +730,7 @@ class ChartPlot(ChartWidget):
          or (self._selectend[0]+2) < xpos < (self._selectstart[0]-2)):
         self._selectmove = xpos
       elif not ((xpos-2) <= self._selectend[0] <= (xpos+2)):
-        self._selectstart = [xpos, self._pos_to_time(xpos)]
+        self._selectstart = [xpos, xtime]
         self._selectend = self._selectstart
       self._selecting = True
     self.update()
@@ -738,6 +739,7 @@ class ChartPlot(ChartWidget):
   #-------------------------------
     xpos = event.pos().x()
     ypos = event.pos().y()
+    xtime = self._pos_to_time(xpos)
     tooltip = False
     if self._mousebutton is None:
       for a in self._annrects:
@@ -747,18 +749,18 @@ class ChartPlot(ChartWidget):
           break
     elif self._marker >= 0:
       self._markers[self._marker][0] = xpos
-      self._markers[self._marker][1] = self._pos_to_time(xpos)
+      self._markers[self._marker][1] = xtime
       self.update()
     elif self._selecting:
       if self._selectmove is None:
-        self._selectend = [xpos, self._pos_to_time(xpos)]
+        self._selectend = [xpos, xtime]
       else:
         delta = xpos - self._selectmove
         self._selectmove = xpos
         self._selectend[0] += delta
-        self._selectend[1] = self._pos_to_time(self._selectend[0])
+        self._selectend[1] = self._timeRange.map(self._selectend[0])
         self._selectstart[0] += delta
-        self._selectstart[1] = self._pos_to_time(self._selectstart[0])
+        self._selectstart[1] = self._timeRange.map(self._selectstart[0])
       self.update()
     if not tooltip: QtGui.QToolTip.showText(event.globalPos(), '')
 
@@ -810,8 +812,7 @@ class ChartPlot(ChartWidget):
               text = str(dialog.annotation()).strip()
               if text: self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text)
           elif item.text() == 'Export':
-            self.exportRecording.emit(self._timeRange.map(self._selectstart[1]),
-                                      self._timeRange.map(self._selectend[1]))
+            self.exportRecording.emit(self._selectstart[1], self._selectend[1])
           self._selectend = self._selectstart
           self.update()
       else:
