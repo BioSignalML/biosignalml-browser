@@ -291,6 +291,7 @@ class ChartPlot(ChartWidget):
     self._selectmove = None
     self._mousebutton = None
     self._annotations = collections.OrderedDict()  # id --> to tuple(start, end, comment)
+    self._annrects = []    # List of tuple(rect, text)
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
@@ -373,6 +374,7 @@ class ChartPlot(ChartWidget):
   #--------------------
     for p in self._plotlist: p[2].reset()
     self._annotations = collections.OrderedDict()
+    self._annrects = []
 
   def addAnnotation(self, id, start, end, text):
   #---------------------------------------------
@@ -551,33 +553,63 @@ class ChartPlot(ChartWidget):
     painter.resetTransform()
     right_side = MARGIN_LEFT + self._plot_width
     line_space = ANN_LINE_WIDTH + ANN_LINE_GAP
-    ann_top = line_space*len(self._annotations)  # Draw bottom lines first
-    annotations = list(self._annotations.itervalues())
-
-    # Could now sort (into time order), start from top, and not
+    # Sort (into time order), start from top, and not
     # step down if prev. end <= new start
-    # Need to save y-pos for finding tool tip...
-
-    annotations.reverse()
-    for n, ann in enumerate(annotations):
+    # Save bar rectangle for finding tool tip...
+    self._annrects = []
+    endtimes = []
+    nextcolour = 0
+    for ann in sorted(list(self._annotations.itervalues())):
+      row = None
+      colours = [ None, None, None ]   # On left, above, below
+      for n, e in enumerate(endtimes):
+        if ann[0] > e[0]:     # Start time after last end omn this row?
+          row = n
+          e[0] = ann[1]       # Save end time
+          colours[0] = e[1]
+          if (n + 1) < len(endtimes):
+            colours[2] = endtimes[n+1][1]
+          break
+        colours[1] = e[1]
+      if row is None:
+        row = len(endtimes)
+        endtimes.append([ann[1], None])
+      ann_top = row*line_space
+      used = -1
+      l = len(ANN_COLOURS)
+      used = [ c for c in colours if c is not None ]
+      i = nextcolour
+      while i in used:        # Must terminate since len(ANN_COLOURS) > len(used)
+        i = (i + 1) % len(ANN_COLOURS)
+      nextcolour = (nextcolour + 1) % len(ANN_COLOURS)
+      endtimes[row][1] = i    # Save colour index
+      colour = ANN_COLOURS[i]
+#      for c in [ c for c in colours if c is not None ]:
+#        if used < c: used = c
+#      used = (used+1) % l
+#      endtimes[row-1][1] = used
+#      colour = ANN_COLOURS[used]
+      pen = QtGui.QPen(colour)
+#      pen.setCapStyle(QtCore.Qt.FlatCap)
+#      pen.setWidth(1)
+      painter.setPen(pen)
       xstart = self._time_to_pos(ann[0])
       xend = self._time_to_pos(ann[1])
-      pen = QtGui.QPen(ANN_COLOURS[(len(annotations)-n-1) % len(ANN_COLOURS)])
-      pen.setCapStyle(QtCore.Qt.FlatCap)
-      pen.setWidth(1)
-      painter.setPen(pen)
-      if self._start < ann[0] < self._end:
-        painter.drawLine(QtCore.QPoint(xstart, ann_top-ANN_LINE_WIDTH/2),
+      if MARGIN_LEFT < xstart < right_side:
+        painter.drawLine(QtCore.QPoint(xstart, ann_top),
                          QtCore.QPoint(xstart, MARGIN_TOP+self._plot_height))
-      if self._start < ann[1] < self._end:
-        painter.drawLine(QtCore.QPoint(xend, ann_top-ANN_LINE_WIDTH/2),
+      if MARGIN_LEFT < xend < right_side:
+        painter.drawLine(QtCore.QPoint(xend, ann_top),
                          QtCore.QPoint(xend, MARGIN_TOP+self._plot_height))
       if xstart < right_side and MARGIN_LEFT < xend:
-        pen.setWidth(ANN_LINE_WIDTH)
-        painter.setPen(pen)
-        painter.drawLine(QtCore.QPoint(max(MARGIN_LEFT, xstart), ann_top),
-                         QtCore.QPoint(min(xend, right_side), ann_top))
-      ann_top -= line_space
+        left = max(MARGIN_LEFT, xstart)
+        right = min(xend, right_side)
+        rect = QtCore.QRect(left, ann_top, ##  - ANN_LINE_WIDTH/2,
+                            right - left, ANN_LINE_WIDTH)
+#        pen.setWidth(ANN_LINE_WIDTH)
+#        painter.setPen(pen)
+        painter.fillRect(rect, colour)
+        self._annrects.append((rect, ann[2]))
     painter.setTransform(xfm)
 
   def _pos_to_time(self, pos):
@@ -697,20 +729,11 @@ class ChartPlot(ChartWidget):
     ypos = event.pos().y()
     tooltip = False
     if self._mousebutton is None:
-      # We reversed order so top time bar is overwrites
-      # lower ones.
-      line_space = ANN_LINE_WIDTH + ANN_LINE_GAP
-      ann_top = line_space*len(self._annotations)
-      annotations = list(self._annotations.itervalues())
-      annotations.reverse()
-      for ann in annotations:
-        if (MARGIN_LEFT < xpos < (MARGIN_LEFT + self._plot_width)
-         and self._time_to_pos(ann[0]) < xpos < self._time_to_pos(ann[1])
-         and (ann_top - ANN_LINE_WIDTH/2) < ypos < (ann_top + ANN_LINE_WIDTH)):
-          QtGui.QToolTip.showText(event.globalPos(), ann[2])
+      for a in self._annrects:
+        if a[0].contains(xpos, ypos):
+          QtGui.QToolTip.showText(event.globalPos(), a[1])
           tooltip = True
           break
-        ann_top -= line_space
     elif self._marker >= 0:
       self._markers[self._marker][0] = xpos
       self._markers[self._marker][1] = self._pos_to_time(xpos)
