@@ -1,4 +1,5 @@
 import sys
+import re
 import logging
 
 from PyQt4 import QtCore, QtGui
@@ -256,8 +257,8 @@ class SignalInfo(QtCore.QAbstractTableModel):
 class Controller(QtGui.QWidget):
 #===============================
 
-  def __init__(self, store, rec_uri, start, duration, parent=None):
-  #----------------------------------------------------------------
+  def __init__(self, store, rec_uri, parent=None):
+  #-----------------------------------------------
     QtGui.QWidget.__init__(self, parent, QtCore.Qt.CustomizeWindowHint
                                        | QtCore.Qt.WindowMinMaxButtonsHint
                            #           | QtCore.Qt.WindowStaysOnTopHint
@@ -266,6 +267,20 @@ class Controller(QtGui.QWidget):
     self.controller.setupUi(self)
 
     self._graphstore = store
+
+    start = 0.0
+    rec_uri = str(rec_uri)
+    mediatag = rec_uri.rfind('#t=')
+    if mediatag >= 0:
+      tag = rec_uri[mediatag+3:]
+      rec_uri = rec_uri[:mediatag]
+      try:
+        times = re.match('(.*?)(,(.*))?$', tag).groups()
+        start = float(times[0])
+        end = float(times[2])
+      except ValueError:
+        end = start
+    duration = (end - start) if start < end else 10.0
 
     if rec_uri == 'edf':         ##################
       self._recording = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/swa49.edf')
@@ -582,7 +597,7 @@ if __name__ == "__main__":
 
   store = BSMLStore('http://devel.biosignalml.org', Virtuoso('http://localhost:8890'))
   try:
-    ctlr = Controller(store, rec_uri, start, duration)
+    ctlr = Controller(store, "%s#t=%g,%g" % (rec_uri, start, start+duration))
   except IOError, msg:
     print str(msg)
     sys.exit(1)
