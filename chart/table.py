@@ -46,7 +46,8 @@ class TableModel(QtCore.QAbstractTableModel):
 
   :param header (list): A list of column headings.
   :param rows (list): A list of table data rows, with each element
-     a list of the row's column data.
+     a list of the row's column data. The first column is used as
+     a row identifier and would normally be hidden.
   """
 
   def __init__(self, header, rows, parent=None):
@@ -54,6 +55,7 @@ class TableModel(QtCore.QAbstractTableModel):
     QtCore.QAbstractTableModel.__init__(self, parent)
     self._header = header
     self._rows = rows
+    self._keys = { str(r[0]): n for n, r in enumerate(self._rows) }
 
   def rowCount(self, parent=None):
   #-------------------------------
@@ -92,6 +94,7 @@ class TableModel(QtCore.QAbstractTableModel):
     posns = (len(self._rows), len(self._rows) + len(rows) - 1)
     self.beginInsertRows(self.createIndex(len(self._rows), 0), posns[0], posns[1])
     self._rows.extend(rows)
+    self._keys = { str(r[0]): n for n, r in enumerate(self._rows) }
     self.endInsertRows()
     return posns
 
@@ -99,7 +102,13 @@ class TableModel(QtCore.QAbstractTableModel):
   #---------------------------
     self.beginRemoveRows(self.createIndex(posns[0], 0), posns[0], posns[1])
     self._rows[posns[0]:posns[1]+1] = []
+    self._keys = { str(r[0]): n for n, r in enumerate(self._rows) }
     self.endRemoveRows()
+
+  def deleteRow(self, key):
+  #------------------------
+    n = self._keys.get(str(key), -1)
+    if n >= 0: self.removeRows((n, n))
 
 
 class SortedTable(QtGui.QSortFilterProxyModel):
@@ -148,5 +157,11 @@ class SortedTable(QtGui.QSortFilterProxyModel):
   #---------------------------
     self._table.layoutAboutToBeChanged.emit()
     self._table.removeRows(posns)
+    self._table.layoutChanged.emit()
+
+  def deleteRow(self, key):
+  #------------------------
+    self._table.layoutAboutToBeChanged.emit()
+    self._table.deleteRow(key)
     self._table.layoutChanged.emit()
 
