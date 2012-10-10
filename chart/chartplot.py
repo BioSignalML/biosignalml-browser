@@ -16,8 +16,8 @@ ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QW
 # Margins of plotting region within chart, in pixels
 MARGIN_LEFT   = 120
 MARGIN_RIGHT  = 80
-MARGIN_TOP    = 70
-MARGIN_BOTTOM = 36
+MARGIN_TOP    = 80
+MARGIN_BOTTOM = 40
 
 
 traceColour      = QtGui.QColor('green')
@@ -32,7 +32,7 @@ selectEdgeColour = QtGui.QColor('cyan')
 selectTimeColour = QtGui.QColor('black')
 selectLenColour  = QtGui.QColor('darkRed')
 
-ANN_LINE_WIDTH   = 6
+ANN_LINE_WIDTH   = 8
 ANN_LINE_GAP     = 2
 ANN_COLOURS      = [ QtGui.QColor('red'),     QtGui.QColor('blue'),     QtGui.QColor('magenta'),
                      QtGui.QColor('darkRed'), QtGui.QColor('darkBlue'), QtGui.QColor('cyan') ]
@@ -280,7 +280,6 @@ class ChartPlot(ChartWidget):
       QtGui.QWidget.__init__(self, parent)
     self.setPalette(QtGui.QPalette(QtGui.QColor('black'), QtGui.QColor('white')))
     self.setMouseTracking(True)
-##    self.setAutoFillBackground(True)  ##
     self._id = None
     self._plots = {}        # id --> index in plotlist
     self._plotlist = []     # [id, visible, plot] triples as a list
