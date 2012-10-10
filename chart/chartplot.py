@@ -744,7 +744,11 @@ class ChartPlot(ChartWidget):
     if self._mousebutton is None:
       for a in self._annrects:
         if a[0].contains(xpos, ypos):
-          QtGui.QToolTip.showText(event.globalPos(), a[1])
+          font = QtGui.QToolTip.font()
+          font.setPointSize(16)
+          QtGui.QToolTip.setFont(font)
+          QtGui.QToolTip.showText(event.globalPos(),
+           "<p>%s</p>" % self._annotations[a[1]][2])
           tooltip = True
           break
     elif self._marker >= 0:
