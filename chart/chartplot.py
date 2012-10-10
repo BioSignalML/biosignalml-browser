@@ -423,12 +423,11 @@ class ChartPlot(ChartWidget):
     # Now transform to time co-ordinates
     qp.scale(1.0/(self._end - self._start), 1.0)
     qp.translate(-self._start, 0.0)
-    self._draw_time_grid(qp)
-
     self._showSelectionRegion(qp)   # Highlight selected region
     self._showAnnotations(qp)       # Show annotations
     self._showSelectionTimes(qp)    # Time labels on top of annotation bars
     self._showTimeMarkers(qp)       # Position markers
+    self._draw_time_grid(qp)
 
     # Draw each each visible trace
     plots = [ p[2] for p in self._plotlist if p[1] ]
