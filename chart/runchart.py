@@ -378,16 +378,15 @@ class Controller(QtGui.QWidget):
   def _setSliderTime(self, label, time):
   #-------------------------------------
     ## Show as HH:MM:SS
-    label.setText(str(self._timerange.map(time)))
+    label.setText(str(self._timerange.map(time, -1)))
 
   def _showSliderTime(self, time):
   #-------------------------------
     self._setSliderTime(self.controller.rec_posn, time)
     sb = self.controller.segment
-    self.controller.rec_posn.move(  ## 44 = approx width of scroll end arrows
-      sb.pos().x() + (sb.width()-44)*time/self._recording.duration,
-      self.controller.rec_start.pos().y() - 12
-      )
+    self.controller.rec_posn.move(  ## 50 = approx width of scroll end arrows
+      20 + sb.pos().x() + (sb.width()-50)*time/self._recording.duration,
+      self.controller.rec_start.pos().y() + 6)
 
   def _setSliderValue(self, time):
   #-------------------------------
