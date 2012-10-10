@@ -62,14 +62,15 @@ def signal_uri(signal):
 class ChartForm(QtGui.QWidget):
 #==============================
 
-  def __init__(self, start, duration, parent=None):
-  #------------------------------------------------
+  def __init__(self, id, start, duration, parent=None):
+  #----------------------------------------------------
     QtGui.QWidget.__init__(self, parent)
     self.ui = Ui_Chart()
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
     self.ui.chart.updateTimeScroll.connect(self.position_timescroll)
     self.ui.timescroll.hide()
+    self.setWindowTitle(id)
     self.ui.chart.setId(id)
     self.setTimeRange(start, duration)
 
@@ -276,7 +277,6 @@ class Controller(QtGui.QWidget):
 
     if self._recording is None: raise IOError("Unknown recording: %s" % rec_uri)
     self.setWindowTitle(str(self._recording.uri))
-##    self.controller.title.setText('')  ##  starttime, duration, .... str(recording.uri))
 
     self._start = start
     self._duration = duration
@@ -318,8 +318,7 @@ class Controller(QtGui.QWidget):
     self.controller.signals.setModel(self.model)
     self.controller.signals.setColumnWidth(0, 25)
 
-    self.viewer = ChartForm(self._start, self._duration)
-    self.viewer.setWindowTitle(str(self._recording.uri))
+    self.viewer = ChartForm(str(self._recording.uri), self._start, self._duration)
     self.model.rowVisible.connect(self.viewer.setPlotVisible)
     self.model.rowMoved.connect(self.viewer.movePlot)
     self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
