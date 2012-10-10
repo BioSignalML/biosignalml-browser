@@ -22,6 +22,12 @@ Chart Module
   * This is a more general issue and applies to deleting any
     resource, including recording graphs.
     
+* Provide a control to adjust the viewer's duration.
+
+* Find data length/size of requested duration and either limit
+  or alert user. (Best to tell user and limit as viewer becomes
+  very slow...)
+
 
 Query Module
 ------------
