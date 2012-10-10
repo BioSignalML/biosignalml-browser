@@ -7,7 +7,7 @@ from PyQt4 import QtCore, QtGui
 from PyQt4 import QtOpenGL
 
 from nrange import NumericRange
-from annotation import Annotation
+from annotation import AnnotationDialog
 
 ##ChartWidget = QtGui.QWidget       # Hangs if > 64K points
 ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
@@ -267,6 +267,7 @@ class ChartPlot(ChartWidget):
   chartPosition = QtCore.pyqtSignal(int, int, int)
   updateTimeScroll = QtCore.pyqtSignal(bool)
   annotationAdded = QtCore.pyqtSignal(float, float, str)
+  annotationModified = QtCore.pyqtSignal(str, float, float, str)
   exportRecording = QtCore.pyqtSignal(float, float)
 
   def __init__(self, parent=None):
@@ -280,6 +281,7 @@ class ChartPlot(ChartWidget):
     self.setPalette(QtGui.QPalette(QtGui.QColor('black'), QtGui.QColor('white')))
     self.setMouseTracking(True)
 ##    self.setAutoFillBackground(True)  ##
+    self._id = None
     self._plots = {}        # id --> index in plotlist
     self._plotlist = []     # [id, visible, plot] triples as a list
     self._timezoom = 1.0
@@ -290,8 +292,12 @@ class ChartPlot(ChartWidget):
     self._selecting = False
     self._selectmove = None
     self._mousebutton = None
-    self._annotations = collections.OrderedDict()  # id --> to tuple(start, end, comment)
-    self._annrects = []    # List of tuple(rect, text)
+    self._annotations = collections.OrderedDict()  # id --> to tuple(start, end, text, editable)
+    self._annrects = []    # List of tuple(rect, id)
+
+  def setId(self, id):
+  #-------------------
+    self._id = id
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
@@ -376,10 +382,15 @@ class ChartPlot(ChartWidget):
     self._annotations = collections.OrderedDict()
     self._annrects = []
 
-  def addAnnotation(self, id, start, end, text):
-  #---------------------------------------------
+  def addAnnotation(self, id, start, end, text, edit=False):
+  #-------------------------------------------------------
     if end > self.start and start < self.end:
-      self._annotations[str(id)] = (start, end, text)
+      self._annotations[str(id)] = (start, end, text, edit)
+
+  def deleteAnnotation(self, id):
+  #------------------------------
+    self._annotations.pop(str(id), None)
+    self.update()
 
   def resizeEvent(self, e):
   #-----------------------
@@ -558,7 +569,8 @@ class ChartPlot(ChartWidget):
     self._annrects = []
     endtimes = []
     nextcolour = 0
-    for ann in sorted(list(self._annotations.itervalues())):
+    for ann, id in sorted([ (ann, id)
+                            for id, ann in self._annotations.iteritems() ]):
       row = None
       colours = [ None, None, None ]   # On left, above, below
       for n, e in enumerate(endtimes):
@@ -608,7 +620,7 @@ class ChartPlot(ChartWidget):
 #        pen.setWidth(ANN_LINE_WIDTH)
 #        painter.setPen(pen)
         painter.fillRect(rect, colour)
-        self._annrects.append((rect, ann[2]))
+        self._annrects.append((rect, id))
     painter.setTransform(xfm)
 
   def _pos_to_time(self, pos):
@@ -761,6 +773,20 @@ class ChartPlot(ChartWidget):
   def contextMenu(self, pos):
   #--------------------------
     self._mousebutton = None
+    for a in self._annrects:
+      if a[0].contains(pos):
+        id = a[1]
+        ann = self._annotations[id]
+        if ann[3]:  # editable
+          menu = QtGui.QMenu()
+          menu.addAction("Edit")
+          if menu.exec_(self.mapToGlobal(pos)):
+            dialog = AnnotationDialog(self._id, ann[0], ann[1], text=ann[2], parent=self)
+            if dialog.exec_():
+              text = str(dialog.annotation()).strip()
+              if text and text != str(ann[2]).strip():
+                self.annotationModified.emit(id, ann[0], ann[1], text)
+        return
     if (MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)
      and MARGIN_LEFT < pos.x() <= (MARGIN_LEFT + self._plot_width)):
       menu = QtGui.QMenu()
@@ -778,11 +804,11 @@ class ChartPlot(ChartWidget):
             self._setTimeGrid(self._selectstart[1], self._selectend[1])
             self.updateTimeScroll.emit(self._timezoom > 1.0)
           elif item.text() == 'Annotate':
-            dialog = Annotation(self._selectstart[1], self._selectend[1], self)
+            dialog = AnnotationDialog(self._id, self._selectstart[1], self._selectend[1],
+                                      parent=self)
             if dialog.exec_():
-              self.annotationAdded.emit(self._timeRange.map(self._selectstart[1]),
-                                        self._timeRange.map(self._selectend[1]),
-                                        dialog.annotation())
+              text = str(dialog.annotation()).strip()
+              if text: self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text)
           elif item.text() == 'Export':
             self.exportRecording.emit(self._timeRange.map(self._selectstart[1]),
                                       self._timeRange.map(self._selectend[1]))

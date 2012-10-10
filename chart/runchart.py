@@ -70,6 +70,7 @@ class ChartForm(QtGui.QWidget):
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
     self.ui.chart.updateTimeScroll.connect(self.position_timescroll)
     self.ui.timescroll.hide()
+    self.ui.chart.setId(id)
     self.setTimeRange(start, duration)
 
   def setTimeRange(self, start, duration):
@@ -89,9 +90,13 @@ class ChartForm(QtGui.QWidget):
   #------------------------------------------------------------------------------------
     self.ui.chart.addEventPlot(id, label, mapping, visible=visible, data=data)
 
-  def addAnnotation(self, id, start, end, text):
-  #---------------------------------------------
-    self.ui.chart.addAnnotation(id, start, end, text)
+  def addAnnotation(self, id, start, end, text, edit=False):
+  #---------------------------------------------------------
+    self.ui.chart.addAnnotation(id, start, end, text, edit)
+
+  def deleteAnnotation(self, id):
+  #------------------------------
+    self.ui.chart.deleteAnnotation(id)
 
   def appendPlotData(self, id, data):
   #----------------------------------
@@ -280,22 +285,25 @@ class Controller(QtGui.QWidget):
     self.controller.rec_posn.resize(self.controller.rec_start.size())
     self._timerange = NumericRange(0.0, duration)
 
-    self._annotations = [ ]      # tuple(uri, start, end, text)
+    self._annotations = [ ]     # tuple(uri, start, end, text, editable)
     for a in [store.get_annotation(ann, self._recording.graph_uri)
                 for ann in store.annotations(rec_uri, self._recording.graph_uri)]:
       annstart = a.time.start if a.time is not None else None
       annend   = a.time.end   if a.time is not None else None
-      if a.comment: self._annotations.append( (a.uri, annstart, annend, str(a.comment)) )
+      if a.comment: self._annotations.append( (str(a.uri), annstart, annend, str(a.comment), True) )
       for t in a.tags:
-        self._annotations.append( (a.uri, annstart, annend, abbreviate_uri(t)) )
+        self._annotations.append( (str(a.uri), annstart, annend, abbreviate_uri(t), False) )
+
     self._annotation_table = SortedTable(['', 'Start', 'End', 'Duration',  'Type', 'Annotation'],
-                                         [ self._make_ann_times(a[1], a[2]) + ['Annotation', a[3]]
+                                         [ [ a[0] ] + self._make_ann_times(a[1], a[2])
+                                         + ['Annotation' if a[4] else 'Event', a[3]]
                                              for a in self._annotations ], parent=self)
     self.controller.annotations.setModel(self._annotation_table)
     self.controller.annotations.setColumnHidden(0, True)
     self._annotation_table.sort(1, QtCore.Qt.AscendingOrder)
     self.controller.annotations.horizontalHeader().setSortIndicator(1, QtCore.Qt.AscendingOrder)
 
+    self._events = { }
     self._event_type = None
     self._event_rows = None
     self.controller.events.addItem('None')
@@ -337,14 +345,14 @@ class Controller(QtGui.QWidget):
   def _make_ann_times(self, start, end):
   #-------------------------------------
     if start is None:
-      return ['', '', '', '']
+      return ['', '', '']
     else:
       nstart = self._timerange.map(start)  # Normalise for display
       if end is not None:
         nend = self._timerange.map(end)
-        return [ start, nstart, nend, nend - nstart ]
+        return [ nstart, nend, nend - nstart ]
       else:
-        return [ start, nstart, '', '' ]
+        return [ nstart, '', '' ]
 
   def _adjust_layout(self):
   #------------------------
@@ -432,23 +440,45 @@ class Controller(QtGui.QWidget):
   #--------------------------------------
     self.model.setVisibility(state)
 
+  def _find_annotation(self, id):
+  #------------------------------
+    for ann in self._annotations:
+      if id == ann[0]: return ann
+
+  def _delete_annotation(self, id):
+  #--------------------------------
+    for n, ann in enumerate(self._annotations):
+      if id == ann[0]:
+        del self._annotations[n]
+        return
+
   def on_annotations_doubleClicked(self, index):
   #---------------------------------------------
     source = index.model().mapToSource(index)
-    time = source.model().createIndex(source.row(), 0).data().toString()
-    duration = source.model().createIndex(source.row(), 3).data().toString()
-    if time != '':
-      if duration != '':
-        duration = float(duration)
-        start = max(0.0, float(time) - duration/2.0)
-        end = min(float(time) + duration + duration/2.0, self._recording.duration)
+    id = str(source.model().createIndex(source.row(), 0).data().toString())
+    ann = self._find_annotation(id)
+    time = None
+    duration = None
+    if ann and ann[1] is not None:
+      time = ann[1]
+      if ann[2] is not None:
+        duration = ann[2] - time
+    else:
+      evt = self._events.get(id, None)
+      if evt is not None:
+        time = evt[0]
+        duration = evt[1]
+    if time is not None:
+      if duration is not None:
+        start = max(0.0, time - duration/2.0)
+        end = min(time + duration + duration/2.0, self._recording.duration)
         self._duration = end - start
       else:
-        start = max(0.0, float(time) - self._duration/4.0)
+        start = max(0.0, time - self._duration/4.0)
       self._moveViewer(start)
       self._setSliderValue(start)
       self._showSliderTime(start)
-      self.viewer.setMarker(float(time))
+      self.viewer.setMarker(time)
 
   def on_events_currentIndexChanged(self, index):
   #----------------------------------------------
@@ -461,29 +491,42 @@ class Controller(QtGui.QWidget):
       return
     if index == 'All': etype = None
     else: etype = expand_uri(index)
+
+    events = [ self._graphstore.get_event(evt, self._recording.graph_uri)
+                 for evt in self._graphstore.events(rec_uri, eventtype=etype,
+                                                    graph_uri=self._recording.graph_uri) ]
+    self._events = { str(event.uri): (event.time, event.duration) for event in events }
     self._event_rows = self._annotation_table.appendRows(
-      [ [ event.time, self._timerange.map(event.time),
-                      self._timerange.map(event.time+event.duration) if event.duration else '',
-                      event.duration, 'Event', abbreviate_uri(event.eventtype) ]
-           for event in [ self._graphstore.get_event(evt, self._recording.graph_uri)
-              for evt in self._graphstore.events(rec_uri, eventtype=etype,
-                                                 graph_uri=self._recording.graph_uri) ]
-      ])
+      [ [ str(event.uri), self._timerange.map(event.time),
+                          self._timerange.map(event.time+event.duration) if event.duration else '',
+                          event.duration, 'Event', abbreviate_uri(event.eventtype) ]
+           for event in events ])
     self._adjust_layout()
 
-  def annotationAdded(self, start, end, text):
-  #-------------------------------------------
+  def annotationAdded(self, start, end, text, predecessor=None):
+  #-------------------------------------------------------------
     text = str(text).strip()
     if text:
       annotation = biosignalml.model.Annotation.Event(self._recording.uri.make_uri(),
                                                       self._recording,
                                                       self._recording.interval(start, end=end),
-                                                      text = text)
+                                                      text = text,
+                                                      preceededBy=predecessor)
       self._graphstore.extend_recording(self._recording, annotation)
-      self._annotation_table.appendRows( [ self._make_ann_times(start, end)
+      self._annotation_table.appendRows( [ [str(annotation.uri)]
+                                         + self._make_ann_times(start, end)
                                          + ['Annotation', annotation.comment ] ] )
-      self._annotations.append((annotation.uri, start, end, text))
-      self.viewer.addAnnotation(annotation.uri, start, end, text)
+      self._annotations.append((annotation.uri, start, end, text, True))
+      self.viewer.addAnnotation(annotation.uri, start, end, text, True)
+
+  def annotationModified(self, id, start, end, text):
+  #--------------------------------------------------
+    id = str(id)
+    self._annotation_table.deleteRow(id)
+    self._delete_annotation(id)
+    self.viewer.deleteAnnotation(id)
+    self.annotationAdded(start, end, text, predecessor=id)
+
 
   def exportRecording(self, start, end):
   #-------------------------------------
