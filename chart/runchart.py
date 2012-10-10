@@ -477,11 +477,12 @@ class Controller(QtGui.QWidget):
     if text:
       annotation = biosignalml.model.Annotation.Event(self._recording.uri.make_uri(),
                                                       self._recording,
-                                                      self._recording.interval(start, end),
+                                                      self._recording.interval(start, end=end),
                                                       text = text)
       self._graphstore.extend_recording(self._recording, annotation)
       self._annotation_table.appendRows( [ self._make_ann_times(start, end)
                                          + ['Annotation', annotation.comment ] ] )
+      self._annotations.append((annotation.uri, start, end, text))
       self.viewer.addAnnotation(annotation.uri, start, end, text)
 
   def exportRecording(self, start, end):
