@@ -323,6 +323,7 @@ class Controller(QtGui.QWidget):
     self.model.rowMoved.connect(self.viewer.movePlot)
     self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
     self.viewer.ui.chart.annotationAdded.connect(self.annotationAdded)
+    self.viewer.ui.chart.annotationModified.connect(self.annotationModified)
     self.viewer.ui.chart.exportRecording.connect(self.exportRecording)
 
     self._setupSlider()
