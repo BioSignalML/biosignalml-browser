@@ -293,6 +293,8 @@ class Controller(QtGui.QWidget):
                                              for a in self._annotations ], parent=self)
     self.controller.annotations.setModel(self._annotation_table)
     self.controller.annotations.setColumnHidden(0, True)
+    self._annotation_table.sort(1, QtCore.Qt.AscendingOrder)
+    self.controller.annotations.horizontalHeader().setSortIndicator(1, QtCore.Qt.AscendingOrder)
 
     self._event_type = None
     self._event_rows = None
@@ -337,9 +339,9 @@ class Controller(QtGui.QWidget):
     if start is None:
       return ['', '', '', '']
     else:
-      nstart = self._timerange.map(start, 1)  # Normalise for display
+      nstart = self._timerange.map(start)  # Normalise for display
       if end is not None:
-        nend = self._timerange.map(end, 1)
+        nend = self._timerange.map(end)
         return [ start, nstart, nend, nend - nstart ]
       else:
         return [ start, nstart, '', '' ]
