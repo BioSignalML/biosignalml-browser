@@ -283,6 +283,8 @@ class Controller(QtGui.QWidget):
     self.controller.rec_posn = QtGui.QLabel(self)
     self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
     self.controller.rec_posn.resize(self.controller.rec_start.size())
+    self.controller.splitter.splitterMoved.connect(self._splitterMoved)
+
     self._timerange = NumericRange(0.0, duration)
 
     self._annotations = [ ]     # tuple(uri, start, end, text, editable)
@@ -361,6 +363,10 @@ class Controller(QtGui.QWidget):
 
   def resizeEvent(self, event):
   #----------------------------
+    self._adjust_layout()
+
+  def _splitterMoved(self, pos, index):
+  #------------------------------------
     self._adjust_layout()
 
   def showEvent(self, event):
