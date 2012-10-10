@@ -18,7 +18,8 @@ Chart Module
     whose predecessor is the one being deleted.
   * This would mean we then don't show (in controller's
     table) those annotations with no comment.
-  * Or do we use some other property?
+  * Or do we use some other property, including marking the
+    latest version with a 'deleted' flag?
   * This is a more general issue and applies to deleting any
     resource, including recording graphs.
     
@@ -27,6 +28,11 @@ Chart Module
 * Find data length/size of requested duration and either limit
   or alert user. (Best to tell user and limit as viewer becomes
   very slow...)
+
+* Read data via streaming API (metadata still via direct connection
+  to SparqlStore).
+
+* Use REST API and/or web repository SPARQL endpoint for metadata.
 
 
 Query Module
