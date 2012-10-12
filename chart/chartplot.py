@@ -722,7 +722,7 @@ class ChartPlot(ChartWidget):
         self._selectstart = [xpos, xtime]
         self._selectend = self._selectstart
       elif (xpos-2) <= self._selectstart[0] <= (xpos+2):
-        end = self._selectend
+        end = self._selectend                       # Start edge move
         self._selectend = self._selectstart
         self._selectstart = end
       elif ((self._selectstart[0]+2) < xpos < (self._selectend[0]-2)
@@ -771,8 +771,13 @@ class ChartPlot(ChartWidget):
   #----------------------------------
     if self._mousebutton == QtCore.Qt.LeftButton:
       self._marker = -1
-      self._selecting = False
-      self._selectmove = None
+      if self._selecting:
+        if self._selectstart[0] > self._selectend[0]: # Moved start edge
+          end = self._selectend
+          self._selectend = self._selectstart
+          self._selectstart = end
+        self._selecting = False
+        self._selectmove = None
     self._mousebutton = None
 
   def contextMenu(self, pos):
