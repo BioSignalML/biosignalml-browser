@@ -14,10 +14,10 @@ ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QW
 
 
 # Margins of plotting region within chart, in pixels
-MARGIN_LEFT   = 120
-MARGIN_RIGHT  = 80
-MARGIN_TOP    = 80
-MARGIN_BOTTOM = 40
+MARGIN_LEFT   =  120
+MARGIN_RIGHT  =  80
+MARGIN_TOP    = 100
+MARGIN_BOTTOM =  40
 
 
 traceColour      = QtGui.QColor('green')
@@ -32,6 +32,7 @@ selectEdgeColour = QtGui.QColor('cyan')
 selectTimeColour = QtGui.QColor('black')
 selectLenColour  = QtGui.QColor('darkRed')
 
+ANN_START        = 20                              ## Pixels from top to first bar
 ANN_LINE_WIDTH   = 8
 ANN_LINE_GAP     = 2
 ANN_COLOURS      = [ QtGui.QColor('red'),     QtGui.QColor('blue'),     QtGui.QColor('magenta'),
@@ -46,8 +47,8 @@ alignMiddle      = 0x0C
 alignCentred     = 0x0F
 
 
-def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred):
-#---------------------------------------------------------------------------
+def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred, fontSize=None, fontWeight=None):
+#-----------------------------------------------------------------------------------------------------------
   if not text: return
   lines = text.split('\n')
   xfm = painter.transform()
@@ -56,6 +57,12 @@ def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred):
     if mapX: x = pt.x()
     if mapY: y = pt.y()
   painter.resetTransform()
+  font = painter.font()
+  if fontSize is not None or fontWeight is not None:
+    newfont = QtGui.QFont(font)
+    if fontSize: newfont.setPointSize(fontSize)
+    if fontWeight: newfont.setWeight(fontWeight)
+    painter.setFont(newfont)
   metrics = painter.fontMetrics()
   th = (metrics.xHeight() + metrics.ascent())/2.0  # Compromise...
   adjust = (len(lines)-1)*metrics.height()  ## lineSpacing()
@@ -68,7 +75,8 @@ def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred):
     elif (align & alignRight)  == alignRight:  tx = x - tw
     else:                                      tx = x
     painter.drawText(QtCore.QPointF(tx, ty), QtCore.QString.fromUtf8(t))
-    ty += metrics.height()          ## lineSpacing()
+    ty += metrics.height()                  ## lineSpacing()
+  painter.setFont(font)             # Reset, in case changed above
   painter.setTransform(xfm)
 
 
@@ -296,7 +304,7 @@ class ChartPlot(ChartWidget):
 
   def setId(self, id):
   #-------------------
-    self._id = id
+    self._id = str(id)
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
@@ -412,6 +420,10 @@ class ChartPlot(ChartWidget):
     h = device.height()
     self._plot_width  = w - (MARGIN_LEFT + MARGIN_RIGHT)
     self._plot_height = h - (MARGIN_TOP + MARGIN_BOTTOM)
+
+    if self._id is not None:
+      drawtext(qp, MARGIN_LEFT+self._plot_width/2, 10, self._id,
+      fontSize=16, fontWeight=QtGui.QFont.Bold)
 
     # Set pixel positions of markers and selected region for
     # use in mouse events.
@@ -584,7 +596,7 @@ class ChartPlot(ChartWidget):
       if row is None:
         row = len(endtimes)
         endtimes.append([ann[1], None])
-      ann_top = row*line_space
+      ann_top = ANN_START + row*line_space
       used = -1
       l = len(ANN_COLOURS)
       used = [ c for c in colours if c is not None ]
