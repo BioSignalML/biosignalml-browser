@@ -310,16 +310,11 @@ class Controller(QtGui.QWidget):
       if a.comment: self._annotations.append( (str(a.uri), annstart, annend, str(a.comment), True) )
       for t in a.tags:
         self._annotations.append( (str(a.uri), annstart, annend, abbreviate_uri(t), False) )
-
-    self._annotation_table = SortedTable(['', 'Start', 'End', 'Duration',  'Type', 'Annotation'],
+    self._annotation_table = SortedTable(self.controller.annotations,
+                                         ['', 'Start', 'End', 'Duration',  'Type', 'Annotation'],
                                          [ [ a[0] ] + self._make_ann_times(a[1], a[2])
                                          + ['Annotation' if a[4] else 'Event', a[3]]
                                              for a in self._annotations ], parent=self)
-    self.controller.annotations.setModel(self._annotation_table)
-    self.controller.annotations.setColumnHidden(0, True)
-    self._annotation_table.sort(1, QtCore.Qt.AscendingOrder)
-    self.controller.annotations.horizontalHeader().setSortIndicator(1, QtCore.Qt.AscendingOrder)
-
     self._events = { }
     self._event_type = None
     self._event_rows = None

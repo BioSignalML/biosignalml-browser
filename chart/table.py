@@ -47,7 +47,7 @@ class TableModel(QtCore.QAbstractTableModel):
   :param header (list): A list of column headings.
   :param rows (list): A list of table data rows, with each element
      a list of the row's column data. The first column is used as
-     a row identifier and would normally be hidden.
+     a row identifier and is normally hidden.
   """
 
   def __init__(self, header, rows, parent=None):
@@ -116,16 +116,25 @@ class SortedTable(QtGui.QSortFilterProxyModel):
   """
   A generic sorted table.
 
+  :param view: A :class:`TableView` in which the model is displayed.
   :param header (list): A list of column headings.
   :param rows (list): A list of table data rows, with each element
-     a list of the row's column data.
+     a list of the row's column data. The first column is used as
+     a row identifier and is hidden.
+
+  The initial view of the model is sorted on the second column (i.e. on
+  the first visible column).
   """
 
-  def __init__(self, header, rows, tablefilter=None, parent=None):
-  #---------------------------------------------------------------
+  def __init__(self, view, header, rows, tablefilter=None, parent=None):
+  #---------------------------------------------------------------------
     QtGui.QSortFilterProxyModel.__init__(self, parent)
     self._table = TableModel(header, rows, parent)
     self.setSourceModel(self._table)
+    view.setModel(self)
+    view.setColumnHidden(0, True)
+    self.sort(1, QtCore.Qt.AscendingOrder)
+    view.horizontalHeader().setSortIndicator(1, QtCore.Qt.AscendingOrder)
 
 #    self._filter = tablefilter    # function(row, content)
 #
