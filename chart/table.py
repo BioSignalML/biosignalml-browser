@@ -19,7 +19,6 @@ class TableView(QtGui.QTableView):
     self.setAlternatingRowColors(True)
     self.setShowGrid(False)
     self.setWordWrap(True)
-    self.setSortingEnabled(True)
     self.verticalHeader().setVisible(False)
     self.horizontalHeader().setStretchLastSection(True)
     self.horizontalHeader().setHighlightSections(False)
@@ -55,6 +54,7 @@ class TableModel(QtCore.QAbstractTableModel):
     QtCore.QAbstractTableModel.__init__(self, parent)
     self._header = header
     self._rows = rows
+
     self._keys = { str(r[0]): n for n, r in enumerate(self._rows) }
 
   def rowCount(self, parent=None):
