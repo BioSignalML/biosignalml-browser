@@ -3,48 +3,11 @@ import logging
 
 from PyQt4 import QtCore, QtGui
 
+from table import SortedTable
+##from tree import SortedTree
+
 from ui.results import Ui_Results
-
-
-class ResultsTable(QtCore.QAbstractTableModel):
-#==============================================
-
-  def __init__(self, header, results, parent=None):
-  #--------------------------------------------------
-    QtCore.QAbstractTableModel.__init__(self, parent)
-    self._header = header
-    self._rows = results
-
-  def rowCount(self, parent=None):
-  #-------------------------------
-    return len(self._rows)
-
-  def columnCount(self, parent=None):
-  #----------------------------------
-    return len(self._header)
-
-  def headerData(self, section, orientation, role):
-  #------------------------------------------------
-    if orientation == QtCore.Qt.Horizontal:
-      if role == QtCore.Qt.DisplayRole:
-        return self._header[section]
-      elif role == QtCore.Qt.TextAlignmentRole:
-        return QtCore.Qt.AlignLeft
-      elif role == QtCore.Qt.FontRole:
-        font = QtGui.QFont(QtGui.QApplication.font())
-        font.setBold(True)
-        return font
-
-  def data(self, index, role):
-  #---------------------------
-    if   role == QtCore.Qt.DisplayRole:
-      return str(self._rows[index.row()][index.column()])
-    elif role == QtCore.Qt.TextAlignmentRole:
-      return QtCore.Qt.AlignTop
-
-  def flags(self, index):
-  #-----------------------
-    return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+##from ui.treeresults import Ui_Results
 
 
 class Results(QtGui.QWidget):
@@ -57,27 +20,17 @@ class Results(QtGui.QWidget):
     self.results = Ui_Results()
     self.results.setupUi(self)
     self.setWindowTitle("Query Results")
-
-    self.model = ResultsTable(header, results, self)
-    sorted = QtGui.QSortFilterProxyModel(self)
-    sorted.setSourceModel(self.model)
-    self.results.view.setModel(sorted)
-
-  def resizeCells(self):  # Needs to be done after table is populated
-  #---------------------
-    selected = self.results.view.selectedIndexes()
-    self.results.view.hide()
-    self.results.view.resizeColumnsToContents()
-    self.results.view.show()
-    self.results.view.hide()
-    self.results.view.resizeRowsToContents()
-    if selected: self.results.view.selectRow(selected[0].row())
-    self.results.view.show()
-
+    self.model = SortedTable(self.results.view,
+                             [''] + header, [[n] + r for n, r in enumerate(results)],
+                             parent=self)
 
   def resizeEvent(self, event):
   #----------------------------
     self.resizeCells()
+
+  def resizeCells(self):
+  #---------------------
+    self.results.view.resizeCells()
 
 
 if __name__ == "__main__":
@@ -108,7 +61,6 @@ if __name__ == "__main__":
     for pfx, ns in PREFIXES.iteritems():
       if v.startswith(ns): return '%s:%s' % (pfx, v[len(ns):])
     return v
-
 
   header  = [ 'Recording', 'Resource', 'Offset', 'Value' ]
   columns = [ 'rec',       'rtype',    'tm',     'v' ]
