@@ -10,6 +10,7 @@ from ui.controller import Ui_Controller
 import biosignalml.formats.hdf5 as hdf5
 import biosignalml.formats.edf  as edf
 
+from biosignalml import BSML
 import biosignalml.model
 import biosignalml.units.ontology as uom
 
@@ -304,12 +305,17 @@ class Controller(QtGui.QWidget):
 
     self._annotations = [ ]     # tuple(uri, start, end, text, editable)
     for a in [store.get_annotation(ann, self._recording.graph_uri)
-                for ann in store.annotations(rec_uri, self._recording.graph_uri)]:
+                for ann in store.annotations(rec_uri, graph_uri=self._recording.graph_uri)]:
       annstart = a.time.start if a.time is not None else None
       annend   = a.time.end   if a.time is not None else None
       if a.comment: self._annotations.append( (str(a.uri), annstart, annend, str(a.comment), True) )
       for t in a.tags:
         self._annotations.append( (str(a.uri), annstart, annend, abbreviate_uri(t), False) )
+
+    for e in [store.get_event(evt, self._recording.graph_uri)
+                for evt in store.events(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph_uri)]:
+      self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), False) )
+
     self._annotation_table = SortedTable(self.controller.annotations,
                                          ['', 'Start', 'End', 'Duration',  'Type', 'Annotation'],
                                          [ [ a[0] ] + self._make_ann_times(a[1], a[2])
@@ -321,6 +327,7 @@ class Controller(QtGui.QWidget):
     self.controller.events.addItem('None')
     self.controller.events.insertItems(1, [abbreviate_uri(etype)
       for etype in store.eventtypes(rec_uri, self._recording.graph_uri)])
+      # if no duration ...
     self.controller.events.addItem('All')
     self._event_type = 'None'
 
@@ -508,13 +515,12 @@ class Controller(QtGui.QWidget):
     else: etype = expand_uri(index)
 
     events = [ self._graphstore.get_event(evt, self._recording.graph_uri)
-                 for evt in self._graphstore.events(rec_uri, eventtype=etype,
+                 for evt in self._graphstore.events(rec_uri, eventtype=etype, timetype=BSML.Instant,
                                                     graph_uri=self._recording.graph_uri) ]
-    self._events = { str(event.uri): (event.time, event.duration) for event in events }
+    self._events = { str(event.uri): (event.time.start, event.time.duration) for event in events }
     self._event_rows = self._annotation_table.appendRows(
-      [ [ str(event.uri), self._timerange.map(event.time),
-                          self._timerange.map(event.time+event.duration) if event.duration else '',
-                          event.duration, 'Event', abbreviate_uri(event.eventtype) ]
+      [ [ str(event.uri), self._timerange.map(event.time.start), self._timerange.map(event.time.end),
+                          event.time.duration, 'Event', abbreviate_uri(event.eventtype) ]
            for event in events ])
     self._adjust_layout()
 
@@ -522,11 +528,10 @@ class Controller(QtGui.QWidget):
   #-------------------------------------------------------------
     text = str(text).strip()
     if text:
-      annotation = biosignalml.model.Annotation.Event(self._recording.uri.make_uri(),
-                                                      self._recording,
-                                                      self._recording.interval(start, end=end),
-                                                      text = text,
-                                                      preceededBy=predecessor)
+      annotation = biosignalml.model.Annotation.Note(self._recording.uri.make_uri(),
+                                                     self._recording, text,
+                                                     time=self._recording.interval(start, end=end),
+                                                     preceededBy=predecessor)
       self._graphstore.extend_recording(self._recording, annotation)
       self._annotation_table.appendRows( [ [str(annotation.uri)]
                                          + self._make_ann_times(start, end)
