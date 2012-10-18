@@ -42,8 +42,9 @@ class NumericRange(object):
 
   def map(self, a, extra=0):
   #-------------------------
-    q = self.quanta/float(math.pow(10, extra))
-    return q*math.floor((a + q/2.0)/q)
+    if a is not None:
+      q = self.quanta/float(math.pow(10, extra))
+      return q*math.floor((a + q/2.0)/q)
 
 
 if __name__ == '__main__':
