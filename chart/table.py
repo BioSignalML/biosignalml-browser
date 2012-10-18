@@ -19,6 +19,7 @@ class TableView(QtGui.QTableView):
     self.setAlternatingRowColors(True)
     self.setShowGrid(False)
     self.setWordWrap(True)
+    self.setSortingEnabled(True)
     self.verticalHeader().setVisible(False)
     self.horizontalHeader().setStretchLastSection(True)
     self.horizontalHeader().setHighlightSections(False)
