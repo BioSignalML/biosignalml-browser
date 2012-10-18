@@ -329,8 +329,8 @@ class Controller(QtGui.QWidget):
     self._event_type = None
     self._event_rows = None
     self.controller.events.addItem('None')
-    self.controller.events.insertItems(1, [abbreviate_uri(etype)
-      for etype in store.eventtypes(rec_uri, self._recording.graph_uri)])
+    self.controller.events.insertItems(1, ['%s (%s)' % (abbreviate_uri(etype), count)
+      for etype, count in store.eventtypes(rec_uri, counts=True, graph_uri=self._recording.graph_uri)])
       # if no duration ...
     self.controller.events.addItem('All')
     self._event_type = 'None'
@@ -516,7 +516,7 @@ class Controller(QtGui.QWidget):
       self._event_rows = None
       return
     if index == 'All': etype = None
-    else: etype = expand_uri(index)
+    else: etype = expand_uri(str(index).rsplit(' (', 1)[0])
 
     events = [ self._graphstore.get_event(evt, self._recording.graph_uri)
                  for evt in self._graphstore.events(rec_uri, eventtype=etype, timetype=BSML.Instant,
