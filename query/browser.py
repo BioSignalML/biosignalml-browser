@@ -3,7 +3,8 @@ import logging
 
 from PyQt4 import QtCore, QtGui
 
-from table import SortedTable
+from table  import SortedTable
+from nrange import NumericRange
 ##from tree import SortedTree
 
 from ui.results import Ui_Results
@@ -24,13 +25,17 @@ class Results(QtGui.QWidget):
                              [''] + header, [[n] + r for n, r in enumerate(results)],
                              parent=self)
 
+  def resizeCells(self):
+  #---------------------
+    self.results.view.resizeCells()
+
   def resizeEvent(self, event):
   #----------------------------
     self.resizeCells()
 
-  def resizeCells(self):
-  #---------------------
-    self.results.view.resizeCells()
+  def showEvent(self, event):
+  #--------------------------
+    self.resizeCells()
 
 
 if __name__ == "__main__":
@@ -51,6 +56,7 @@ if __name__ == "__main__":
     'bsml': 'http://www.biosignalml.org/ontologies/2011/04/biosignalml#',
     'dct':  'http://purl.org/dc/terms/',
     'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+    'xsd':  'http://www.w3.org/2001/XMLSchema#',
     'pbank':	'http://www.biosignalml.org/ontologies/examples/physiobank#',
 
     'repo': 'http://devel.biosignalml.org/resource/',
@@ -62,36 +68,79 @@ if __name__ == "__main__":
       if v.startswith(ns): return '%s:%s' % (pfx, v[len(ns):])
     return v
 
-  header  = [ 'Recording', 'Resource', 'Offset', 'Value' ]
-  columns = [ 'rec',       'rtype',    'tm',     'v' ]
+  rec_range = NumericRange(0, 1800)   #### Cludge ####
 
-  NOVALUE = { 'value': '' }
+  def get_value(result, column):
+  #-----------------------------
+    from biosignalml.utils import isoduration_to_seconds
+    NOVALUE = { 'value': '', 'type': 'literal', 'datatype': '' }
+    r = result.get(column, NOVALUE)
+##    print r
+    if   r['type'] == 'uri':
+      return abbreviate(r['value'])
+    elif r['type'] == 'typed-literal':
+      dt = abbreviate(r['datatype'])
+      if dt == 'xsd:dayTimeDuration':
+        return rec_range.map(isoduration_to_seconds(r['value']))
+      elif dt == 'xsd:integer':
+        return int(r['value'])
+      ## Extend ....   ## And needs to be in generic query results...
+    return r['value']
 
-  qr =  rdfstore.select(' '.join(('?' + c) for c in columns),
-          """graph ?g {
+
+  header  = [ 'Recording', 'Offset (secs)', 'Resource', 'Property', 'Value' ]
+  columns = [ 'rec',       'tm',            'rtype',    'prop',     'v',     ]
+  time_query = """graph ?g {
                ?rec a bsml:Recording .
                ?res a ?rtype .
-               { ?res ?p ?v . ?v bif:contains "PVC or PVCs" .
+               { ?res ?prop ?v . ?v bif:contains "PVC or PVCs" }
+             union {
+               ?res ?prop ?v filter (?v = pbank:pvcBeat) .
                }
-               union
-               { ?res bsml:eventType ?v filter (?v = pbank:pvcBeat) .
+             optional { ?res bsml:time ?time .
+               optional { ?time tl:at ?tm } .
+               optional { ?time tl:start ?tm } .
                }
-             }""",
+             }"""
+  grouping = None
+  sparql_query = time_query
+  query_cols = ' '.join(('?' + c) for c in columns)
+  query_order = '?rec ?res'
+
+  header  = [ 'Recording', 'Resource', 'Property', 'Count', 'Value',  ]
+  columns = [ 'rec',       'rtype',    'prop',     'ct',    'v',      ]
+  count_query = """graph ?g {
+               ?rec a bsml:Recording .
+               ?res a ?rtype .
+               { ?res ?prop ?v . ?v bif:contains 'PVC or PVCs or "premature ventricular"' }
+             union {
+               ?res ?prop ?v filter (?v = pbank:pvcBeat) .
+               }
+             }"""
+  grouping = '?rec ?rtype ?prop ?v'
+  sparql_query = count_query
+  query_cols = '?rec count(?v) as ?ct ?rtype ?prop ?v'
+  query_order = '?rec ?v'
+
+  qr =  rdfstore.select(query_cols,
+          sparql_query,
           distinct=True,
-          order='?rec ?res')
-  query_results = [ [ abbreviate(r.get(c, NOVALUE)['value']) for c in columns ] for r in qr ]
+          group=grouping,
+          limit=100,    #### Need a paged view OFFSET xxx LIMIT yyy
+          order=query_order)
+  query_results = [ [ get_value(r, c) for c in columns ] for r in qr ]
 
 # [ 'Recording', 'has Resource', 'of Type', 'with Property', 'having a Value' ]
 
   results = Results(header, query_results)
   results.show()
-  results.resizeCells()
+##  results.resizeCells()
   results.raise_()
 
   sys.exit(app.exec_())
 
 
-
+## ?res bsml:time ?tm . ?tm tl:duration "value"
 
 
   """
