@@ -37,7 +37,7 @@ class QueryForm(QtGui.QWidget):
   #----------------------------
     op = self.ui.operation.clone('operation%d' % row, True)
     op.row = row
-    self.ui.gridLayout.addWidget(op, row, 1, QtCore.Qt.AlignTop)
+    self.ui.gridLayout.addWidget(op, row, 0, QtCore.Qt.AlignTop)
     op.currentIndexChanged.connect(self.on_operation_changed)
     self._rows.append([ op, None ])
 
@@ -49,7 +49,7 @@ class QueryForm(QtGui.QWidget):
      and str(op.itemText(0)).startswith('More')):
       item = self.ui.expression.clone('expression%d' % op.row)
       item.set_configuration(self.config)
-      self.ui.gridLayout.addWidget(item, op.row, 2)
+      self.ui.gridLayout.addWidget(item, op.row, 1)
       self._rows[op.row][1] = item
       op.removeItem(0)
       if op.row < (MAXROWS - 1): self.add_operation(op.row+1)
