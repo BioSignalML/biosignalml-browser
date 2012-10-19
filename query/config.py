@@ -1,10 +1,28 @@
 from collections import namedtuple
 
+from biosignalml.rdf.sparqlstore import Virtuoso
+
 
 PropertyValue = namedtuple('PropertyValue', ['uri', 'relations', 'valuetype'])
 
 Relation      = namedtuple('Relation',      ['name', 'mapping'])
 
+
+PREFIXES = {
+  'bsml': 'http://www.biosignalml.org/ontologies/2011/04/biosignalml#',
+  'dct':  'http://purl.org/dc/terms/',
+  'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+  'pbank':	'http://www.biosignalml.org/ontologies/examples/physiobank#',
+
+  'repo': 'http://devel.biosignalml.org/resource/',
+  }
+
+def abbreviate_uri(uri):
+#=======================
+  v = str(uri)
+  for pfx, ns in PREFIXES.iteritems():
+    if v.startswith(ns): return '%s:%s' % (pfx, v[len(ns):])
+  return v
 
 
 class QueryConfig(object):
@@ -18,19 +36,19 @@ class QueryConfig(object):
     Configuration includes location of RDF store.
     """
 
-    self.rdfstore = None
+    self.rdfstore = Virtuoso('http://localhost:8890')
 
     self._propdata = {
       'Text': PropertyValue('bif:contains',
                             [ Relation('contains', 'text_word') ],
                             'text'),
-      'Event': PropertyValue('bsml:event',
+      'Event': PropertyValue('bsml:eventType',
                             [ Relation('has type', 'uri_match'),
                               Relation('not type', 'uri_nomatch') ],
                             'list'),
-      'Duration': PropertyValue('bsml:duration',
+      'Duration': PropertyValue('tl:duration',
                             ['=', '!=', '<', '<=', '>', '>='],
-                            'text'),
+                            'text'),     ## Needs ?res bsml:time ?tm . ?tm tl:duration "value"
       'Recording': PropertyValue('bsml:recording',
                             [ Relation('with URI',  'uri_match') ],
                             'text'),
@@ -43,14 +61,13 @@ class QueryConfig(object):
     for key, pv in self._propdata.iteritems():
       if pv.valuetype == 'list':
         values = [ ]
-#        for r in self.rdfstore.query("""select distinct ?value ?label where {
-#                                     [] <%s> ?value .
-#                                     optional { ?value rdfs:label ?label
-#                                     }""" % pv.uri,
-#                                 prefixes=prefixes):
-#          if r['label']: values.append(r['label'])
-#          else:          values.append(r['value'])
-        values = [ 'Normal beat', 'Fusion beat', 'Paced beat', 'PVC beat' ]  ###
+        for r in self.rdfstore.select('?value ?label',
+                                      '[] %(uri)s ?value . optional { ?value rdfs:label ?label }',
+                                      ## prefixes=prefixes,
+                                      params=dict(uri=pv.uri)):
+          if r['value'].get('label'): values.append(r['value']['label'])
+          else:                       values.append(abbreviate_uri(r['value']['value']))
+#        values = [ 'Normal beat', 'Fusion beat', 'Paced beat', 'PVC beat' ]  ###
         self._propvalues[key] = sorted(values)
 
 
