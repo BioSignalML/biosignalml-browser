@@ -577,15 +577,16 @@ class ChartPlot(ChartWidget):
     # Sort (into time order), start from top, and not
     # step down if prev. end <= new start
     # Save bar rectangle for finding tool tip...
-    self._annrects = []
-    endtimes = []
+    self._annrects = []      # list if (rect, id) pairs
+    endtimes = []            # [endtime, colour] pair for each row
     nextcolour = 0
+    colourdict = {}          # key by text, to use the same colour for the same text
     for ann, id in sorted([ (ann, id)
                             for id, ann in self._annotations.iteritems() ]):
       row = None
       colours = [ None, None, None ]   # On left, above, below
       for n, e in enumerate(endtimes):
-        if ann[0] > e[0]:     # Start time after last end omn this row?
+        if ann[0] > e[0]:     # Start time after last end on this row?
           row = n
           e[0] = ann[1]       # Save end time
           colours[0] = e[1]
@@ -597,20 +598,18 @@ class ChartPlot(ChartWidget):
         row = len(endtimes)
         endtimes.append([ann[1], None])
       ann_top = ANN_START + row*line_space
-      used = -1
-      l = len(ANN_COLOURS)
-      used = [ c for c in colours if c is not None ]
-      i = nextcolour
-      while i in used:        # Must terminate since len(ANN_COLOURS) > len(used)
-        i = (i + 1) % len(ANN_COLOURS)
-      nextcolour = (nextcolour + 1) % len(ANN_COLOURS)
-      endtimes[row][1] = i    # Save colour index
-      colour = ANN_COLOURS[i]
-#      for c in [ c for c in colours if c is not None ]:
-#        if used < c: used = c
-#      used = (used+1) % l
-#      endtimes[row-1][1] = used
-#      colour = ANN_COLOURS[used]
+      thiscolour = colourdict.get(ann[2], None)
+      if thiscolour is None:
+        used = -1
+        l = len(ANN_COLOURS)
+        used = [ c for c in colours if c is not None ]
+        thiscolour = nextcolour
+        while thiscolour in used:      # Must terminate since len(ANN_COLOURS) > len(used)
+          thiscolour = (thiscolour + 1) % len(ANN_COLOURS)
+        nextcolour = (nextcolour + 1) % len(ANN_COLOURS)
+        colourdict[ann[2]] = thiscolour
+      endtimes[row][1] = thiscolour  # Save colour index
+      colour = ANN_COLOURS[thiscolour]
       pen = QtGui.QPen(colour)
 #      pen.setCapStyle(QtCore.Qt.FlatCap)
 #      pen.setWidth(1)
