@@ -9,7 +9,7 @@ from config import QueryConfig
 from termgrid import TermGrid
 from sparql import Sparql
 
-from scroll import Ui_Form
+from ui.scroll import Ui_Form
 
 
 MAXROWS = 3   #: Maximum number of term expressions
