@@ -41,8 +41,10 @@ class Results(QtGui.QWidget):
 if __name__ == "__main__":
 #=========================
 
-  from biosignalml.rdf.sparqlstore import Virtuoso
+  import biosignalml.rdf as rdf
   from biosignalml.repository import BSMLStore
+  from biosignalml.rdf.sparqlstore import Virtuoso
+  from biosignalml.rdf.sparqlstore import get_result_value
 
   logging.basicConfig(format='%(asctime)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
@@ -70,57 +72,44 @@ if __name__ == "__main__":
 
   rec_range = NumericRange(0, 1800)   #### Cludge ####
 
-  def get_value(result, column):
-  #-----------------------------
-    from biosignalml.utils import isoduration_to_seconds
-    NOVALUE = { 'value': '', 'type': 'literal', 'datatype': '' }
-    r = result.get(column, NOVALUE)
-##    print r
-    if   r['type'] == 'uri':
-      return abbreviate(r['value'])
-    elif r['type'] == 'typed-literal':
-      dt = abbreviate(r['datatype'])
-      if dt == 'xsd:dayTimeDuration':
-        return rec_range.map(isoduration_to_seconds(r['value']))
-      elif dt == 'xsd:integer':
-        return int(r['value'])
-      ## Extend ....   ## And needs to be in generic query results...
-    return r['value']
+  summary = True
 
+  if summary:
+    header  = [ 'Recording', 'Resource', 'Property', 'Count', 'Value',  ]
+    columns = [ 'rec',       'rtype',    'prop',     'ct',    'v',      ]
+    count_query = """graph ?g {
+                 ?rec a bsml:Recording .
+                 ?res a ?rtype .
+                 { ?res ?prop ?v . ?v bif:contains 'PVC or PVCs or "premature ventricular"' }
+               union {
+                 ?res ?prop ?v filter (?v = pbank:pvcBeat) .
+                 }
+               }"""
+    grouping = '?rec ?rtype ?prop ?v'
+    sparql_query = count_query
+    query_cols = '?rec count(?v) as ?ct ?rtype ?prop ?v'
+    query_order = '?rec ?v'
 
-  header  = [ 'Recording', 'Offset (secs)', 'Resource', 'Property', 'Value' ]
-  columns = [ 'rec',       'tm',            'rtype',    'prop',     'v',     ]
-  time_query = """graph ?g {
-               ?rec a bsml:Recording .
-               ?res a ?rtype .
-               { ?res ?prop ?v . ?v bif:contains "PVC or PVCs" }
-             union {
-               ?res ?prop ?v filter (?v = pbank:pvcBeat) .
-               }
-             optional { ?res bsml:time ?time .
-               optional { ?time tl:at ?tm } .
-               optional { ?time tl:start ?tm } .
-               }
-             }"""
-  grouping = None
-  sparql_query = time_query
-  query_cols = ' '.join(('?' + c) for c in columns)
-  query_order = '?rec ?res'
+  else:
+    header  = [ 'Recording', 'Resource', 'Offset (secs)', 'Property', 'Value' ]
+    columns = [ 'rec',       'rtype',    'tm',            'prop',     'v',     ]
+    time_query = """graph ?g {
+                 ?rec a bsml:Recording .
+                 ?res a ?rtype .
+                 { ?res ?prop ?v . ?v bif:contains "PVC or PVCs" }
+               union {
+                 ?res ?prop ?v filter (?v = pbank:pvcBeat) .
+                 }
+               optional { ?res bsml:time ?time .
+                 optional { ?time tl:at ?tm } .
+                 optional { ?time tl:start ?tm } .
+                 }
+               }"""
+    grouping = None
+    sparql_query = time_query
+    query_cols = ' '.join(('?' + c) for c in columns)
+    query_order = '?rec ?res'
 
-  header  = [ 'Recording', 'Resource', 'Property', 'Count', 'Value',  ]
-  columns = [ 'rec',       'rtype',    'prop',     'ct',    'v',      ]
-  count_query = """graph ?g {
-               ?rec a bsml:Recording .
-               ?res a ?rtype .
-               { ?res ?prop ?v . ?v bif:contains 'PVC or PVCs or "premature ventricular"' }
-             union {
-               ?res ?prop ?v filter (?v = pbank:pvcBeat) .
-               }
-             }"""
-  grouping = '?rec ?rtype ?prop ?v'
-  sparql_query = count_query
-  query_cols = '?rec count(?v) as ?ct ?rtype ?prop ?v'
-  query_order = '?rec ?v'
 
   qr =  rdfstore.select(query_cols,
           sparql_query,
@@ -128,13 +117,13 @@ if __name__ == "__main__":
           group=grouping,
           limit=100,    #### Need a paged view OFFSET xxx LIMIT yyy
           order=query_order)
-  query_results = [ [ get_value(r, c) for c in columns ] for r in qr ]
 
-# [ 'Recording', 'has Resource', 'of Type', 'with Property', 'having a Value' ]
+  query_results = [ [ abbreviate(str(v)) if isinstance(v, rdf.Uri) else v
+                        for v in [ get_result_value(r, c) for c in columns ] ]
+                          for r in qr ]
 
   results = Results(header, query_results)
   results.show()
-##  results.resizeCells()
   results.raise_()
 
   sys.exit(app.exec_())
