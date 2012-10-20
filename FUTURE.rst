@@ -1,6 +1,21 @@
 Future Enhancments for QtBrowser
 ================================
 
+
+ Update screen viewer picture with better time axis labelling (e.g. units);
+ recording details; annotation; event bars; vertical zoom and scroll; signal
+ selection; etc.
+
+ Viewer control -- how much detail (turn on/off things like beat annotations
+ (markers and/or text)); what signals are displayed and their order; what
+ segment of a recording is shown; scroll/select/zoom; refresh v's live update...
+
+ User control over presentation --- positioning of elements, colours, styles,
+ themes, ...
+
+ Simple query configuration
+
+
 General
 -------
 
