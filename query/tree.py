@@ -126,6 +126,8 @@ class ResultsTreeModel(QtCore.QAbstractItemModel):
       item = index.internalPointer()
       if   role == QtCore.Qt.DisplayRole:
         return item.data(col)
+      elif role == QtCore.Qt.TextAlignmentRole:
+        return QtCore.Qt.AlignTop
       elif col == 0 and role == QtCore.Qt.DecorationRole:
         if item.data(2) == 'Database':
           return QtGui.QApplication.style().standardIcon(QtGui.QStyle.SP_DirIcon)
