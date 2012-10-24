@@ -276,7 +276,7 @@ class ChartPlot(ChartWidget):
   updateTimeScroll = QtCore.pyqtSignal(bool)
   annotationAdded = QtCore.pyqtSignal(float, float, str)
   annotationModified = QtCore.pyqtSignal(str, float, float, str)
-  exportRecording = QtCore.pyqtSignal(float, float)
+  exportRecording = QtCore.pyqtSignal(str, float, float)
 
   def __init__(self, parent=None):
   #-------------------------------
@@ -818,21 +818,28 @@ class ChartPlot(ChartWidget):
         menu.addAction("Export")
         item = menu.exec_(self.mapToGlobal(pos))
         if item:
+          clearselection = False
           if item.text() == 'Zoom':
             self._duration = self._selectend[1] - self._selectstart[1]
             self._timezoom = self.duration/self._duration
             # Now update slider's position to reflect _start _position _end
             self._setTimeGrid(self._selectstart[1], self._selectend[1])
             self.updateTimeScroll.emit(self._timezoom > 1.0)
+            clearselection = True
           elif item.text() == 'Annotate':
             dialog = AnnotationDialog(self._id, self._selectstart[1], self._selectend[1],
                                       parent=self)
             if dialog.exec_():
               text = str(dialog.annotation()).strip()
-              if text: self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text)
+              if text:
+                self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text)
+                clearselection = True
           elif item.text() == 'Export':
-            self.exportRecording.emit(self._selectstart[1], self._selectend[1])
-          self._selectend = self._selectstart
+            filename = QtGui.QFileDialog.getSaveFileName(self, 'Export region', '', '*.bsml')
+            if filename:
+              self.exportRecording.emit(filename, self._selectstart[1], self._selectend[1])
+              clearselection = True
+          if clearselection: self._selectend = self._selectstart
           self.update()
       else:
         menu.addAction("Save as PNG")
