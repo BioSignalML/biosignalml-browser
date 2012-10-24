@@ -149,3 +149,10 @@ Query Module
 
 * Then provenance graph could be another RDF graph displayed using
   this view.
+
+* Live update giving user feedback during query and selection.
+
+* Summaries of partial search results, classes of resources,
+  categories of a given resource.
+
+
