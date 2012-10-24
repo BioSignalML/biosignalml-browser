@@ -540,7 +540,7 @@ class Controller(QtGui.QWidget):
       self._annotation_table.appendRows( [ [str(annotation.uri)]
                                          + self._make_ann_times(start, end)
                                          + ['Annotation', annotation.comment ] ] )
-      self._annotations.append((annotation.uri, start, end, text, True))
+      self._annotations.append((str(annotation.uri), start, end, text, True))
       self.viewer.addAnnotation(annotation.uri, start, end, text, True)
 
   def annotationModified(self, id, start, end, text):
