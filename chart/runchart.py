@@ -316,8 +316,9 @@ class Controller(QtGui.QWidget):
       annstart = a.time.start if a.time is not None else None
       annend   = a.time.end   if a.time is not None else None
       if a.comment: self._annotations.append( (str(a.uri), annstart, annend, str(a.comment), True) )
-      for t in a.tags:
-        self._annotations.append( (str(a.uri), annstart, annend, abbreviate_uri(t), False) )
+      else:
+        for t in a.tags:
+          self._annotations.append( (str(a.uri), annstart, annend, abbreviate_uri(t), True) )
 
     for e in [store.get_event(evt, self._recording.graph_uri)
                 for evt in store.events(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph_uri)]:
