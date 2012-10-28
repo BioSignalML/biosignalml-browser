@@ -93,6 +93,10 @@ Chart Module
 
 * Show time position at mouse tip.
 
+* If we are already displaying the period that spans the double-clicked
+  event (in controller's table) then just postion display and don't
+  reload data.
+
 
 Query Module
 ------------
