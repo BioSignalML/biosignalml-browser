@@ -557,11 +557,11 @@ class ChartPlot(ChartWidget):
       painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
       painter.drawLine(QtCore.QPoint(m[0], ypos + 6),
         QtCore.QPoint(m[0], MARGIN_TOP+self._plot_height+10))
-      drawtext(painter, m[0], ypos, str(m[1]),
+      drawtext(painter, m[0], ypos, str(self._timeRange.map(m[1])),
         mapX=False, mapY=False)
       if n > 0 and m[1] != last[1]:
         painter.setPen(QtGui.QPen(textColour))
-        width = last[1] - m[1]
+        width = self._timeRange.map(last[1]) - self._timeRange.map(m[1])
         if width < 0: width = -width
         drawtext(painter, (last[0]+m[0])/2.0, ypos, str(width),
           mapX=False, mapY=False)
