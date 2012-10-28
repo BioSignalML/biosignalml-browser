@@ -292,6 +292,9 @@ class Controller(QtGui.QWidget):
       ## This is to resolve an issue Virtuoso has with xsd:dayTimeDuration...
       if isinstance(self._recording.duration, set):
         self._recording.duration = self._recording.duration.pop()
+    if self._recording is None:
+      raise IOError("Unknown recording: %s" % rec_uri)
+
 
     annotator = wfdbAnnotation   ##################
 
