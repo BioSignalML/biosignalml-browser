@@ -2,20 +2,6 @@ Future Enhancments for QtBrowser
 ================================
 
 
- Update screen viewer picture with better time axis labelling (e.g. units);
- recording details; annotation; event bars; vertical zoom and scroll; signal
- selection; etc.
-
- Viewer control -- how much detail (turn on/off things like beat annotations
- (markers and/or text)); what signals are displayed and their order; what
- segment of a recording is shown; scroll/select/zoom; refresh v's live update...
-
- User control over presentation --- positioning of elements, colours, styles,
- themes, ...
-
- Simple query configuration
-
-
 General
 -------
 
@@ -35,6 +21,7 @@ General
 * Optionally show rdfs:label instead of URIs.
 
 * Optionally abbreviate URIs (and specify base).
+
 
 Chart Module
 ------------
@@ -97,6 +84,31 @@ Chart Module
   event (in controller's table) then just postion display and don't
   reload data.
 
+* Show all semantic tags associated with an annotation.
+
+* Allow semantic tags to be used with an annotation. Specifying
+  a tag could start with choosing an ontology and then populating
+  a pulldown list with 'rdfs:label' values from tags in the
+  ontology.
+
+* Use DrugBank as an example??
+
+* Specify applicable tag ontologies in a configuration file.
+
+* Provide read-only view of an annotation (say if user doesn't
+  have update capabilities).
+
+* Update screen viewer picture with better time axis labelling (e.g. units);
+  recording details; annotation; event bars; vertical zoom and scroll; signal
+  selection; etc.
+
+* Viewer control -- how much detail (turn on/off things like beat annotations
+  (markers and/or text)); what signals are displayed and their order; what
+  segment of a recording is shown; scroll/select/zoom; refresh v's live update...
+
+* User control over presentation --- positioning of elements, colours, styles,
+  themes, ...
+
 
 Query Module
 ------------
@@ -134,7 +146,6 @@ Query Module
 * We could show query results in a text browser and allow links
   to be followed.
 
-
 * General columns for search results:::
 
     | Recording | ResourceType | Resource | Value | SNORQL_Link |
@@ -159,4 +170,4 @@ Query Module
 * Summaries of partial search results, classes of resources,
   categories of a given resource.
 
-
+* Simple query configuration
