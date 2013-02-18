@@ -285,7 +285,7 @@ class Controller(QtGui.QWidget):
 
     if rec_uri == 'edf':         ##################
       self._recording = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/swa49.edf')
-      self._recording.graph_uri = None
+      self._recording.graph = None
     else:                        ##################
       self._recording = store.get_recording_with_signals(rec_uri)
 
@@ -307,8 +307,8 @@ class Controller(QtGui.QWidget):
     self._timerange = NumericRange(0.0, duration)
 
     self._annotations = [ ]     # tuple(uri, start, end, text, editable)
-    for a in [store.get_annotation(ann, self._recording.graph_uri)
-                for ann in store.annotations(rec_uri, graph_uri=self._recording.graph_uri)]:
+    for a in [store.get_annotation(ann, self._recording.graph)
+                for ann in store.annotations(rec_uri, graph_uri=self._recording.graph)]:
       annstart = a.time.start if a.time is not None else None
       annend   = a.time.end   if a.time is not None else None
       if a.comment: self._annotations.append( (str(a.uri), annstart, annend, str(a.comment), True) )
@@ -316,8 +316,8 @@ class Controller(QtGui.QWidget):
         for t in a.tags:
           self._annotations.append( (str(a.uri), annstart, annend, abbreviate_uri(t), True) )
 
-    for e in [store.get_event(evt, self._recording.graph_uri)
-                for evt in store.events(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph_uri)]:
+    for e in [store.get_event(evt, self._recording.graph)
+                for evt in store.events(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph)]:
       self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), False) )
 
     self._annotation_table = SortedTable(self.controller.annotations,
@@ -330,7 +330,7 @@ class Controller(QtGui.QWidget):
     self._event_rows = None
     self.controller.events.addItem('None')
     self.controller.events.insertItems(1, ['%s (%s)' % (abbreviate_uri(etype), count)
-      for etype, count in store.eventtypes(rec_uri, counts=True, graph_uri=self._recording.graph_uri)])
+      for etype, count in store.eventtypes(rec_uri, counts=True, graph_uri=self._recording.graph)])
       # if no duration ...
     self.controller.events.addItem('All')
     self._event_type = 'None'
@@ -518,9 +518,9 @@ class Controller(QtGui.QWidget):
     if index == 'All': etype = None
     else: etype = expand_uri(str(index).rsplit(' (', 1)[0])
 
-    events = [ self._graphstore.get_event(evt, self._recording.graph_uri)
+    events = [ self._graphstore.get_event(evt, self._recording.graph)
                  for evt in self._graphstore.events(rec_uri, eventtype=etype, timetype=BSML.Instant,
-                                                    graph_uri=self._recording.graph_uri) ]
+                                                    graph_uri=self._recording.graph) ]
     self._events = { str(event.uri): (event.time.start, event.time.duration) for event in events }
     self._event_rows = self._annotation_table.appendRows(
       [ [ str(event.uri), self._timerange.map(event.time.start), self._timerange.map(event.time.end),
