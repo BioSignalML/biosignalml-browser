@@ -565,8 +565,8 @@ class Controller(QtGui.QWidget):
 
 
 
-if __name__ == "__main__":
-#=========================
+def main():
+#==========
 
   import biosignalml.client
 
@@ -612,3 +612,13 @@ if __name__ == "__main__":
   #viewer1.save_chart_as_png('test.png')   ## Needs to be via 'Save' button/menu and file dialog...
 
   sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+#=========================
+
+  logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
+
+  logging.getLogger().setLevel('DEBUG')
+  logging.debug("Starting...")
+  main()
