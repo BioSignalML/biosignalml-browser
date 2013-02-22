@@ -13,6 +13,23 @@ from annotation import AnnotationDialog
 ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
 
 
+try:
+## Borrowed from http://home.gna.org/veusz/
+  from veusz.qtloops import addNumpyToPolygonF
+
+  def make_polygon(points):
+  #------------------------
+    poly = QtGui.QPolygonF()
+    addNumpyToPolygonF(poly, points[..., 0], points[..., 1])
+    return poly
+
+except ImportError:
+
+  def make_polygon(points):
+  #------------------------
+    return QtGui.QPolygonF([QtCore.QPointF(pt[0], pt[1]) for pt in points])
+
+
 # Margins of plotting region within chart, in pixels
 MARGIN_LEFT   =  120
 MARGIN_RIGHT  =  80
@@ -98,7 +115,7 @@ class SignalPlot(object):
 
   def reset(self):
   #---------------
-    self._points = [ ]
+    self._poly = QtGui.QPolygonF()
     self._path = None
     self._lastpoint = None
 
@@ -127,13 +144,14 @@ class SignalPlot(object):
     if self._ymin == None or self._ymin > ymin: self._ymin = ymin
     if self._ymax == None or self._ymax < ymax: self._ymax = ymax
     self._setYrange()
+
+    poly = make_polygon(data.points)
     if self._path is None:
       self._path = QtGui.QPainterPath()
     else:
-      self._path.lineTo(QtCore.QPointF(data[0][0], data[0][1]))
-    trace = [ QtCore.QPointF(pt[0], pt[1]) for pt in data.points ]
-    self._path.addPolygon(QtGui.QPolygonF(trace))
-    self._points.extend(trace) ## for yValue lookup
+      self._path.lineTo(QtCore.QPointF(poly.at(0).x(), poly.at(0).y()))
+    self._path.addPolygon(poly)
+    self._poly += poly
 
   def yValue(self, time):
   #----------------------
@@ -141,18 +159,18 @@ class SignalPlot(object):
     Find the y-value corresponding to a time.
     """
     i = self._index(time)
-    if i is not None: return self._points[i].y()
+    if i is not None: return self._poly.at(i).y()
 
   def _index(self, time):
   #----------------------
     i = 0
-    j = len(self._points)
-    if (time < self._points[0].x()
-     or time > self._points[j-1].x()): return None
+    j = self._poly.size()
+    if (time < self._poly.at(0).x()
+     or time > self._poly.at(j-1).x()): return None
     while i < j:
       m = (i + j)//2
-      if self._points[m].x() <= time: i = m + 1
-      else:                          j = m
+      if self._poly.at(m).x() <= time: i = m + 1
+      else:                            j = m
     return i - 1
 
   def yPosition(self, timepos):
@@ -203,7 +221,7 @@ class SignalPlot(object):
          painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
          i = self._index(t)
          if i is not None:
-           y = self._range.map(self._points[i].y())
+           y = self._range.map(self._poly.at(i).y())
            xy = xfm.map(QtCore.QPointF(t, y))
            drawtext(painter, xy.x()+5, xy.y(), str(y), mapX=False, mapY=False, align=alignLeft)
 
