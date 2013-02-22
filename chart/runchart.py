@@ -7,9 +7,6 @@ from PyQt4 import QtCore, QtGui
 from ui.chart      import Ui_Chart
 from ui.controller import Ui_Controller
 
-import biosignalml.formats.hdf5 as hdf5
-import biosignalml.formats.edf  as edf
-
 from biosignalml import BSML
 import biosignalml.model
 import biosignalml.units.ontology as uom
@@ -282,12 +279,6 @@ class Controller(QtGui.QWidget):
       except ValueError:
         end = start
     duration = (end - start) if start < end else 10.0
-
-    if rec_uri == 'edf':         ##################
-      self._recording = edf.EDFRecording.open('/Users/dave/biosignalml/testdata/swa49.edf')
-      self._recording.graph = None
-    else:                        ##################
-      self._recording = store.get_recording_with_signals(rec_uri)
 
     if self._recording is None:
       raise IOError("Unknown recording: %s" % rec_uri)
