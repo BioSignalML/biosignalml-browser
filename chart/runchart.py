@@ -8,6 +8,7 @@ from ui.chart      import Ui_Chart
 from ui.controller import Ui_Controller
 
 from biosignalml import BSML
+from biosignalml.data import DataSegment
 import biosignalml.model
 import biosignalml.units.ontology as uom
 
@@ -56,6 +57,25 @@ def signal_uri(signal):
   uri = str(signal.uri)
   if uri.startswith(prefix): return uri[len(prefix):]
   else:                      return uri
+
+
+class SignalReadThread(QtCore.QThread):
+#======================================
+
+  append_points = QtCore.pyqtSignal(str, DataSegment)
+
+  def __init__(self, sig, interval, plotter):
+  #------------------------------------------
+    QtCore.QThread.__init__(self)
+    self._signal = sig
+    self._id = signal_uri(sig)
+    self._interval = interval
+    self.append_points.connect(plotter.ui.chart.appendData)
+
+  def run(self):
+  #-------------
+    for d in self._signal.read(self._interval, maxpoints=20000):
+      self.append_points.emit(self._id, d) ##, chartplot.make_polygon(d.points))
 
 
 class ChartForm(QtGui.QWidget):
@@ -362,10 +382,15 @@ class Controller(QtGui.QWidget):
 
   def _plot_signals(self, interval):
   #---------------------------------
+    readers = [ ]
     for s in self._recording.signals():
-      for d in s.read(interval, maxpoints=10000):
-        self.viewer.appendPlotData(signal_uri(s), d)
-
+      readers.append(SignalReadThread(s, interval, self.viewer))
+      readers[-1].start()
+    while True:
+      stopped = True
+      for t in readers:
+        stopped = stopped and t.wait(10)
+      if stopped: break
 
   def _make_ann_times(self, start, end):
   #-------------------------------------

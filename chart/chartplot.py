@@ -6,6 +6,8 @@ import numpy as np
 from PyQt4 import QtCore, QtGui
 from PyQt4 import QtOpenGL
 
+from biosignalml.data import DataSegment
+
 from nrange import NumericRange
 from annotation import AnnotationDialog
 
@@ -338,6 +340,7 @@ class ChartPlot(ChartWidget):
     self._plotlist.append([str(id), visible, plot])
     self.update()
 
+  @QtCore.pyqtSlot(str, DataSegment)
   def appendData(self, id, data):
   #------------------------------
     n = self._plots.get(str(id), -1)
