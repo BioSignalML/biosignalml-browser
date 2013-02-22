@@ -562,8 +562,7 @@ class Controller(QtGui.QWidget):
 if __name__ == "__main__":
 #=========================
 
-  from biosignalml.rdf.sparqlstore import Virtuoso
-  from biosignalml.repository import BSMLStore
+  import biosignalml.client
 
   logging.basicConfig(format='%(asctime)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
@@ -574,7 +573,6 @@ if __name__ == "__main__":
     sys.exit(1)
 
   rec_uri = sys.argv[1]
-
   if len(sys.argv) >= 3:
     try:
       start = float(sys.argv[2])
@@ -583,7 +581,6 @@ if __name__ == "__main__":
       sys.exit(1)
   else:
     start = 0.0
-
   if len(sys.argv) >= 4:
     try:
       duration = float(sys.argv[3])
@@ -595,7 +592,7 @@ if __name__ == "__main__":
 
   app = QtGui.QApplication(sys.argv)
 
-  store = BSMLStore('http://devel.biosignalml.org', Virtuoso('http://localhost:8890'))
+  store = biosignalml.client.Repository.connect(rec_uri)
   try:
     ctlr = Controller(store, "%s#t=%g,%g" % (rec_uri, start, start+duration))
   except IOError, msg:
