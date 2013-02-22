@@ -348,13 +348,20 @@ class Controller(QtGui.QWidget):
         try: units = uom.RESOURCES[str(s.units)].label
         except: units = str(s.units)
         self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
-      for d in s.read(interval): self.viewer.appendPlotData(uri, d)
+    self._plot_signals(interval)
     for a in self._annotations:  # tuple(uri, start, end, text)
       if a[1] is not None: self.viewer.addAnnotation(*a)
 
     # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
     self.viewer.show()
     self.viewer.raise_()
+
+  def _plot_signals(self, interval):
+  #---------------------------------
+    for s in self._recording.signals():
+      for d in s.read(interval, maxpoints=10000):
+        self.viewer.appendPlotData(signal_uri(s), d)
+
 
   def _make_ann_times(self, start, end):
   #-------------------------------------
@@ -434,9 +441,7 @@ class Controller(QtGui.QWidget):
     if start != self._start:
       self.viewer.resetPlots()
       interval = self._recording.interval(start, self._duration)
-      for s in self._recording.signals():
-        for d in s.read(interval):
-          self.viewer.appendPlotData(signal_uri(s), d)
+      self._plot_signals(interval)
       self.viewer.setTimeRange(start, self._duration)
       self._start = start
       for a in self._annotations:  # tuple(uri, start, end, text)
