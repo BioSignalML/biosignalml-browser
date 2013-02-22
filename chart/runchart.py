@@ -280,13 +280,13 @@ class Controller(QtGui.QWidget):
         end = start
     duration = (end - start) if start < end else 10.0
 
+    self._recording = store.get_recording_with_signals(rec_uri)
     if self._recording is None:
       raise IOError("Unknown recording: %s" % rec_uri)
+    self.setWindowTitle(str(self._recording.uri))
 
     annotator = wfdbAnnotation   ##################
 
-    if self._recording is None: raise IOError("Unknown recording: %s" % rec_uri)
-    self.setWindowTitle(str(self._recording.uri))
 
     self._start = start
     self._duration = duration
@@ -598,8 +598,8 @@ if __name__ == "__main__":
     sys.exit(1)
 
   ctlr.show()
-  ctlr.raise_()
   ctlr.viewer.raise_()
+  ctlr.viewer.activateWindow()
 
   #viewer1.save_chart_as_png('test.png')   ## Needs to be via 'Save' button/menu and file dialog...
 
