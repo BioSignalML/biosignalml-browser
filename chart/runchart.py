@@ -263,10 +263,10 @@ class Controller(QtGui.QWidget):
                           )
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
-
     self._graphstore = store
 
     start = 0.0
+    end = None
     rec_uri = str(rec_uri)
     mediatag = rec_uri.rfind('#t=')
     if mediatag >= 0:
@@ -277,16 +277,20 @@ class Controller(QtGui.QWidget):
         start = float(times[0])
         end = float(times[2])
       except ValueError:
-        end = start
-    duration = (end - start) if start < end else 10.0
+        pass
 
     self._recording = store.get_recording_with_signals(rec_uri)
     if self._recording is None:
       raise IOError("Unknown recording: %s" % rec_uri)
     self.setWindowTitle(str(self._recording.uri))
 
-    annotator = wfdbAnnotation   ##################
-
+    if end is None:
+      duration = self._recording.duration
+    elif start <= end:
+      duration = end - start
+    else:
+      duration = start - end
+      start = end
 
     self._start = start
     self._duration = duration
@@ -296,6 +300,8 @@ class Controller(QtGui.QWidget):
     self.controller.splitter.splitterMoved.connect(self._splitterMoved)
 
     self._timerange = NumericRange(0.0, duration)
+
+    annotator = wfdbAnnotation   ##################
 
     self._annotations = [ ]     # tuple(uri, start, end, text, editable)
     for a in [store.get_annotation(ann, self._recording.graph)
@@ -572,6 +578,8 @@ if __name__ == "__main__":
     print "Usage: %s recording_uri [start] [duration]" % sys.argv[0]
     sys.exit(1)
 
+  app = QtGui.QApplication(sys.argv)
+
   rec_uri = sys.argv[1]
   if len(sys.argv) >= 3:
     try:
@@ -583,18 +591,16 @@ if __name__ == "__main__":
     start = 0.0
   if len(sys.argv) >= 4:
     try:
-      duration = float(sys.argv[3])
+      end = start + float(sys.argv[3])
     except:
       print "Invalid duration"
       sys.exit(1)
   else:
-    duration = 60.0
-
-  app = QtGui.QApplication(sys.argv)
+    end = None
 
   store = biosignalml.client.Repository.connect(rec_uri)
   try:
-    ctlr = Controller(store, "%s#t=%g,%g" % (rec_uri, start, start+duration))
+    ctlr = Controller(store, "%s#t=%g,%s" % (rec_uri, start, end if end is not None else ''))
   except IOError, msg:
     print str(msg)
     sys.exit(1)
