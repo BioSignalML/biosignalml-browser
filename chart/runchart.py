@@ -124,10 +124,6 @@ class ChartForm(QtGui.QWidget):
   #------------------------------
     self.ui.chart.deleteAnnotation(id)
 
-  def appendPlotData(self, id, data):
-  #----------------------------------
-    self.ui.chart.appendData(id, data)
-
   def setPlotVisible(self, id, visible=True):
   #------------------------------------------
     self.ui.chart.setPlotVisible(id, visible)
@@ -645,8 +641,6 @@ def main():
   ctlr.show()
   ctlr.viewer.raise_()
   ctlr.viewer.activateWindow()
-
-  #viewer1.save_chart_as_png('test.png')   ## Needs to be via 'Save' button/menu and file dialog...
 
   sys.exit(app.exec_())
 
