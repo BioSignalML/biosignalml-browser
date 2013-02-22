@@ -74,8 +74,14 @@ class SignalReadThread(QtCore.QThread):
 
   def run(self):
   #-------------
+    self._exit = False
     for d in self._signal.read(self._interval, maxpoints=20000):
       self.append_points.emit(self._id, d) ##, chartplot.make_polygon(d.points))
+      if self._exit: break
+
+  def stop(self):
+  #--------------
+    self._exit = True
 
 
 class ChartForm(QtGui.QWidget):
@@ -374,23 +380,33 @@ class Controller(QtGui.QWidget):
         try: units = uom.RESOURCES[str(s.units)].label
         except: units = str(s.units)
         self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
+    self._readers = [ ]
     self._plot_signals(interval)
     for a in self._annotations:  # tuple(uri, start, end, text)
       if a[1] is not None: self.viewer.addAnnotation(*a)
     # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
     self.viewer.show()
 
+  def __del__(self):
+  #-----------------
+    self._stop_readers()
+
   def _plot_signals(self, interval):
   #---------------------------------
-    readers = [ ]
+    self._stop_readers()
     for s in self._recording.signals():
-      readers.append(SignalReadThread(s, interval, self.viewer))
-      readers[-1].start()
+      self._readers.append(SignalReadThread(s, interval, self.viewer))
+      self._readers[-1].start()
+
+  def _stop_readers(self):
+  #-----------------------
+    for t in self._readers: t.stop()
     while True:
       stopped = True
-      for t in readers:
+      for t in self._readers:
         stopped = stopped and t.wait(10)
       if stopped: break
+    self._readers = [ ]
 
   def _make_ann_times(self, start, end):
   #-------------------------------------
