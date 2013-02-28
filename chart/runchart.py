@@ -387,9 +387,10 @@ class Controller(QtGui.QWidget):
   #-----------------
     self._stop_readers()
 
-  def _plot_signals(self, interval):
-  #---------------------------------
+  def _plot_signals(self, interval, reset=False):
+  #----------------------------------------------
     self._stop_readers()
+    if reset: self.viewer.resetPlots()
     for s in self._recording.signals():
       self._readers.append(SignalReadThread(s, interval, self.viewer))
       self._readers[-1].start()
@@ -456,6 +457,8 @@ class Controller(QtGui.QWidget):
 
   def _setupSlider(self):
   #----------------------
+    self._sliding = False
+    self._move_timer = None
     duration = self._recording.duration
     if duration == 0: return
     sb = self.controller.segment
@@ -467,21 +470,46 @@ class Controller(QtGui.QWidget):
     self._setSliderTime(self.controller.rec_start, 0.0)
     self._setSliderTime(self.controller.rec_end, duration)
 
+  def _stop_move_timer(self):
+  #--------------------------
+    if self._move_timer is not None:
+      self.killTimer(self._move_timer)
+      self._move_timer = None
+
+  def _start_move_timer(self):
+  #---------------------------
+    if self._move_timer is not None:
+      self.killTimer(self._move_timer)
+    self._move_timer = self.startTimer(100)  # 100ms
+
+  def timerEvent(self, event):
+  #---------------------------
+    if self._move_timer is not None:
+      self._stop_move_timer()
+      self._moveViewer(self._newstart)
+
   def _sliderMoved(self):
   #----------------------
     sb = self.controller.segment
     duration = self._recording.duration
     width = sb.maximum() + sb.pageStep() - sb.minimum()
-    newstart = sb.value()*duration/float(width)
-    self._showSliderTime(newstart)
-    if not self.controller.segment.isSliderDown():
-      self._moveViewer(newstart)
+    self._newstart = sb.value()*duration/float(width)
+    self._showSliderTime(self._newstart)
+    if self.controller.segment.isSliderDown():
+      self._start_move_timer()
+      self._sliding = True
+    elif self._sliding:
+      if self._move_timer is not None:
+        self._stop_move_timer()
+        self._moveViewer(self._newstart)
+      self._sliding = False
+    else:
+      self._moveViewer(self._newstart)
 
   def _moveViewer(self, start):
   #----------------------------
     if start != self._start:
-      self.viewer.resetPlots()
-      self._plot_signals(self._recording.interval(start, self._duration))
+      self._plot_signals(self._recording.interval(start, self._duration), reset=True)
       self.viewer.setTimeRange(start, self._duration)
       self._start = start
       for a in self._annotations:  # tuple(uri, start, end, text)
