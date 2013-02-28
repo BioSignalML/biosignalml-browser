@@ -366,6 +366,7 @@ class Controller(QtGui.QWidget):
     self.viewer.ui.chart.annotationModified.connect(self.annotationModified)
     self.viewer.ui.chart.exportRecording.connect(self.exportRecording)
 
+    self._readers = [ ]
     self._setupSlider()
     interval = self._recording.interval(self._start, self._duration)
     for s in self._recording.signals():
@@ -376,7 +377,6 @@ class Controller(QtGui.QWidget):
         try: units = uom.RESOURCES[str(s.units)].label
         except: units = str(s.units)
         self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
-    self._readers = [ ]
     self._plot_signals(interval)
     for a in self._annotations:  # tuple(uri, start, end, text)
       if a[1] is not None: self.viewer.addAnnotation(*a)
