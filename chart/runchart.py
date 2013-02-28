@@ -301,7 +301,7 @@ class Controller(QtGui.QWidget):
       except ValueError:
         pass
 
-    self._recording = store.get_recording_with_signals(rec_uri)
+    self._recording = store.get_recording(rec_uri)
     if self._recording is None:
       raise IOError("Unknown recording: %s" % rec_uri)
     self.setWindowTitle(str(self._recording.uri))
