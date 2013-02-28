@@ -128,7 +128,6 @@ class SignalPlot(object):
       else:          (ymin, ymax) = (-0.5, 0.5)
     else:
       (ymin, ymax) = (self._ymin, self._ymax)
-
     self._range = NumericRange(ymin, ymax)
     self.gridstep = self._range.major
     self.ymin = self._range.start
@@ -146,7 +145,6 @@ class SignalPlot(object):
     if self._ymin == None or self._ymin > ymin: self._ymin = ymin
     if self._ymax == None or self._ymax < ymax: self._ymax = ymax
     self._setYrange()
-
     poly = make_polygon(data.points)
     if self._path is None:
       self._path = QtGui.QPainterPath()
