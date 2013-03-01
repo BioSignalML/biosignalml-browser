@@ -109,17 +109,16 @@ class SignalPlot(object):
   #-----------------------------------------------------------------
     self.label = '%s\n(%s)' % (label, units) if units else label
     self.selected = False
-    self._ymin = ymin
-    self._ymax = ymax
-    self.reset()
+    self.reset(ymin, ymax)
     if data: self.appendData(data, ymin, ymax)
     else:    self._setYrange()
 
-  def reset(self):
-  #---------------
+  def reset(self, ymin=None, ymax=None):
+  #-------------------------------------
+    self._ymin = ymin
+    self._ymax = ymax
     self._poly = QtGui.QPolygonF()
-    self._path = None
-    self._lastpoint = None
+    self._path = QtGui.QPainterPath()
 
   def _setYrange(self):
   #--------------------
@@ -140,17 +139,18 @@ class SignalPlot(object):
 
   def appendData(self, data, ymin=None, ymax=None):
   #------------------------------------------------
+    if data.dataseries is None:
+      self.reset(ymin, ymax)
+      return
     if ymin is None: ymin = np.amin(data.data)
     if ymax is None: ymax = np.amax(data.data)
     if self._ymin == None or self._ymin > ymin: self._ymin = ymin
     if self._ymax == None or self._ymax < ymax: self._ymax = ymax
     self._setYrange()
     poly = make_polygon(data.points)
-    if self._path is None:
-      self._path = QtGui.QPainterPath()
-    else:
-      self._path.lineTo(QtCore.QPointF(poly.at(0).x(), poly.at(0).y()))
-    self._path.addPolygon(poly)
+    path = QtGui.QPainterPath()
+    path.addPolygon(poly)
+    self._path.connectPath(path)
     self._poly += poly
 
   def yValue(self, time):
@@ -265,7 +265,10 @@ class EventPlot(object):
 
   def appendData(self, data):
   #--------------------------
-    self._events.extend([ (pt[0], self._mapping(pt[1])) for pt in data.points ])
+    if data.dataseries is None:
+      self.reset()
+    else:
+      self._events.extend([ (pt[0], self._mapping(pt[1])) for pt in data.points ])
 
   def drawTrace(self, painter, start, end, markers=None, **kwds):
   #--------------------------------------------------------------
@@ -402,9 +405,8 @@ class ChartPlot(ChartWidget):
       p[2].selected = (n == row)
     self.update()
 
-  def resetPlots(self):
-  #--------------------
-    for p in self._plotlist: p[2].reset()
+  def resetAnnotations(self):
+  #--------------------------
     self._annotations = collections.OrderedDict()
     self._annrects = []
 

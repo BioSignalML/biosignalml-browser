@@ -75,8 +75,9 @@ class SignalReadThread(QtCore.QThread):
   def run(self):
   #-------------
     self._exit = False
+    self.append_points.emit(self._id, DataSegment(0, None))
     for d in self._signal.read(self._interval, maxpoints=20000):
-      self.append_points.emit(self._id, d) ##, chartplot.make_polygon(d.points))
+      self.append_points.emit(self._id, d)
       if self._exit: break
 
   def stop(self):
@@ -140,9 +141,9 @@ class ChartForm(QtGui.QWidget):
   #---------------------------
     self.ui.chart.plotSelected(row)
 
-  def resetPlots(self):
-  #--------------------
-    self.ui.chart.resetPlots()
+  def resetAnnotations(self):
+  #--------------------------
+    self.ui.chart.resetAnnotations()
 
   def save_chart_as_png(self, filename):
   #-------------------------------------
@@ -308,6 +309,8 @@ class Controller(QtGui.QWidget):
 
     if end is None:
       duration = self._recording.duration
+      if duration is None or duration <= 0.0:
+        self._recording.duration = duration = 60.0    ######
     elif start <= end:
       duration = end - start
     else:
@@ -387,10 +390,10 @@ class Controller(QtGui.QWidget):
   #-----------------
     self._stop_readers()
 
-  def _plot_signals(self, interval, reset=False):
-  #----------------------------------------------
+  def _plot_signals(self, interval):
+  #---------------------------------
     self._stop_readers()
-    if reset: self.viewer.resetPlots()
+    self.viewer.resetAnnotations()
     for s in self._recording.signals():
       self._readers.append(SignalReadThread(s, interval, self.viewer))
       self._readers[-1].start()
@@ -457,8 +460,8 @@ class Controller(QtGui.QWidget):
 
   def _setupSlider(self):
   #----------------------
-    self._sliding = False
-    self._move_timer = None
+    self._sliding = True            ## So we don't moveViewer() when sliderMoved()
+    self._move_timer = None         ## is triggered by setting the slider's value
     duration = self._recording.duration
     if duration == 0: return
     sb = self.controller.segment
@@ -509,7 +512,7 @@ class Controller(QtGui.QWidget):
   def _moveViewer(self, start):
   #----------------------------
     if start != self._start:
-      self._plot_signals(self._recording.interval(start, self._duration), reset=True)
+      self._plot_signals(self._recording.interval(start, self._duration))
       self.viewer.setTimeRange(start, self._duration)
       self._start = start
       for a in self._annotations:  # tuple(uri, start, end, text)
