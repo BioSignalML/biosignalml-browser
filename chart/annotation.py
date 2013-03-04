@@ -3,11 +3,21 @@ from PyQt4 import QtCore, QtGui
 from ui.annotate import Ui_AnnotationDialog
 
 
+class TagItem(QtGui.QListWidgetItem):
+#====================================
+
+  def __init__(self, uri, label):
+  #------------------------------
+    QtGui.QListWidgetItem.__init__(self, label)
+    self.uri = uri
+    self.label = label
+
+
 class AnnotationDialog(QtGui.QDialog):
 #=====================================
 
-  def __init__(self, id, start, end, text='', parent=None):
-  #--------------------------------------------------------
+  def __init__(self, id, start, end, text='', tags=None, parent=None):
+  #-------------------------------------------------------------------
     QtGui.QDialog.__init__(self, parent)
     self.ui = Ui_AnnotationDialog()
     self.ui.setupUi(self)
@@ -17,7 +27,34 @@ class AnnotationDialog(QtGui.QDialog):
     self.setWindowTitle(id)
     self.ui.description.setText('Annotate %g to %g seconds' % (start, end))
     self.ui.annotation.setPlainText(text)
+    
+    if tags is None: tags = [ ]
+    semantic_tags = parent.semantic_tags  # { uri: label }
+    self.ui.taglist.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+    for u, l in semantic_tags.iteritems(): self.ui.taglist.addItem(TagItem(u, l))
+    for t in tags:   ## Show 'unknown' tags
+      if t not in semantic_tags: self.ui.taglist.addItem(TagItem(t, str(t)))
+    self.ui.taglist.sortItems()
+    ## Setting selected as items are added doesn't work (because of sort??)
+    for n in xrange(self.ui.taglist.count()):
+      t = self.ui.taglist.item(n)
+      if t.uri in tags: t.setSelected(True)
+    self.ui.taglist.hide()
+    self._tags_visible = False
+    QtCore.QObject.connect(self.ui.tags, QtCore.SIGNAL("clicked()"), self.show_tags)
+    self.ui.taglabels.setText(', '.join(sorted([semantic_tags.get(t, str(t)) for t in tags])))
 
-  def annotation(self):
-  #--------------------
-    return self.ui.annotation.toPlainText()
+
+  def get_annotation(self):
+  #------------------------
+    return str(self.ui.annotation.toPlainText()).strip()
+
+  def show_tags(self):
+  #-------------------
+    self.ui.taglabels.setText(', '.join(sorted([t.label for t in self.ui.taglist.selectedItems()])))
+    self._tags_visible = not self._tags_visible
+    self.ui.taglist.setVisible(self._tags_visible)
+
+  def get_tags(self):
+  #------------------
+     return [ t.uri for t in self.ui.taglist.selectedItems() ]

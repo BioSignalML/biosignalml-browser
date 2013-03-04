@@ -105,6 +105,10 @@ class ChartForm(QtGui.QWidget):
     self.ui.chart.setTimeRange(start, duration)
     self.ui.chart.setTimeScroll(self.ui.timescroll)
 
+  def setSemanticTags(self, tag_dict):
+  #-----------------------------------
+    self.ui.chart.setSemanticTags(tag_dict)
+
   def setMarker(self, time):
   #-------------------------
     self.ui.chart.setMarker(time)
@@ -117,9 +121,9 @@ class ChartForm(QtGui.QWidget):
   #------------------------------------------------------------------------------------
     self.ui.chart.addEventPlot(id, label, mapping, visible=visible, data=data)
 
-  def addAnnotation(self, id, start, end, text, edit=False):
-  #---------------------------------------------------------
-    self.ui.chart.addAnnotation(id, start, end, text, edit)
+  def addAnnotation(self, id, start, end, text, tags, edit=False):
+  #---------------------------------------------------------------
+    self.ui.chart.addAnnotation(id, start, end, text, tags, edit)
 
   def deleteAnnotation(self, id):
   #------------------------------
@@ -275,6 +279,20 @@ class SignalInfo(QtCore.QAbstractTableModel):
                    QtCore.Qt.CheckStateRole)
 
 
+class AnnotationTable(object):
+#=============================
+
+  @staticmethod
+  def header():
+  #------------
+    return ['', 'Start', 'End', 'Duration',  'Type', 'Annotation', 'Tags']
+
+  @staticmethod
+  def row(uri, times, type, text, tagtext=''):
+  #---=---------------------------------------
+    return [str(uri)] + times + [ type, text, tagtext ]
+
+
 class Controller(QtGui.QWidget):
 #===============================
 
@@ -328,25 +346,27 @@ class Controller(QtGui.QWidget):
 
     annotator = wfdbAnnotation   ##################
 
+    self.semantic_tags = store.get_semantic_tags()
+
     self._annotations = [ ]     # tuple(uri, start, end, text, editable)
     for a in [store.get_annotation(ann, self._recording.graph)
                 for ann in store.annotations(rec_uri, graph_uri=self._recording.graph)]:
       annstart = a.time.start if a.time is not None else None
       annend   = a.time.end   if a.time is not None else None
-      if a.comment: self._annotations.append( (str(a.uri), annstart, annend, str(a.comment), True) )
-      else:
-        for t in a.tags:
-          self._annotations.append( (str(a.uri), annstart, annend, abbreviate_uri(t), True) )
-
+      self._annotations.append( (str(a.uri), annstart, annend,
+                                 a.comment if a.comment is not None else '',
+                                 a.tags, True) )
+##      print (str(a.uri), annstart, annend, str(a.comment), a.tags)
     for e in [store.get_event(evt, self._recording.graph)
                 for evt in store.events(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph)]:
-      self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), False) )
+      self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), None, False) )
 
-    self._annotation_table = SortedTable(self.controller.annotations,
-                                         ['', 'Start', 'End', 'Duration',  'Type', 'Annotation'],
-                                         [ [ a[0] ] + self._make_ann_times(a[1], a[2])
-                                         + ['Annotation' if a[4] else 'Event', a[3]]
-                                             for a in self._annotations ], parent=self)
+    self._annotation_table = SortedTable(self.controller.annotations, AnnotationTable.header(),
+                                         [ AnnotationTable.row(a[0], self._make_ann_times(a[1], a[2]),
+                                                              'Annotation' if a[5] else 'Event',
+                                                              a[3], self._tag_labels(a[4]))
+                                             for a in self._annotations ],
+                                         parent=self)
     self._events = { }
     self._event_type = None
     self._event_rows = None
@@ -369,6 +389,8 @@ class Controller(QtGui.QWidget):
     self.viewer.ui.chart.annotationModified.connect(self.annotationModified)
     self.viewer.ui.chart.exportRecording.connect(self.exportRecording)
 
+    self.viewer.setSemanticTags(self.semantic_tags)
+
     self._readers = [ ]
     self._setupSlider()
     interval = self._recording.interval(self._start, self._duration)
@@ -381,7 +403,7 @@ class Controller(QtGui.QWidget):
         except: units = str(s.units)
         self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
     self._plot_signals(interval)
-    for a in self._annotations:  # tuple(uri, start, end, text)
+    for a in self._annotations:  # tuple(uri, start, end, text, tags)
       if a[1] is not None: self.viewer.addAnnotation(*a)
     # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
     self.viewer.show()
@@ -419,6 +441,13 @@ class Controller(QtGui.QWidget):
         return [ nstart, nend, nend - nstart ]
       else:
         return [ nstart, '', '' ]
+
+  def _tag_labels(self, tags):
+  #---------------------------
+    if tags is None:
+      return ''
+    else:
+      return ', '.join(sorted([self.semantic_tags.get(t, str(t)) for t in tags]))
 
   def _adjust_layout(self):
   #------------------------
@@ -515,7 +544,7 @@ class Controller(QtGui.QWidget):
       self._plot_signals(self._recording.interval(start, self._duration))
       self.viewer.setTimeRange(start, self._duration)
       self._start = start
-      for a in self._annotations:  # tuple(uri, start, end, text)
+      for a in self._annotations:  # tuple(uri, start, end, text, tags)
         if a[1] is not None: self.viewer.addAnnotation(*a)
 
   def on_segment_valueChanged(self, position):
@@ -588,34 +617,36 @@ class Controller(QtGui.QWidget):
                  for evt in self._graphstore.events(self._recording.uri, eventtype=etype,
                                                     timetype=BSML.Instant, graph_uri=self._recording.graph) ]
     self._events = { str(event.uri): (event.time.start, event.time.duration) for event in events }
-    self._event_rows = self._annotation_table.appendRows(
-      [ [ str(event.uri), self._timerange.map(event.time.start), self._timerange.map(event.time.end),
-                          event.time.duration, 'Event', abbreviate_uri(event.eventtype) ]
-           for event in events ])
+    self._event_rows = self._annotation_table.appendRows([ AnnotationTable.row(event.uri,
+                                                            [self._timerange.map(event.time.start),
+                                                             self._timerange.map(event.time.end),
+                                                             event.time.duration], 'Event',
+                                                            abbreviate_uri(event.eventtype))
+                                                         for event in events ])
     self._adjust_layout()
 
-  def annotationAdded(self, start, end, text, predecessor=None):
-  #-------------------------------------------------------------
-    text = str(text).strip()
-    if text:
-      annotation = biosignalml.model.Annotation.Note(self._recording.uri.make_uri(),
-                                                     self._recording, text,
+  def annotationAdded(self, start, end, text, tags, predecessor=None):
+  #-------------------------------------------------------------------
+    if text or tags:
+      annotation = biosignalml.model.Annotation(self._recording.uri.make_uri(), about=self._recording,
+                                                     comment=text, tags=tags,
                                                      time=self._recording.interval(start, end=end),
                                                      preceededBy=predecessor)
       self._graphstore.extend_recording(self._recording, annotation)
-      self._annotation_table.appendRows( [ [str(annotation.uri)]
-                                         + self._make_ann_times(start, end)
-                                         + ['Annotation', annotation.comment ] ] )
+      self._annotation_table.appendRows([ AnnotationTable.row(annotation.uri,
+                                                              self._make_ann_times(start, end),
+                                                              'Annotation', annotation.comment,
+                                                              self._tag_labels(annotation.tags)) ])
       self._annotations.append((str(annotation.uri), start, end, text, True))
-      self.viewer.addAnnotation(annotation.uri, start, end, text, True)
+      self.viewer.addAnnotation(annotation.uri, start, end, text, tags, True)
 
-  def annotationModified(self, id, start, end, text):
-  #--------------------------------------------------
+  def annotationModified(self, id, start, end, text, tags):
+  #--------------------------------------------------------
     id = str(id)
     self._annotation_table.deleteRow(id)
     self._delete_annotation(id)
     self.viewer.deleteAnnotation(id)
-    self.annotationAdded(start, end, text, predecessor=id)
+    self.annotationAdded(start, end, text, tags, predecessor=id)
 
 
   def exportRecording(self, start, end):

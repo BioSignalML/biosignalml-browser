@@ -295,8 +295,8 @@ class ChartPlot(ChartWidget):
   """
   chartPosition = QtCore.pyqtSignal(int, int, int)
   updateTimeScroll = QtCore.pyqtSignal(bool)
-  annotationAdded = QtCore.pyqtSignal(float, float, str)
-  annotationModified = QtCore.pyqtSignal(str, float, float, str)
+  annotationAdded = QtCore.pyqtSignal(float, float, str, list)
+  annotationModified = QtCore.pyqtSignal(str, float, float, str, list)
   exportRecording = QtCore.pyqtSignal(str, float, float)
 
   def __init__(self, parent=None):
@@ -320,12 +320,17 @@ class ChartPlot(ChartWidget):
     self._selecting = False
     self._selectmove = None
     self._mousebutton = None
-    self._annotations = collections.OrderedDict()  # id --> to tuple(start, end, text, editable)
+    self._annotations = collections.OrderedDict()  # id --> to tuple(start, end, text, tags, editable)
     self._annrects = []    # List of tuple(rect, id)
+    self.semantic_tags = { }
 
   def setId(self, id):
   #-------------------
     self._id = str(id)
+
+  def setSemanticTags(self, tag_dict):
+  #-----------------------------------
+    self.semantic_tags = tag_dict    ## { uri: label }
 
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
@@ -410,10 +415,10 @@ class ChartPlot(ChartWidget):
     self._annotations = collections.OrderedDict()
     self._annrects = []
 
-  def addAnnotation(self, id, start, end, text, edit=False):
-  #-------------------------------------------------------
+  def addAnnotation(self, id, start, end, text, tags, edit=False):
+  #---------------------------------------------------------------
     if end > self.start and start < self.end:
-      self._annotations[str(id)] = (start, end, text, edit)
+      self._annotations[str(id)] = (start, end, text, tags, edit)
 
   def deleteAnnotation(self, id):
   #------------------------------
@@ -619,7 +624,8 @@ class ChartPlot(ChartWidget):
         row = len(endtimes)
         endtimes.append([ann[1], None])
       ann_top = ANN_START + row*line_space
-      thiscolour = colourdict.get(ann[2], None)
+      text = self._annotation_display_text(ann)
+      thiscolour = colourdict.get(text, None)
       if thiscolour is None:
         used = -1
         l = len(ANN_COLOURS)
@@ -628,7 +634,7 @@ class ChartPlot(ChartWidget):
         while thiscolour in used:      # Must terminate since len(ANN_COLOURS) > len(used)
           thiscolour = (thiscolour + 1) % len(ANN_COLOURS)
         nextcolour = (nextcolour + 1) % len(ANN_COLOURS)
-        colourdict[ann[2]] = thiscolour
+        colourdict[text] = thiscolour
       endtimes[row][1] = thiscolour  # Save colour index
       colour = ANN_COLOURS[thiscolour]
       pen = QtGui.QPen(colour)
@@ -766,6 +772,16 @@ class ChartPlot(ChartWidget):
       self._selecting = True
     self.update()
 
+  def _annotation_display_text(self, ann):
+  #---------------------------------------
+    text = [ ]
+    if ann[2] != '':
+      text.append("<p>%s</p>" % ann[2])
+    if ann[3] not in [ None, [ ] ]:
+      text.append("<p>Tags: %s</p>"
+        % ', '.join(sorted([self.semantic_tags.get(t, str(t)) for t in ann[3]])))
+    return ''.join(text)
+
   def mouseMoveEvent(self, event):
   #-------------------------------
     xpos = event.pos().x()
@@ -779,7 +795,7 @@ class ChartPlot(ChartWidget):
           font.setPointSize(16)
           QtGui.QToolTip.setFont(font)
           QtGui.QToolTip.showText(event.globalPos(),
-           "<p>%s</p>" % self._annotations[a[1]][2])
+            self._annotation_display_text(self._annotations[a[1]]))
           tooltip = True
           break
     elif self._marker >= 0:
@@ -819,15 +835,16 @@ class ChartPlot(ChartWidget):
       if a[0].contains(pos):
         id = a[1]
         ann = self._annotations[id]
-        if ann[3]:  # editable
+        if ann[4]:  # editable
           menu = QtGui.QMenu()
           menu.addAction("Edit")
           if menu.exec_(self.mapToGlobal(pos)):
-            dialog = AnnotationDialog(self._id, ann[0], ann[1], text=ann[2], parent=self)
+            dialog = AnnotationDialog(self._id, ann[0], ann[1], text=ann[2], tags=ann[3], parent=self)
             if dialog.exec_():
-              text = str(dialog.annotation()).strip()
-              if text and text != str(ann[2]).strip():
-                self.annotationModified.emit(id, ann[0], ann[1], text)
+              text = str(dialog.get_annotation()).strip()
+              tags = dialog.get_tags()
+              if (text and text != str(ann[2]).strip() or tags != ann[3]):
+                self.annotationModified.emit(id, ann[0], ann[1], text, tags)
         return
     if (MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)
      and MARGIN_LEFT < pos.x() <= (MARGIN_LEFT + self._plot_width)):
@@ -848,12 +865,12 @@ class ChartPlot(ChartWidget):
             self.updateTimeScroll.emit(self._timezoom > 1.0)
             clearselection = True
           elif item.text() == 'Annotate':
-            dialog = AnnotationDialog(self._id, self._selectstart[1], self._selectend[1],
-                                      parent=self)
+            dialog = AnnotationDialog(self._id, self._selectstart[1], self._selectend[1], parent=self)
             if dialog.exec_():
-              text = str(dialog.annotation()).strip()
-              if text:
-                self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text)
+              text = dialog.get_annotation()
+              tags = dialog.get_tags()
+              if text or tags:
+                self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text, tags)
                 clearselection = True
           elif item.text() == 'Export':
             filename = QtGui.QFileDialog.getSaveFileName(self, 'Export region', '', '*.bsml')
