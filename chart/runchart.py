@@ -696,7 +696,7 @@ def main():
   else:
     end = None
 
-  store = biosignalml.client.Repository.connect(rec_uri)
+  store = biosignalml.client.Repository(rec_uri)
   try:
     ctlr = Controller(store, "%s#t=%g,%s" % (rec_uri, start, end if end is not None else ''))
   except IOError, msg:
