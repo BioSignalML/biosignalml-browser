@@ -90,7 +90,10 @@ class ChartForm(QtGui.QWidget):
 
   def __init__(self, id, start, duration, parent=None):
   #----------------------------------------------------
-    QtGui.QWidget.__init__(self, parent)
+    QtGui.QWidget.__init__(self, parent, QtCore.Qt.CustomizeWindowHint
+                                       | QtCore.Qt.WindowMinMaxButtonsHint
+                           #           | QtCore.Qt.WindowStaysOnTopHint
+                          )
     self.ui = Ui_Chart()
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
