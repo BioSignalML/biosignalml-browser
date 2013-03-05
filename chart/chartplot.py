@@ -417,6 +417,7 @@ class ChartPlot(ChartWidget):
 
   def addAnnotation(self, id, start, end, text, tags, edit=False):
   #---------------------------------------------------------------
+    if end is None: end = start
     if end > self.start and start < self.end:
       self._annotations[str(id)] = (start, end, text, tags, edit)
 
@@ -652,8 +653,12 @@ class ChartPlot(ChartWidget):
       if xstart < right_side and MARGIN_LEFT < xend:
         left = max(MARGIN_LEFT, xstart)
         right = min(xend, right_side)
+        width = right - left
+        if width <= 1:                     ##  Instants
+          left -= 2
+          width = 4
         rect = QtCore.QRect(left, ann_top, ##  - ANN_LINE_WIDTH/2,
-                            right - left, ANN_LINE_WIDTH)
+                            width, ANN_LINE_WIDTH)
 #        pen.setWidth(ANN_LINE_WIDTH)
 #        painter.setPen(pen)
         painter.fillRect(rect, colour)
