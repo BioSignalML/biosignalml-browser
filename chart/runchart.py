@@ -351,7 +351,7 @@ class Controller(QtGui.QWidget):
 
     self.semantic_tags = store.get_semantic_tags()
 
-    self._annotations = [ ]     # tuple(uri, start, end, text, editable)
+    self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable)
     for a in [store.get_annotation(ann, self._recording.graph)
                 for ann in store.annotations(rec_uri, graph_uri=self._recording.graph)]:
       annstart = a.time.start if a.time is not None else None
@@ -640,7 +640,7 @@ class Controller(QtGui.QWidget):
                                                               self._make_ann_times(start, end),
                                                               'Annotation', annotation.comment,
                                                               self._tag_labels(annotation.tags)) ])
-      self._annotations.append((str(annotation.uri), start, end, text, True))
+      self._annotations.append((str(annotation.uri), start, end, text, tags, True))
       self.viewer.addAnnotation(annotation.uri, start, end, text, tags, True)
 
   def annotationModified(self, id, start, end, text, tags):
