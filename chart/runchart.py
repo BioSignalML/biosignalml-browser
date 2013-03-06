@@ -32,8 +32,6 @@ PREFIXES = {
   'dct':  'http://purl.org/dc/terms/',
   'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
   'pbank':	'http://www.biosignalml.org/ontologies/examples/physiobank#',
-
-  'repo': 'http://devel.biosignalml.org/resource/',
   }
 
 def abbreviate_uri(uri):
