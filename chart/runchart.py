@@ -450,7 +450,7 @@ class Controller(QtGui.QWidget):
     if tags is None:
       return ''
     else:
-      return ', '.join(sorted([self.semantic_tags.get(t, str(t)) for t in tags]))
+      return ', '.join(sorted([self.semantic_tags.get(str(t), str(t)) for t in tags]))
 
   def _adjust_layout(self):
   #------------------------

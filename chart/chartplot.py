@@ -784,7 +784,7 @@ class ChartPlot(ChartWidget):
       text.append("<p>%s</p>" % ann[2])
     if ann[3] not in [ None, [ ] ]:
       text.append("<p>Tags: %s</p>"
-        % ', '.join(sorted([self.semantic_tags.get(t, str(t)) for t in ann[3]])))
+        % ', '.join(sorted([self.semantic_tags.get(str(t), str(t)) for t in ann[3]])))
     return ''.join(text)
 
   def mouseMoveEvent(self, event):
