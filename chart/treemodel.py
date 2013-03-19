@@ -96,8 +96,9 @@ class UriTreeModel(QtCore.QAbstractItemModel):
       elif col == 0 and role == QtCore.Qt.DecorationRole:
         if item.branch(): return QtGui.QApplication.style().standardIcon(QtGui.QStyle.SP_DirIcon)
         else:             return QtGui.QApplication.style().standardIcon(QtGui.QStyle.SP_FileIcon)
-      elif role == QtCore.Qt.ToolTipRole:
-        return item.get_data(1)  ## Could go to repo for metadata for tool-tip....
+   ##   elif role == QtCore.Qt.ToolTipRole:
+   ##     return item.get_data(1)  ## Could go to repo for metadata for tool-tip....
+   ##     return '<div class="metadata"><p><span class="emphasised">Duration: </span><span class="details">0:13:45.389868</span></p><p><span class="emphasised">Format: </span><span class="details">application/x-bsml+hdf5</span></p><p><span class="emphasised">Imported: </span><span class="details">2013-03-11 02:28:30.602365+00:00</span></p><p><span class="emphasised">Importer: </span><span class="details">d.brooks@auckland.ac.nz</span></p></div>'
     return QtCore.QVariant()
 
   def flags(self, index):
