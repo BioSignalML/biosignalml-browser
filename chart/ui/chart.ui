@@ -101,6 +101,21 @@
           <string>10 x</string>
          </property>
         </item>
+        <item>
+         <property name="text">
+          <string>20 x</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>50 x</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 x</string>
+         </property>
+        </item>
        </widget>
       </item>
      </layout>

@@ -170,7 +170,7 @@ class ChartForm(QtGui.QWidget):
   def on_timezoom_currentIndexChanged(self, index):
   #------------------------------------------------
     if isinstance(index, int):
-      scale = [1.0, 2.0, 5.0, 10.0][index]
+      scale = [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0][index]
       self.ui.chart.setTimeZoom(scale)
       self.position_timescroll(index > 0)
 
