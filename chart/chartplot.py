@@ -203,7 +203,8 @@ class SignalPlot(object):
     while y <= self.ymax:
       painter.setPen(QtGui.QPen(gridMinorColour))
       painter.drawLine(QtCore.QPointF(start, y), QtCore.QPointF(end, y))
-      if ((endlabels or self.ymin < y < self.ymax)
+      if (labelfreq > 0
+       and (endlabels or self.ymin < y < self.ymax)
        and (self.gridheight/labelfreq) > 1 and (n % labelfreq) == 0):
         painter.drawLine(QtCore.QPointF(start-0.005*(end-start), y), QtCore.QPointF(start, y))
         painter.setPen(QtGui.QPen(textColour))
@@ -484,7 +485,10 @@ class ChartPlot(ChartWidget):
     gridheight = 0
     for plot in plots: gridheight += plot.gridheight
     plotposition = gridheight
-    labelfreq = int(10.0/(float(self._plot_height)/(gridheight + 1))) + 1
+    try:
+      labelfreq = int(10.0/(float(self._plot_height)/(gridheight + 1))) + 1
+    except ZeroDivisionError:
+      labelfreq = 0
     for plot in plots:
       qp.save()
       qp.scale(1.0, float(plot.gridheight)/gridheight)
