@@ -1,4 +1,4 @@
-all: chart.py controller.py annotate.py
+all: chart.py controller.py annotate.py repo.py
 
 %.py: %.ui
 	pyuic4 $< -o $@
