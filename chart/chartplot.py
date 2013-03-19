@@ -298,6 +298,7 @@ class ChartPlot(ChartWidget):
   updateTimeScroll = QtCore.pyqtSignal(bool)
   annotationAdded = QtCore.pyqtSignal(float, float, str, list)
   annotationModified = QtCore.pyqtSignal(str, float, float, str, list)
+  annotationDeleted = QtCore.pyqtSignal(str)
   exportRecording = QtCore.pyqtSignal(str, float, float)
 
   def __init__(self, parent=None):
@@ -847,13 +848,23 @@ class ChartPlot(ChartWidget):
         if ann[4]:  # editable
           menu = QtGui.QMenu()
           menu.addAction("Edit")
-          if menu.exec_(self.mapToGlobal(pos)):
-            dialog = AnnotationDialog(self._id, ann[0], ann[1], text=ann[2], tags=ann[3], parent=self)
-            if dialog.exec_():
-              text = str(dialog.get_annotation()).strip()
-              tags = dialog.get_tags()
-              if (text and text != str(ann[2]).strip() or tags != ann[3]):
-                self.annotationModified.emit(ann_id, ann[0], ann[1], text, tags)
+          menu.addAction("Delete")
+          item = menu.exec_(self.mapToGlobal(pos))
+          if item:
+            if item.text() == 'Edit':
+              dialog = AnnotationDialog(self._id, ann[0], ann[1], text=ann[2], tags=ann[3], parent=self)
+              if dialog.exec_():
+                text = str(dialog.get_annotation()).strip()
+                tags = dialog.get_tags()
+                if (text and text != str(ann[2]).strip() or tags != ann[3]):
+                  self.annotationModified.emit(ann_id, ann[0], ann[1], text, tags)
+            elif item.text() == 'Delete':
+              confirm = QtGui.QMessageBox(QtGui.QMessageBox.Question, "Delete Annotation",
+                "Delete Annotation", QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)
+              confirm.setInformativeText("Do you want to delete the annotation?")
+              confirm.setDefaultButton(QtGui.QMessageBox.Cancel)
+              if confirm.exec_() == QtGui.QMessageBox.Ok:
+                self.annotationDeleted.emit(ann_id)
         return
     if (MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)
      and MARGIN_LEFT < pos.x() <= (MARGIN_LEFT + self._plot_width)):

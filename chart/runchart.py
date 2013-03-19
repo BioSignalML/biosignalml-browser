@@ -388,6 +388,7 @@ class Controller(QtGui.QWidget):
     self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
     self.viewer.ui.chart.annotationAdded.connect(self.annotationAdded)
     self.viewer.ui.chart.annotationModified.connect(self.annotationModified)
+    self.viewer.ui.chart.annotationDeleted.connect(self.annotationDeleted)
     self.viewer.ui.chart.exportRecording.connect(self.exportRecording)
 
     self.viewer.setSemanticTags(self.semantic_tags)
@@ -641,14 +642,21 @@ class Controller(QtGui.QWidget):
       self._annotations.append((str(annotation.uri), start, end, text, tags, True))
       self.viewer.addAnnotation(annotation.uri, start, end, text, tags, True)
 
-  def annotationModified(self, id, start, end, text, tags):
-  #--------------------------------------------------------
-    id = str(id)
+  def _remove_annotation(self, id):
+  #--------------------------------
     self._annotation_table.deleteRow(id)
     self._delete_annotation(id)
     self.viewer.deleteAnnotation(id)
+
+  def annotationModified(self, id, start, end, text, tags):
+  #--------------------------------------------------------
+    self._remove_annotation(id)
     self.annotationAdded(start, end, text, tags, predecessor=id)
 
+  def annotationDeleted(self, id):
+  #-------------------------------
+    self._remove_annotation(id)
+    self._graphstore.remove_recording_resource(self._recording, id)
 
   def exportRecording(self, start, end):
   #-------------------------------------
