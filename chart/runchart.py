@@ -341,7 +341,7 @@ class Controller(QtGui.QWidget):
     self.controller.rec_posn = QtGui.QLabel(self)
     self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
     self.controller.rec_posn.resize(self.controller.rec_start.size())
-    self.controller.splitter.splitterMoved.connect(self._splitterMoved)
+    self.controller.splitter.splitterMoved.connect(self._splitter_moved)
 
     self._timerange = NumericRange(0.0, duration)
 
@@ -393,8 +393,8 @@ class Controller(QtGui.QWidget):
     self.viewer.setSemanticTags(self.semantic_tags)
 
     self._readers = [ ]
-    self._setupSlider()
     interval = self._recording.interval(self._start, self._duration)
+    self._setup_slider()
     for s in self._recording.signals():
       uri = signal_uri(s)
       if str(s.units) == str(uom.UNITS.AnnotationData.uri):
@@ -453,14 +453,14 @@ class Controller(QtGui.QWidget):
   def _adjust_layout(self):
   #------------------------
     self.controller.annotations.resizeCells()
-    self._showSliderTime(self._start)
+    self._show_slider_time(self._start)
 
   def resizeEvent(self, event):
   #----------------------------
     self._adjust_layout()
 
-  def _splitterMoved(self, pos, index):
-  #------------------------------------
+  def _splitter_moved(self, pos, index):
+  #-------------------------------------
     self._adjust_layout()
 
   def showEvent(self, event):
@@ -469,28 +469,28 @@ class Controller(QtGui.QWidget):
     self._adjust_layout()
     QtGui.QWidget.showEvent(self, event)
 
-  def _setSliderTime(self, label, time):
-  #-------------------------------------
+  def _set_slider_time(self, label, time):
+  #---------------------------------------
     ## Show as HH:MM:SS
     label.setText(str(self._timerange.map(time, -1)))
 
-  def _showSliderTime(self, time):
-  #-------------------------------
-    self._setSliderTime(self.controller.rec_posn, time)
+  def _show_slider_time(self, time):
+  #---------------------------------
+    self._set_slider_time(self.controller.rec_posn, time)
     sb = self.controller.segment
     self.controller.rec_posn.move(  ## 50 = approx width of scroll end arrows
       20 + sb.pos().x() + (sb.width()-50)*time/self._recording.duration,
       self.controller.rec_start.pos().y() + 6)
 
-  def _setSliderValue(self, time):
-  #-------------------------------
+  def _set_slider_value(self, time):
+  #---------------------------------
     sb = self.controller.segment
     width = sb.maximum() + sb.pageStep() - sb.minimum()
     sb.setValue(width*time/self._recording.duration)
 
-  def _setupSlider(self):
-  #----------------------
-    self._sliding = True            ## So we don't moveViewer() when sliderMoved()
+  def _setup_slider(self):
+  #-----------------------
+    self._sliding = True            ## So we don't move_viewer() when sliderMoved()
     self._move_timer = None         ## is triggered by setting the slider's value
     duration = self._recording.duration
     if duration == 0: return
@@ -500,8 +500,8 @@ class Controller(QtGui.QWidget):
     sb.setPageStep(scrollwidth*self._duration/duration)
     sb.setMaximum(scrollwidth - sb.pageStep())
     sb.setValue(scrollwidth*self._start/duration)
-    self._setSliderTime(self.controller.rec_start, 0.0)
-    self._setSliderTime(self.controller.rec_end, duration)
+    self._set_slider_time(self.controller.rec_start, 0.0)
+    self._set_slider_time(self.controller.rec_end, duration)
 
   def _stop_move_timer(self):
   #--------------------------
@@ -519,28 +519,28 @@ class Controller(QtGui.QWidget):
   #---------------------------
     if self._move_timer is not None:
       self._stop_move_timer()
-      self._moveViewer(self._newstart)
+      self._move_viewer(self._newstart)
 
-  def _sliderMoved(self):
-  #----------------------
+  def _slider_moved(self):
+  #-----------------------
     sb = self.controller.segment
     duration = self._recording.duration
     width = sb.maximum() + sb.pageStep() - sb.minimum()
     self._newstart = sb.value()*duration/float(width)
-    self._showSliderTime(self._newstart)
+    self._show_slider_time(self._newstart)
     if self.controller.segment.isSliderDown():
       self._start_move_timer()
       self._sliding = True
     elif self._sliding:
       if self._move_timer is not None:
         self._stop_move_timer()
-        self._moveViewer(self._newstart)
+        self._move_viewer(self._newstart)
       self._sliding = False
     else:
-      self._moveViewer(self._newstart)
+      self._move_viewer(self._newstart)
 
-  def _moveViewer(self, start):
-  #----------------------------
+  def _move_viewer(self, start):
+  #-----------------------------
     if start != self._start:
       self._plot_signals(self._recording.interval(start, self._duration))
       self.viewer.setTimeRange(start, self._duration)
@@ -550,14 +550,14 @@ class Controller(QtGui.QWidget):
 
   def on_segment_valueChanged(self, position):
   #-------------------------------------------
-    self._sliderMoved()
+    self._slider_moved()
     # Sluggish if large data segments with tracking...
   # Tracking is on, show time at slider posiotion
   # But also catch slider released and use this to refresh chart data...
 
   def on_segment_sliderReleased(self):
   #-----------------------------------
-    self._sliderMoved()
+    self._slider_moved()
 
   def on_allsignals_toggled(self, state):
   #--------------------------------------
@@ -598,9 +598,9 @@ class Controller(QtGui.QWidget):
         self._duration = end - start
       else:
         start = max(0.0, time - self._duration/4.0)
-      self._moveViewer(start)
-      self._setSliderValue(start)
-      self._showSliderTime(start)
+      self._move_viewer(start)
+      self._set_slider_value(start)
+      self._show_slider_time(start)
       self.viewer.setMarker(time)
 
   def on_events_currentIndexChanged(self, index):
