@@ -250,10 +250,6 @@ class EventPlot(object):
     self._events = [ ]
     self._eventpos = []
 
-  def yValue(self, time):
-  #----------------------
-    return None
-
   def yPosition(self, timepos):
   #----------------------------
     timepos = int(timepos+0.5) + 3                          ## "close to"
