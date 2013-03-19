@@ -309,6 +309,7 @@ class Controller(QtGui.QWidget):
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
     self._graphstore = store
+    self._readers = [ ]
 
     start = 0.0
     end = None
@@ -397,7 +398,6 @@ class Controller(QtGui.QWidget):
 
     self.viewer.setSemanticTags(self.semantic_tags)
 
-    self._readers = [ ]
     interval = self._recording.interval(self._start, self._duration)
     self._setup_slider()
     for s in self._recording.signals():
