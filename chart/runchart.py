@@ -333,6 +333,7 @@ class Controller(QtGui.QWidget):
       raise IOError("Unknown recording: %s" % rec_uri)
     self.uri = str(self._recording.uri)
     self.setWindowTitle(self.uri)
+    self._make_uri = self._recording.uri.make_uri    # Method for minting new URIs
 
     if end is None:
       duration = self._recording.duration
@@ -637,7 +638,7 @@ class Controller(QtGui.QWidget):
   def annotationAdded(self, start, end, text, tags, predecessor=None):
   #-------------------------------------------------------------------
     if text or tags:
-      annotation = biosignalml.model.Annotation(self._recording.uri.make_uri(), about=self._recording,
+      annotation = biosignalml.model.Annotation(self._make_uri(), about=self._recording,
                                                      comment=text, tags=tags,
                                                      time=self._recording.interval(start, end=end),
                                                      preceededBy=predecessor)
