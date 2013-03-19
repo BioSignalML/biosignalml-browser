@@ -159,7 +159,12 @@ class SignalPlot(object):
     Find the y-value corresponding to a time.
     """
     i = self._index(time)
-    if i is not None: return self._poly.at(i).y()
+    if i is not None:
+      if i >= (self._poly.size() - 1):
+        i = self._poly.size() - 2
+      p0 = self._poly.at(i)
+      p1 = self._poly.at(i+1)
+      return p0.y() + (time - p0.x())*(p1.y() - p0.y())/(p1.x() - p0.x())
 
   def _index(self, time):
   #----------------------
@@ -219,9 +224,9 @@ class SignalPlot(object):
       xfm = painter.transform()
       for n, t in enumerate(markers):
          painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
-         i = self._index(t)
-         if i is not None:
-           y = self._range.map(self._poly.at(i).y())
+         y = self.yValue(t)
+         if y is not None:
+           y = self._range.map(y, extra=1)
            xy = xfm.map(QtCore.QPointF(t, y))
            drawtext(painter, xy.x()+5, xy.y(), str(y), mapX=False, mapY=False, align=alignLeft)
 
