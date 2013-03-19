@@ -89,12 +89,12 @@ class SignalReadThread(QtCore.QThread):
 class ChartForm(QtGui.QWidget):
 #==============================
 
-    QtGui.QWidget.__init__(self, parent, QtCore.Qt.CustomizeWindowHint
-                                       | QtCore.Qt.WindowMinMaxButtonsHint
-                           #           | QtCore.Qt.WindowStaysOnTopHint
-                          )
   def __init__(self, uri, start, duration, parent=None):
   #-----------------------------------------------------
+    QtGui.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
+#                                       | QtCore.Qt.WindowMinMaxButtonsHint
+#                           #           | QtCore.Qt.WindowStaysOnTopHint
+#                          )
     self.ui = Ui_Chart()
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
@@ -300,12 +300,12 @@ class AnnotationTable(object):
 class Controller(QtGui.QWidget):
 #===============================
 
-  def __init__(self, store, rec_uri, parent=None):
-  #-----------------------------------------------
-    QtGui.QWidget.__init__(self, parent, QtCore.Qt.CustomizeWindowHint
-                                       | QtCore.Qt.WindowMinMaxButtonsHint
-                           #           | QtCore.Qt.WindowStaysOnTopHint
-                          )
+  def __init__(self, store, rec_uri, recording=None, parent=None):
+  #---------------------------------------------------------------
+    QtGui.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
+#                                       | QtCore.Qt.WindowMinMaxButtonsHint
+#                           #           | QtCore.Qt.WindowStaysOnTopHint
+#                          )
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
     self._graphstore = store
