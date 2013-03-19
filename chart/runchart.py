@@ -74,9 +74,12 @@ class SignalReadThread(QtCore.QThread):
   #-------------
     self._exit = False
     self.append_points.emit(self._id, DataSegment(0, None))
-    for d in self._signal.read(self._interval, maxpoints=20000):
-      self.append_points.emit(self._id, d)
-      if self._exit: break
+    try:
+      for d in self._signal.read(self._interval, maxpoints=20000):
+        self.append_points.emit(self._id, d)
+        if self._exit: break
+    except Exception, msg:
+      logging.error(msg)
 
   def stop(self):
   #--------------
