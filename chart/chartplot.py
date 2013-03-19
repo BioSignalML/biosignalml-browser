@@ -139,7 +139,7 @@ class SignalPlot(object):
 
   def appendData(self, data, ymin=None, ymax=None):
   #------------------------------------------------
-    if data.dataseries is None:
+    if len(data) == 0:
       self.reset(ymin, ymax)
       return
     if ymin is None: ymin = np.amin(data.data)
@@ -270,7 +270,7 @@ class EventPlot(object):
 
   def appendData(self, data):
   #--------------------------
-    if data.dataseries is None:
+    if len(data) == 0:
       self.reset()
     else:
       self._events.extend([ (pt[0], self._mapping(pt[1])) for pt in data.points ])
