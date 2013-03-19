@@ -641,8 +641,8 @@ class Controller(QtGui.QWidget):
       annotation = biosignalml.model.Annotation(self._make_uri(), about=self._recording,
                                                      comment=text, tags=tags,
                                                      time=self._recording.interval(start, end=end),
-      self._graphstore.extend_recording(self._recording, annotation)
                                                      precededBy=predecessor)
+      self._graphstore.extend_recording_graph(self._recording, annotation)
       self._annotation_table.appendRows([ AnnotationTable.row(annotation.uri,
                                                               self._make_ann_times(start, end),
                                                               'Annotation', annotation.comment,
