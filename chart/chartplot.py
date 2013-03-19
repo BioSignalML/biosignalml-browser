@@ -219,7 +219,6 @@ class SignalPlot(object):
     painter.drawPath(self._path)
     #painter.drawPolyline(QtGui.QPolygonF(self._points))
     # But very fast as is, esp. when using OpenGL
-
     painter.setClipping(False)
     if markers:
       xfm = painter.transform()
@@ -452,7 +451,7 @@ class ChartPlot(ChartWidget):
 
     if self._id is not None:
       drawtext(qp, MARGIN_LEFT+self._plot_width/2, 10, self._id,
-      fontSize=16, fontWeight=QtGui.QFont.Bold)
+               fontSize=16, fontWeight=QtGui.QFont.Bold)
 
     # Set pixel positions of markers and selected region for
     # use in mouse events.
@@ -495,7 +494,7 @@ class ChartPlot(ChartWidget):
       plotposition -= plot.gridheight
       qp.translate(0.0, float(plotposition)/plot.gridheight)
       plot.drawTrace(qp, self._start, self._end,
-        labelfreq = labelfreq,
+        labelfreq=labelfreq,
         markers=[m[1] for m in self._markers])
       qp.restore()
     # Event labels have now been assigned (by drawTrace())
@@ -843,8 +842,8 @@ class ChartPlot(ChartWidget):
     self._mousebutton = None
     for a in self._annrects:
       if a[0].contains(pos):
-        id = a[1]
-        ann = self._annotations[id]
+        ann_id = a[1]
+        ann = self._annotations[ann_id]
         if ann[4]:  # editable
           menu = QtGui.QMenu()
           menu.addAction("Edit")
@@ -854,7 +853,7 @@ class ChartPlot(ChartWidget):
               text = str(dialog.get_annotation()).strip()
               tags = dialog.get_tags()
               if (text and text != str(ann[2]).strip() or tags != ann[3]):
-                self.annotationModified.emit(id, ann[0], ann[1], text, tags)
+                self.annotationModified.emit(ann_id, ann[0], ann[1], text, tags)
         return
     if (MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)
      and MARGIN_LEFT < pos.x() <= (MARGIN_LEFT + self._plot_width)):
