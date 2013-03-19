@@ -325,7 +325,10 @@ class Controller(QtGui.QWidget):
       except ValueError:
         pass
 
-    self._recording = store.get_recording(rec_uri)
+    if recording is None:
+      self._recording = store.get_recording(rec_uri)
+    else:
+      self._recording = recording
     if self._recording is None:
       raise IOError("Unknown recording: %s" % rec_uri)
     self.uri = str(self._recording.uri)
@@ -672,13 +675,36 @@ class Controller(QtGui.QWidget):
   #  pass
 
 
+def show_chart(store, recording, start=0.0, end=None):
+#=====================================================
+  try:
+    ctlr = Controller(store, "%s#t=%g,%s" % (recording.uri, start, end if end is not None else ''))
+  except IOError, msg:
+    print str(msg)
+    return
+  ctlr.viewer.raise_()
+  ctlr.viewer.activateWindow()
+  return ctlr
 
-def main():
-#==========
+
+def show_recording(uri, start=0.0, end=None):
+#============================================
+  store = biosignalml.client.Repository(uri)
+  try:
+    ctlr = Controller(store, "%s#t=%g,%s" % (uri, start, end if end is not None else ''))
+  except IOError, msg:
+    sys.exit(str(msg))
+  ctlr.viewer.raise_()
+  ctlr.viewer.activateWindow()
+  return ctlr
+
+
+if __name__ == "__main__":
+#=========================
 
   import biosignalml.client
 
-  logging.basicConfig(format='%(asctime)s: %(message)s')
+  logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
   logging.getLogger().setLevel('DEBUG')
 
   ## Replace following with Python arg parser...
@@ -706,25 +732,8 @@ def main():
   else:
     end = None
 
-  store = biosignalml.client.Repository(rec_uri)
-  try:
-    ctlr = Controller(store, "%s#t=%g,%s" % (rec_uri, start, end if end is not None else ''))
-  except IOError, msg:
-    print str(msg)
-    sys.exit(1)
-
-  ctlr.show()
-  ctlr.viewer.raise_()
-  ctlr.viewer.activateWindow()
+  viewer = show_recording(rec_uri, start, end)
+  viewer.show()
 
   sys.exit(app.exec_())
 
-
-if __name__ == "__main__":
-#=========================
-
-  logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
-
-  logging.getLogger().setLevel('DEBUG')
-  logging.debug("Starting...")
-  main()
