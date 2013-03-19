@@ -624,7 +624,7 @@ class Controller(QtGui.QWidget):
     if index == 'All': etype = None
     else: etype = expand_uri(str(index).rsplit(' (', 1)[0])
     events = [ self._graphstore.get_event(evt, self._recording.graph)
-                 for evt in self._graphstore.events(self._recording.uri, eventtype=etype,
+                 for evt in self._graphstore.events(self.uri, eventtype=etype,
                                                     timetype=BSML.Instant, graph_uri=self._recording.graph) ]
     self._events = { str(event.uri): (event.time.start, event.time.duration) for event in events }
     self._event_rows = self._annotation_table.appendRows([ AnnotationTable.row(event.uri,
