@@ -118,7 +118,6 @@ class WebView(QtWebKit.QWebView):
     pos = event.pos()
     element = self.page().mainFrame().hitTestContent(pos)
     link_url = str(element.linkUrl().toString())
-    print link_url, element.linkTargetFrame()
     ## element.linkTargetFrame() == None when <a> target is blank...
     menu = self.page().createStandardContextMenu()
     menu.addSeparator()
