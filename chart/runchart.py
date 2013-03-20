@@ -103,6 +103,9 @@ class ChartForm(QtGui.QWidget):
     self.setWindowTitle(uri)
     self.ui.chart.setId(uri)
     self.setTimeRange(start, duration)
+    self._user_zoom_index = self.ui.timezoom.count()
+    self.ui.chart.zoomChart.connect(self.zoom_chart)
+
 
   def setTimeRange(self, start, duration):
   #---------------------------------------
@@ -170,12 +173,22 @@ class ChartForm(QtGui.QWidget):
     self.ui.chart.setTimeScroll(self.ui.timescroll)
     self.ui.timescroll.setVisible(visible)
 
-  def on_timezoom_currentIndexChanged(self, index):
-  #------------------------------------------------
-    if isinstance(index, int):
-      scale = [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0][index]
+  def on_timezoom_currentIndexChanged(self, text):
+  #-----------------------------------------------
+    if isinstance(text, QtCore.QString) and text != "":
+      scale = float(str(text).split()[0])
       self.ui.chart.setTimeZoom(scale)
-      self.position_timescroll(index > 0)
+      self.position_timescroll(scale > 1.0)
+
+  def zoom_chart(self, scale):
+  #---------------------------
+    if self.ui.timezoom.count() > self._user_zoom_index:
+      self.ui.timezoom.setItemText(self._user_zoom_index, "%.2f x" % scale)
+    else:
+      self.ui.timezoom.insertItem(self._user_zoom_index, "%.2f x" % scale)
+    self.ui.timezoom.setCurrentIndex(-1)
+    self.ui.timezoom.setCurrentIndex(self._user_zoom_index)
+    # Above will trigger on_timezoom_currentIndexChanged()
 
   def position_timescroll(self, visible):
   #--------------------------------------

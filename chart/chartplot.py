@@ -300,6 +300,7 @@ class ChartPlot(ChartWidget):
   annotationModified = QtCore.pyqtSignal(str, float, float, str, list)
   annotationDeleted = QtCore.pyqtSignal(str)
   exportRecording = QtCore.pyqtSignal(str, float, float)
+  zoomChart = QtCore.pyqtSignal(float)
 
   def __init__(self, parent=None):
   #-------------------------------
@@ -683,8 +684,8 @@ class ChartPlot(ChartWidget):
 
   def setTimeRange(self, start, duration):
   #---------------------------------------
-    self.start = start
-    self.end = start + duration
+    self.start = self._start = start
+    self.end = self._end = start + duration
     self.duration = duration
     self.setTimeZoom(self._timezoom)    # Keep existing zoom
     self._markers = [ [0, self._start], [0, self._start] ]  ##  Two markers
@@ -693,7 +694,7 @@ class ChartPlot(ChartWidget):
   #----------------------------
     self._timezoom = scale
     self._duration = self.duration/scale
-    newstart = (self.start + self.end - self._duration)/2.0
+    newstart = (self._start + self._end - self._duration)/2.0
     newend = newstart + self._duration
     if newstart < self.start:
       newstart = self.start
@@ -878,11 +879,10 @@ class ChartPlot(ChartWidget):
         if item:
           clearselection = False
           if item.text() == 'Zoom':
-            self._duration = self._selectend[1] - self._selectstart[1]
-            self._timezoom = self.duration/self._duration
-            # Now update slider's position to reflect _start _position _end
-            self._setTimeGrid(self._selectstart[1], self._selectend[1])
-            self.updateTimeScroll.emit(self._timezoom > 1.0)
+            scale = self.duration/(self._selectend[1] - self._selectstart[1])
+            self._start = self._selectstart[1]
+            self._end   = self._selectend[1]
+            self.zoomChart.emit(scale)    # Results in setTimeZoom() being called
             clearselection = True
           elif item.text() == 'Annotate':
             dialog = AnnotationDialog(self._id, self._selectstart[1], self._selectend[1], parent=self)
