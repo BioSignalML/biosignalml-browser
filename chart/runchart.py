@@ -398,7 +398,7 @@ class Controller(QtGui.QWidget):
     self._event_rows = None
     self.controller.events.addItem('None')
     self.controller.events.insertItems(1, ['%s (%s)' % (abbreviate_uri(etype), count)
-      for etype, count in store.eventtypes(rec_uri, counts=True, graph_uri=self._recording.graph)])
+      for etype, count in store.event_types(rec_uri, counts=True, graph_uri=self._recording.graph)])
       # if no duration ...
     self.controller.events.addItem('All')
     self._event_type = 'None'
