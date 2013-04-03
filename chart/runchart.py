@@ -95,6 +95,7 @@ class ChartForm(QtGui.QWidget):
 #                                       | QtCore.Qt.WindowMinMaxButtonsHint
 #                           #           | QtCore.Qt.WindowStaysOnTopHint
 #                          )
+    closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
     self.ui = Ui_Chart()
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
@@ -319,6 +320,8 @@ class Controller(QtGui.QWidget):
 #                                       | QtCore.Qt.WindowMinMaxButtonsHint
 #                           #           | QtCore.Qt.WindowStaysOnTopHint
 #                          )
+
+    closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
     self._graphstore = store

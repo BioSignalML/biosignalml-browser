@@ -41,6 +41,8 @@ class WebView(QtWebKit.QWebView):
   def __init__(self, repo, parent=None):
   #-------------------------------------
     super(WebView, self).__init__(parent)
+    closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
+    refresh = QtGui.QShortcut(QtGui.QKeySequence.Refresh, self, activated=self.reload)
     self.setPage(WebPage(self))
     self._charts = [ ]
     if repo is not None:
@@ -78,6 +80,7 @@ class WebView(QtWebKit.QWebView):
           self._charts.append(chart)
           chart.show()
           chart.viewer.raise_()
+          chart.viewer.activateWindow()
 
   def createWindow(self, type):
   #----------------------------
@@ -104,6 +107,7 @@ class RepositoryDialog(QtGui.QDialog):
   def __init__(self, parent=None):
   #-------------------------------
     QtGui.QWidget.__init__(self, parent)
+    closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
     self.repos = Ui_SelectRepository()
     self.repos.setupUi(self)
     self.repos.repository.addItem("")
