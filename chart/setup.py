@@ -12,8 +12,9 @@ DATA_FILES = []
 ## DATA_FILES = ['gpl-3.0.txt']
 
 OPTIONS = {'argv_emulation': False,
-           'compressed': False,  ## Otherwise pint can't get at its data file
-           'includes': ['PyQt4'],
+           'compressed': True,
+           'includes': ['PyQt4', 'pint.*'],
+           'packages': ['pint'],
            'iconfile': 'QtBrowser.icns',
            'excludes': ['modulegraph', 'graph_tool', 'sympy', 'scipy',
                         'wx', 'matplotlib', 'OpenGL', 'zmq'],
