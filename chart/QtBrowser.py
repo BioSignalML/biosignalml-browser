@@ -3,6 +3,7 @@ import logging
 from PyQt4 import QtCore, QtGui, QtWebKit
 
 from biosignalml import client
+from biosignalml.rdf.sparqlstore import StoreException
 
 from runchart import show_chart
 from ui.repo import Ui_SelectRepository
@@ -63,6 +64,10 @@ class WebView(QtWebKit.QWebView):
       recording = store.get_recording(link_url)
       menu.addSeparator()
       action = menu.addAction('View Recording')
+    except StoreException, msg:
+      alert = QtGui.QMessageBox()
+      alert.setText(str(msg))
+      alert.exec_()
     except IOError:
       pass
     item = menu.exec_(self.mapToGlobal(pos))
