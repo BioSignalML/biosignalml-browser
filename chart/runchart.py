@@ -374,18 +374,18 @@ class Controller(QtGui.QWidget):
 
     self.semantic_tags = store.get_semantic_tags()
 
-    self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable)
+    self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable, resource)
     for a in [store.get_annotation(ann, self._recording.graph)
                 for ann in store.annotations(rec_uri, graph_uri=self._recording.graph)]:
       annstart = a.time.start if a.time is not None else None
       annend   = a.time.end   if a.time is not None else None
       self._annotations.append( (str(a.uri), annstart, annend,
                                  a.comment if a.comment is not None else '',
-                                 a.tags, True) )
+                                 a.tags, True, a) )
 ##      print (str(a.uri), annstart, annend, str(a.comment), a.tags)
     for e in [store.get_event(evt, self._recording.graph)
                 for evt in store.events(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph)]:
-      self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), None, False) )
+      self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), None, False, e) )
 
     self._annotation_table = SortedTable(self.controller.annotations, AnnotationTable.header(),
                                          [ AnnotationTable.row(a[0], self._make_ann_times(a[1], a[2]),
@@ -429,8 +429,8 @@ class Controller(QtGui.QWidget):
         except: units = str(s.units)
         self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
     self._plot_signals(interval)
-    for a in self._annotations:  # tuple(uri, start, end, text, tags)
-      if a[1] is not None: self.viewer.addAnnotation(*a)
+    for a in self._annotations:  # tuple(uri, start, end, text, tags, resource)
+      if a[1] is not None: self.viewer.addAnnotation(*a[:6])
     # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
     self.viewer.show()
 
@@ -570,8 +570,8 @@ class Controller(QtGui.QWidget):
       self._plot_signals(self._recording.interval(start, self._duration))
       self.viewer.setTimeRange(start, self._duration)
       self._start = start
-      for a in self._annotations:  # tuple(uri, start, end, text, tags)
-        if a[1] is not None: self.viewer.addAnnotation(*a)
+      for a in self._annotations:  # tuple(uri, start, end, text, tags, resource)
+        if a[1] is not None: self.viewer.addAnnotation(*a[:6])
 
   def on_segment_valueChanged(self, position):
   #-------------------------------------------
@@ -654,17 +654,31 @@ class Controller(QtGui.QWidget):
   def annotationAdded(self, start, end, text, tags, predecessor=None):
   #-------------------------------------------------------------------
     if text or tags:
-      annotation = biosignalml.model.Annotation(self._make_uri(), about=self._recording,
-                                                     comment=text, tags=tags,
-                                                     time=self._recording.interval(start, end=end),
-                                                     precededBy=predecessor)
-      self._graphstore.extend_recording_graph(self._recording, annotation)
-      self._annotation_table.appendRows([ AnnotationTable.row(annotation.uri,
-                                                              self._make_ann_times(start, end),
-                                                              'Annotation', annotation.comment,
-                                                              self._tag_labels(annotation.tags)) ])
-      self._annotations.append((str(annotation.uri), start, end, text, tags, True))
-      self.viewer.addAnnotation(annotation.uri, start, end, text, tags, True)
+      segment = biosignalml.model.Segment(self._make_uri(),
+                                          self._recording,
+                                          self._recording.interval(start, end=end))
+      self._graphstore.extend_recording_graph(self._recording, segment)
+      self._add_annotation(segment, text, tags, predecessor)
+
+  def _add_annotation(self, about, text, tags, predecessor=None):
+  #--------------------------------------------------------------
+    annotation = biosignalml.model.Annotation(self._make_uri(),
+                                              about=about,
+                                              comment=text, tags=tags,
+                                              precededBy=predecessor)
+    self._graphstore.extend_recording_graph(self._recording, annotation)
+    if annotation.time is not None:
+      (start, end) = (annotation.time.start, annotation.time.end)
+    else:
+      (start, end) = (None, None)
+    self._annotation_table.appendRows([ AnnotationTable.row(annotation.uri,
+                                                            self._make_ann_times(start, end),
+                                                            'Annotation', text,
+                                                            self._tag_labels(tags)) ])
+    self._annotations.append((str(annotation.uri), start, end, text, tags, True, annotation))
+    self.viewer.addAnnotation(annotation.uri, start, end, text, tags, True)
+
+
 
   def _remove_annotation(self, id):
   #--------------------------------
@@ -672,15 +686,19 @@ class Controller(QtGui.QWidget):
     self._delete_annotation(id)
     self.viewer.deleteAnnotation(id)
 
-  def annotationModified(self, id, start, end, text, tags):
-  #--------------------------------------------------------
-    self._remove_annotation(id)
-    self.annotationAdded(start, end, text, tags, predecessor=id)
+  def annotationModified(self, id, text, tags):
+  #--------------------------------------------
+    ann = self._find_annotation(id)
+    if ann is not None:
+      self._remove_annotation(id)
+      if text or tags:
+        self._add_annotation(ann[6].about, text, tags, predecessor=id)
 
   def annotationDeleted(self, id):
   #-------------------------------
     self._remove_annotation(id)
     self._graphstore.remove_recording_resource(self._recording, id)
+
 
   def exportRecording(self, start, end):
   #-------------------------------------
@@ -753,4 +771,3 @@ if __name__ == "__main__":
   viewer.show()
 
   sys.exit(app.exec_())
-

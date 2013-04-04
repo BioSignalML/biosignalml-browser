@@ -297,7 +297,7 @@ class ChartPlot(ChartWidget):
   chartPosition = QtCore.pyqtSignal(int, int, int)
   updateTimeScroll = QtCore.pyqtSignal(bool)
   annotationAdded = QtCore.pyqtSignal(float, float, str, list)
-  annotationModified = QtCore.pyqtSignal(str, float, float, str, list)
+  annotationModified = QtCore.pyqtSignal(str, str, list)
   annotationDeleted = QtCore.pyqtSignal(str)
   exportRecording = QtCore.pyqtSignal(str, float, float)
   zoomChart = QtCore.pyqtSignal(float)
@@ -858,7 +858,7 @@ class ChartPlot(ChartWidget):
                 text = str(dialog.get_annotation()).strip()
                 tags = dialog.get_tags()
                 if (text and text != str(ann[2]).strip() or tags != ann[3]):
-                  self.annotationModified.emit(ann_id, ann[0], ann[1], text, tags)
+                  self.annotationModified.emit(ann_id, text, tags)
             elif item.text() == 'Delete':
               confirm = QtGui.QMessageBox(QtGui.QMessageBox.Question, "Delete Annotation",
                 "Delete Annotation", QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)
