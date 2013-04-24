@@ -375,16 +375,19 @@ class Controller(QtGui.QWidget):
     self.semantic_tags = store.get_semantic_tags()
 
     self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable, resource)
-    for a in [store.get_annotation(ann, self._recording.graph)
-                for ann in store.annotations(rec_uri, graph_uri=self._recording.graph)]:
-      annstart = a.time.start if a.time is not None else None
-      annend   = a.time.end   if a.time is not None else None
+    for a in store.get_annotations(rec_uri, self._recording.graph):
+      if a.time is None:
+        annstart = None
+        annend   = None
+      else:
+        annstart = a.time.start
+        annend   = None if a.time.duration in [None, 0.0] else a.time.end
       self._annotations.append( (str(a.uri), annstart, annend,
                                  a.comment if a.comment is not None else '',
                                  a.tags, True, a) )
 ##      print (str(a.uri), annstart, annend, str(a.comment), a.tags)
     for e in [store.get_event(evt, self._recording.graph)
-                for evt in store.events(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph)]:
+                for evt in store.get_event_uris(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph)]:
       self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), None, False, e) )
 
     self._annotation_table = SortedTable(self.controller.annotations, AnnotationTable.header(),
