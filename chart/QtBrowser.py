@@ -112,14 +112,17 @@ class WebBrowser(QtGui.QMainWindow):
 class RepositoryDialog(QtGui.QDialog):
 #=====================================
 
-  def __init__(self, parent=None):
-  #-------------------------------
+  def __init__(self, repo, parent=None):
+  #-------------------------------------
     QtGui.QWidget.__init__(self, parent)
     closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
-    self.repos = Ui_SelectRepository()
-    self.repos.setupUi(self)
-    self.repos.repository.addItem("")
-    self.repos.repository.addItems(client.Repository.known_repositories())
+    self.input = Ui_SelectRepository()
+    self.input.setupUi(self)
+    self.input.repository.addItem("")
+    repos = client.Repository.known_repositories()
+    if repo != '' and repo not in repos: repos.append(repo)
+    self.input.repository.addItems(sorted(repos))
+    self.input.repository.setCurrentIndex(self.input.repository.findText(repo))
 
 
 if __name__ == '__main__':
@@ -130,24 +133,31 @@ if __name__ == '__main__':
 
   app = QtGui.QApplication(sys.argv)
 
-  dialog = RepositoryDialog()
+  settings = QtCore.QSettings('biosignalml.org', 'QtBrowser')
+
+  dialog = RepositoryDialog(settings.value('repository', '').toString())
   dialog.show()
   dialog.raise_()
-  if dialog.exec_():
-    url = QtCore.QUrl.fromUserInput(dialog.repos.repository.currentText())
+  while dialog.exec_():
+    input = dialog.input
+    url = QtCore.QUrl.fromUserInput(input.repository.currentText())
     if url.isValid():
       url = str(url.toString())
       try:
-        repo = client.Repository(url)
+        repo = client.Repository(url, str(input.username.text()), str(input.password.text()))
+        if repo.access_token is None:
+          raise IOError("Invalid username/password")
         # Better to first check client.Repository.authenticated(url)
         # and if not get name/password and:
         #   repo = client.Repository(url, name, password)
         # This process will add repo to list of known ones.
+
+        settings.setValue('repository', url)
         browser = WebBrowser(url)
-        sys.exit(app.exec_())
-      except IOError:
+        app.exec_()
+      except IOError, msg:
         alert = QtGui.QMessageBox()
-        alert.setText("Cannot connect to repository")
+        alert.setText("Cannot connect to repository: %s" % msg)
         alert.exec_()
 
 
