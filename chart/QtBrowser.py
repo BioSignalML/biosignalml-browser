@@ -1,4 +1,12 @@
 import logging
+import os, sys
+
+## This is so we can import pint when running via py2exe
+if hasattr(sys,"frozen") and len(sys.path) == 1:
+  libpath = os.path.dirname(sys.path[0])
+  sys.path.insert(0, libpath)
+  sys.path_importer_cache[libpath] = None
+##
 
 from PyQt4 import QtCore, QtGui, QtWebKit
 
@@ -117,7 +125,6 @@ class RepositoryDialog(QtGui.QDialog):
 if __name__ == '__main__':
 #=========================
 
-  import sys
 #  logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
 #  logging.getLogger().setLevel('DEBUG')
 
