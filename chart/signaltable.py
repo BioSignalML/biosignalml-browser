@@ -1,8 +1,8 @@
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 
-class SignalItem(QtGui.QStyledItemDelegate):
-#===========================================
+class SignalItem(QtWidgets.QStyledItemDelegate):
+#===============================================
 
   def paint(self, painter, option, index):
   #---------------------------------------
@@ -11,17 +11,17 @@ class SignalItem(QtGui.QStyledItemDelegate):
     and draw a line underneath each table row,
     """
     r = option.rect
-    viewoption = QtGui.QStyleOptionViewItemV4(option)
+    viewoption = QtWidgets.QStyleOptionViewItem(option)
     if index.column() == 0:
-      margin = QtGui.QApplication.style().pixelMetric(QtGui.QStyle.PM_FocusFrameHMargin) + 1
-      viewoption.rect = QtGui.QStyle.alignedRect(option.direction, QtCore.Qt.AlignCenter,
+      margin = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PM_FocusFrameHMargin) + 1
+      viewoption.rect = QtWidgets.QStyle.alignedRect(option.direction, QtCore.Qt.AlignCenter,
                                                  QtCore.QSize(option.decorationSize.width() + 5, option.decorationSize.height()),
                                                  QtCore.QRect(r.x() + margin,
                                                               r.y(),
                                                               r.width() - (2 * margin),
                                                               r.height()))
     painter.drawLine(r.x(), r.y()+r.height(), r.x()+r.width(), r.y()+r.height())
-    QtGui.QStyledItemDelegate.paint(self, painter, viewoption, index)
+    QtWidgets.QStyledItemDelegate.paint(self, painter, viewoption, index)
 
   def editorEvent(self, event, model, option, index):
   #--------------------------------------------------
@@ -31,34 +31,34 @@ class SignalItem(QtGui.QStyledItemDelegate):
     flags = model.flags(index)
     if not (flags & (QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)):
       return False
+    if not index.isValid(): return False
     value = index.data(QtCore.Qt.CheckStateRole)
-    if not value.isValid(): return False
     if not event.type() == QtCore.QEvent.MouseButtonRelease: return False
-    margin = QtGui.QApplication.style().pixelMetric(QtGui.QStyle.PM_FocusFrameHMargin) + 1
-    if not QtGui.QStyle.alignedRect(option.direction, QtCore.Qt.AlignCenter, option.decorationSize,
+    margin = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PM_FocusFrameHMargin) + 1
+    if not QtWidgets.QStyle.alignedRect(option.direction, QtCore.Qt.AlignCenter, option.decorationSize,
                                     QtCore.QRect(option.rect.x() + (2 * margin),
                                                  option.rect.y(),
                                                  option.rect.width() - (2 * margin),
                                                  option.rect.height())).contains(event.pos()): return False
-    state = QtCore.Qt.Unchecked if (value.toInt()[0] == QtCore.Qt.Checked) else QtCore.Qt.Checked
+    state = QtCore.Qt.Unchecked if (value == QtCore.Qt.Checked) else QtCore.Qt.Checked
     return model.setData(index, state, QtCore.Qt.CheckStateRole)
 
 
-class SignalTable(QtGui.QTableView):
-#====================================
+class SignalTable(QtWidgets.QTableView):
+#=======================================
 
   rowSelected = QtCore.pyqtSignal(int)   # row, -1 means clear
 
   def __init__(self, *args, **kwds):
   #---------------------------------
-    QtGui.QTableView.__init__(self, *args, **kwds)
+    QtWidgets.QTableView.__init__(self, *args, **kwds)
     self.setItemDelegate(SignalItem(self))
     self.setShowGrid(False)
     self.verticalHeader().hide()
     self.horizontalHeader().setStretchLastSection(True)
     self.horizontalHeader().setHighlightSections(False)
-    self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-    self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+    self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+    self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
     self._selectedrow = -1
 
   def mousePressEvent(self, event):
@@ -91,4 +91,4 @@ class SignalTable(QtGui.QTableView):
   def mouseReleaseEvent(self, event):
   #----------------------------------
     self._selectedrow = -1
-    QtGui.QTableView.mouseReleaseEvent(self, event)
+    QtWidgets.QTableView.mouseReleaseEvent(self, event)

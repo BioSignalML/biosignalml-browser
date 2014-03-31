@@ -4,11 +4,11 @@ Sub-class QT classes for widget promotion.
 
 """
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 
-class ChartFrame(QtGui.QFrame):
-#==============================
+class ChartFrame(QtWidgets.QFrame):
+#==================================
 
   """
   Emit a signal when the size of the chart's frame changes.

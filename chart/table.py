@@ -4,18 +4,18 @@ A generic widget and model for working with a table view.
 Selection by row and sortable columns are provided.
 """
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class TableView(QtGui.QTableView):
-#=================================
+class TableView(QtWidgets.QTableView):
+#=====================================
   """
   A generic table view.
   """
 
   def __init__(self, *args, **kwds):
   #---------------------------------
-    QtGui.QTableView.__init__(self, *args, **kwds)
+    QtWidgets.QTableView.__init__(self, *args, **kwds)
     self.setAlternatingRowColors(True)
     self.setShowGrid(False)
     self.setWordWrap(True)
@@ -23,8 +23,8 @@ class TableView(QtGui.QTableView):
     self.horizontalHeader().setStretchLastSection(True)
     self.horizontalHeader().setHighlightSections(False)
     self.horizontalHeader().setSortIndicatorShown(True)
-    self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-    self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+    self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+    self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
 
   def resizeCells(self):  # Needs to be done after table is populated
   #---------------------
@@ -73,7 +73,7 @@ class TableModel(QtCore.QAbstractTableModel):
       elif role == QtCore.Qt.TextAlignmentRole:
         return QtCore.Qt.AlignLeft
       elif role == QtCore.Qt.FontRole:
-        font = QtGui.QFont(QtGui.QApplication.font())
+        font = QtGui.QFont(QtWidgets.QApplication.font())
         font.setBold(True)
         return font
 
@@ -111,8 +111,8 @@ class TableModel(QtCore.QAbstractTableModel):
     if n >= 0: self.removeRows((n, n))
 
 
-class SortedTable(QtGui.QSortFilterProxyModel):
-#==============================================
+class SortedTable(QtCore.QSortFilterProxyModel):
+#===============================================
   """
   A generic sorted table.
 
@@ -128,7 +128,7 @@ class SortedTable(QtGui.QSortFilterProxyModel):
 
   def __init__(self, view, header, rows, tablefilter=None, parent=None):
   #---------------------------------------------------------------------
-    QtGui.QSortFilterProxyModel.__init__(self, parent)
+    QtCore.QSortFilterProxyModel.__init__(self, parent)
     self._table = TableModel(header, rows, parent)
     self.setSourceModel(self._table)
     view.setModel(self)

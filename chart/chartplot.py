@@ -3,15 +3,15 @@ import logging
 import collections
 import numpy as np
 
-from PyQt4 import QtCore, QtGui
-from PyQt4 import QtOpenGL
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtOpenGL
 
 from biosignalml.data import DataSegment
 
 from nrange import NumericRange
 from annotation import AnnotationDialog
 
-##ChartWidget = QtGui.QWidget       # Hangs if > 64K points
+##ChartWidget = QtWidgets.QWidget   # Hangs if > 64K points
 ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
 
 
@@ -93,7 +93,7 @@ def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred, font
     if   (align & alignCentre) == alignCentre: tx = x - tw/2.0
     elif (align & alignRight)  == alignRight:  tx = x - tw
     else:                                      tx = x
-    painter.drawText(QtCore.QPointF(tx, ty), QtCore.QString.fromUtf8(t))
+    painter.drawText(QtCore.QPointF(tx, ty), t)
     ty += metrics.height()                  ## lineSpacing()
   painter.setFont(font)             # Reset, in case changed above
   painter.setTransform(xfm)
@@ -201,19 +201,19 @@ class SignalPlot(object):
     n = 0
     y = self.ymin
     while y <= self.ymax:
-      painter.setPen(QtGui.QPen(gridMinorColour))
+      painter.setPen(QtGui.QPen(gridMinorColour, 0))
       painter.drawLine(QtCore.QPointF(start, y), QtCore.QPointF(end, y))
       if (labelfreq > 0
        and (endlabels or self.ymin < y < self.ymax)
        and (self.gridheight/labelfreq) > 1 and (n % labelfreq) == 0):
         painter.drawLine(QtCore.QPointF(start-0.005*(end-start), y), QtCore.QPointF(start, y))
-        painter.setPen(QtGui.QPen(textColour))
+        painter.setPen(QtGui.QPen(textColour, 0))
         drawtext(painter, MARGIN_LEFT-20, y, str(y), mapX=False)    # Label grid
       y += self._range.major
       if -1e-10 < y < 1e-10: y = 0.0  #####
       n += 1
     painter.setClipping(True)
-    painter.setPen(QtGui.QPen(traceColour if not self.selected else selectedColour))
+    painter.setPen(QtGui.QPen(traceColour if not self.selected else selectedColour, 0))
     # Could find start/end indices and only draw segment
     # rather than rely on clipping...
     painter.drawPath(self._path)
@@ -223,7 +223,7 @@ class SignalPlot(object):
     if markers:
       xfm = painter.transform()
       for n, t in enumerate(markers):
-         painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
+         painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour, 0))
          y = self.yValue(t)
          if y is not None:
            y = self._range.map(y, extra=1)
@@ -278,9 +278,9 @@ class EventPlot(object):
     self._eventpos = []
     for t, event in self._events:
       if event[0]:
-        painter.setPen(QtGui.QPen(traceColour if not self.selected else selectedColour))
+        painter.setPen(QtGui.QPen(traceColour if not self.selected else selectedColour, 0))
         painter.drawLine(QtCore.QPointF(t, 0.0), QtCore.QPointF(t, 1.0))
-        painter.setPen(QtGui.QPen(textColour))
+        painter.setPen(QtGui.QPen(textColour, 0))
         drawtext(painter, t, 0.5, event[0])
         xy = painter.transform().map(QtCore.QPointF(t, 0.5))
         self._eventpos.append( (int(xy.x()+0.5), int(xy.y()+0.5), '\n'.join(event[1].split())) )
@@ -309,7 +309,7 @@ class ChartPlot(ChartWidget):
         QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers),
         parent)
     else:
-      QtGui.QWidget.__init__(self, parent)
+      QtWidgets.QWidget.__init__(self, parent)
     self.setPalette(QtGui.QPalette(QtGui.QColor('black'), QtGui.QColor('white')))
     self.setMouseTracking(True)
     self._id = None
@@ -467,7 +467,7 @@ class ChartPlot(ChartWidget):
     qp.scale(self._plot_width, -self._plot_height)
     qp.setClipRect(0, 0, 1, 1)
     qp.setClipping(False)
-    qp.setPen(QtGui.QPen(gridMajorColour))
+    qp.setPen(QtGui.QPen(gridMajorColour, 0))
     qp.drawRect(0, 0, 1, 1)
 
     labelxfm = qp.transform()       # before time transforms
@@ -516,12 +516,12 @@ class ChartPlot(ChartWidget):
       painter.scale(1.0, float(plot.gridheight)/gridheight)
       plotposition -= plot.gridheight
       painter.translate(0.0, float(plotposition)/plot.gridheight)
-      painter.setPen(QtGui.QPen(textColour))
+      painter.setPen(QtGui.QPen(textColour, 0))
       drawtext(painter, (MARGIN_LEFT-40)/2, 0.5, plot.label, mapX=False)  # Signal label
       for n, m in enumerate(self._markers):
         ytext = plot.yPosition(m[0])
         if ytext is not None:                             # Write event descriptions on RHS
-          painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
+          painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour, 0))
           drawtext(painter, MARGIN_LEFT+self._plot_width+25, 0.50, ytext, mapX=False)
       painter.restore()
 
@@ -531,7 +531,7 @@ class ChartPlot(ChartWidget):
       duration = (self._selectend[1] - self._selectstart[1])
       painter.setClipping(True)
       painter.fillRect(QtCore.QRectF(self._selectstart[1], 0.0, duration, 1.0), selectionColour)
-      painter.setPen(QtGui.QPen(selectEdgeColour))
+      painter.setPen(QtGui.QPen(selectEdgeColour, 0))
       painter.drawLine(QtCore.QPointF(self._selectstart[1], 0), QtCore.QPointF(self._selectstart[1], 1.0))
       painter.drawLine(QtCore.QPointF(self._selectend[1],   0), QtCore.QPointF(self._selectend[1],   1.0))
       painter.setClipping(False)
@@ -541,10 +541,10 @@ class ChartPlot(ChartWidget):
     if self._selectstart != self._selectend:
       duration = (self._selectend[1] - self._selectstart[1])
       ypos = MARGIN_TOP - 8
-      painter.setPen(QtGui.QPen(selectTimeColour))
+      painter.setPen(QtGui.QPen(selectTimeColour, 0))
       drawtext(painter, self._selectstart[1], ypos, str(self._selectstart[1]), mapY=False)
       drawtext(painter, self._selectend[1],   ypos, str(self._selectend[1]),   mapY=False)
-      painter.setPen(QtGui.QPen(selectLenColour))
+      painter.setPen(QtGui.QPen(selectLenColour, 0))
       middle = (self._selectend[1] + self._selectstart[1])/2.0
       if duration < 0: duration = -duration
       drawtext(painter, middle, ypos, str(duration), mapY=False)
@@ -554,7 +554,7 @@ class ChartPlot(ChartWidget):
     xfm = painter.transform()
     painter.resetTransform()
     ypos = MARGIN_TOP + self._plot_height
-    painter.setPen(QtGui.QPen(gridMinorColour))
+    painter.setPen(QtGui.QPen(gridMinorColour, 0))
     t = self._timeRange.start
     while t <= self._end:
       if self._start <= t <= self._end:
@@ -564,10 +564,10 @@ class ChartPlot(ChartWidget):
     t = self._timeRange.start
     while t <= self._end:
       if self._start <= t <= self._end:
-        painter.setPen(QtGui.QPen(gridMajorColour))
+        painter.setPen(QtGui.QPen(gridMajorColour, 0))
         painter.drawLine(QtCore.QPoint(self._time_to_pos(t), MARGIN_TOP),
           QtCore.QPoint(self._time_to_pos(t), ypos+5))
-        painter.setPen(QtGui.QPen(textColour))
+        painter.setPen(QtGui.QPen(textColour, 0))
         drawtext(painter, self._time_to_pos(t), ypos+18, str(t),
           mapX=False, mapY=False)
       t += self._timeRange.major
@@ -587,13 +587,13 @@ class ChartPlot(ChartWidget):
     painter.resetTransform()
     for n, m in enumerate(self._markers):
       ypos = MARGIN_TOP - 20
-      painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour))
+      painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour, 0))
       painter.drawLine(QtCore.QPoint(m[0], ypos + 6),
         QtCore.QPoint(m[0], MARGIN_TOP+self._plot_height+10))
       drawtext(painter, m[0], ypos, str(self._timeRange.map(m[1])),
         mapX=False, mapY=False)
       if n > 0 and m[1] != last[1]:
-        painter.setPen(QtGui.QPen(textColour))
+        painter.setPen(QtGui.QPen(textColour, 0))
         width = self._timeRange.map(last[1]) - self._timeRange.map(m[1])
         if width < 0: width = -width
         drawtext(painter, (last[0]+m[0])/2.0, ypos, str(width),
@@ -644,7 +644,7 @@ class ChartPlot(ChartWidget):
         colourdict[text] = thiscolour
       endtimes[row][1] = thiscolour  # Save colour index
       colour = ANN_COLOURS[thiscolour]
-      pen = QtGui.QPen(colour)
+      pen = QtGui.QPen(colour, 0)
 #      pen.setCapStyle(QtCore.Qt.FlatCap)
 #      pen.setWidth(1)
       painter.setPen(pen)
@@ -802,10 +802,10 @@ class ChartPlot(ChartWidget):
     if self._mousebutton is None:
       for a in self._annrects:
         if a[0].contains(xpos, ypos):
-          font = QtGui.QToolTip.font()
+          font = QtWidgets.QToolTip.font()
           font.setPointSize(16)
-          QtGui.QToolTip.setFont(font)
-          QtGui.QToolTip.showText(event.globalPos(),
+          QtWidgets.QToolTip.setFont(font)
+          QtWidgets.QToolTip.showText(event.globalPos(),
             self._annotation_display_text(self._annotations[a[1]]))
           tooltip = True
           break
@@ -824,7 +824,7 @@ class ChartPlot(ChartWidget):
         self._selectstart[0] += delta
         self._selectstart[1] = self._timeRange.map(self._selectstart[0])
       self.update()
-    if not tooltip: QtGui.QToolTip.showText(event.globalPos(), '')
+    if not tooltip: QtWidgets.QToolTip.showText(event.globalPos(), '')
 
   def mouseReleaseEvent(self, event):
   #----------------------------------
@@ -847,7 +847,7 @@ class ChartPlot(ChartWidget):
         ann_id = a[1]
         ann = self._annotations[ann_id]
         if ann[4]:  # editable
-          menu = QtGui.QMenu()
+          menu = QtWidgets.QMenu()
           menu.addAction("Edit")
           menu.addAction("Delete")
           item = menu.exec_(self.mapToGlobal(pos))
@@ -860,16 +860,16 @@ class ChartPlot(ChartWidget):
                 if (text and text != str(ann[2]).strip() or tags != ann[3]):
                   self.annotationModified.emit(ann_id, text, tags)
             elif item.text() == 'Delete':
-              confirm = QtGui.QMessageBox(QtGui.QMessageBox.Question, "Delete Annotation",
-                "Delete Annotation", QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)
+              confirm = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, "Delete Annotation",
+                "Delete Annotation", QtWidgets.QMessageBox.Cancel | QtWidgets.QMessageBox.Ok)
               confirm.setInformativeText("Do you want to delete the annotation?")
-              confirm.setDefaultButton(QtGui.QMessageBox.Cancel)
-              if confirm.exec_() == QtGui.QMessageBox.Ok:
+              confirm.setDefaultButton(QtWidgets.QMessageBox.Cancel)
+              if confirm.exec_() == QtWidgets.QMessageBox.Ok:
                 self.annotationDeleted.emit(ann_id)
         return
     if (MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)
      and MARGIN_LEFT < pos.x() <= (MARGIN_LEFT + self._plot_width)):
-      menu = QtGui.QMenu()
+      menu = QtWidgets.QMenu()
       if (self._selectstart != self._selectend
        and self._selectstart[0] < pos.x() < self._selectend[0]):
         menu.addAction("Zoom")
@@ -893,7 +893,7 @@ class ChartPlot(ChartWidget):
                 self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text, tags)
                 clearselection = True
           elif item.text() == 'Export':
-            filename = QtGui.QFileDialog.getSaveFileName(self, 'Export region', '', '*.bsml')
+            filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Export region', '', '*.bsml')
             if filename:
               self.exportRecording.emit(filename, self._selectstart[1], self._selectend[1])
               clearselection = True
@@ -903,7 +903,7 @@ class ChartPlot(ChartWidget):
         menu.addAction("Save as PNG")
         item = menu.exec_(self.mapToGlobal(pos))
         if item:
-          filename = QtGui.QFileDialog.getSaveFileName(self, 'Save chart', '', '*.png')
+          filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save chart', '', '*.png')
           if filename:
             output = QtGui.QImage(self.width(), self.height(), QtGui.QImage.Format_ARGB32_Premultiplied)
             self._draw(output)

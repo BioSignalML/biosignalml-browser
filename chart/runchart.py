@@ -2,7 +2,7 @@ import sys
 import re
 import logging
 
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ui.chart      import Ui_Chart
 from ui.controller import Ui_Controller
@@ -86,16 +86,16 @@ class SignalReadThread(QtCore.QThread):
     self._exit = True
 
 
-class ChartForm(QtGui.QWidget):
-#==============================
+class ChartForm(QtWidgets.QWidget):
+#==================================
 
   def __init__(self, uri, start, duration, parent=None):
   #-----------------------------------------------------
-    QtGui.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
+    QtWidgets.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
 #                                       | QtCore.Qt.WindowMinMaxButtonsHint
 #                           #           | QtCore.Qt.WindowStaysOnTopHint
 #                          )
-    closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
+    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
     self.ui = Ui_Chart()
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)
@@ -176,7 +176,7 @@ class ChartForm(QtGui.QWidget):
 
   def on_timezoom_currentIndexChanged(self, text):
   #-----------------------------------------------
-    if isinstance(text, QtCore.QString) and text != "":
+    if isinstance(text, basestring) and text != "":
       scale = float(str(text).split()[0])
       self.ui.chart.setTimeZoom(scale)
       self.position_timescroll(scale > 1.0)
@@ -244,7 +244,7 @@ class SignalInfo(QtCore.QAbstractTableModel):
       elif role == QtCore.Qt.TextAlignmentRole:
         return QtCore.Qt.AlignLeft
       elif role == QtCore.Qt.FontRole:
-        font = QtGui.QFont(QtGui.QApplication.font())
+        font = QtGui.QFont(QtWidgets.QApplication.font())
         font.setBold(True)
         return font
 
@@ -311,17 +311,17 @@ class AnnotationTable(object):
     return [str(uri)] + times + [ type, text, tagtext ]
 
 
-class Controller(QtGui.QWidget):
-#===============================
+class Controller(QtWidgets.QWidget):
+#===================================
 
   def __init__(self, store, rec_uri, recording=None, parent=None):
   #---------------------------------------------------------------
-    QtGui.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
+    QtWidgets.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
 #                                       | QtCore.Qt.WindowMinMaxButtonsHint
 #                           #           | QtCore.Qt.WindowStaysOnTopHint
 #                          )
 
-    closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
+    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
     self._graphstore = store
@@ -363,7 +363,7 @@ class Controller(QtGui.QWidget):
 
     self._start = start
     self._duration = duration
-    self.controller.rec_posn = QtGui.QLabel(self)
+    self.controller.rec_posn = QtWidgets.QLabel(self)
     self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
     self.controller.rec_posn.resize(self.controller.rec_start.size())
     self.controller.splitter.splitterMoved.connect(self._splitter_moved)
@@ -495,7 +495,7 @@ class Controller(QtGui.QWidget):
   #--------------------------
 #    if self.controller.rec_posn.pos().y() == 0:  # After laying out controller
     self._adjust_layout()
-    QtGui.QWidget.showEvent(self, event)
+    QtWidgets.QWidget.showEvent(self, event)
 
   def _set_slider_time(self, label, time):
   #---------------------------------------
@@ -606,7 +606,7 @@ class Controller(QtGui.QWidget):
   def on_annotations_doubleClicked(self, index):
   #---------------------------------------------
     source = index.model().mapToSource(index)
-    id = str(source.model().createIndex(source.row(), 0).data().toString())
+    id = source.model().createIndex(source.row(), 0).data()
     ann = self._find_annotation(id)
     time = None
     duration = None
@@ -634,7 +634,7 @@ class Controller(QtGui.QWidget):
   def on_events_currentIndexChanged(self, index):
   #----------------------------------------------
     if (self._event_type is None      # Setting up
-     or not isinstance(index, QtCore.QString)): return
+     or not isinstance(index, basestring)): return
     if self._event_rows is not None:
       self._annotation_table.removeRows(self._event_rows)
     if index == 'None':
@@ -750,7 +750,7 @@ if __name__ == "__main__":
     print "Usage: %s recording_uri [start] [duration]" % sys.argv[0]
     sys.exit(1)
 
-  app = QtGui.QApplication(sys.argv)
+  app = QtWidgets.QApplication(sys.argv)
 
   rec_uri = sys.argv[1]
   if len(sys.argv) >= 3:

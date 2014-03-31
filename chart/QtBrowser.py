@@ -8,7 +8,7 @@ if hasattr(sys,"frozen") and len(sys.path) == 1:
   sys.path_importer_cache[libpath] = None
 ##
 
-from PyQt4 import QtCore, QtGui, QtWebKit
+from PyQt5 import QtCore, QtGui, QtWidgets, QtWebKitWidgets
 
 from biosignalml import client
 from biosignalml.rdf.sparqlstore import StoreException
@@ -17,20 +17,20 @@ from runchart import show_chart
 from ui.repo import Ui_SelectRepository
 
 
-class WebPage(QtWebKit.QWebPage):
-#================================
+class WebPage(QtWebKitWidgets.QWebPage):
+#=======================================
 
   def __init__(self, parent=None):
   #-------------------------------
     super(WebPage, self).__init__(parent)
-#    self.setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
+#    self.setLinkDelegationPolicy(QtWebKitWidgets.QWebPage.DelegateAllLinks)
 #    self.linkHovered.connect(self.link_hovered)
 #    self.linkClicked.connect(self.link_clicked)
 
   def triggerAction(self, action, checked=False):
   #----------------------------------------------
-    if action == QtWebKit.QWebPage.OpenLinkInNewWindow:
-      self.createWindow(QtWebKit.QWebPage.WebBrowserWindow)
+    if action == QtWebKitWidgets.QWebPage.OpenLinkInNewWindow:
+      self.createWindow(QtWebKitWidgets.QWebPage.WebBrowserWindow)
     return super(WebPage, self).triggerAction(action, checked)
 
 #  def link_hovered(self, link, title, content):
@@ -43,14 +43,14 @@ class WebPage(QtWebKit.QWebPage):
 #    self.view().load(url)
 
 
-class WebView(QtWebKit.QWebView):
-#================================
+class WebView(QtWebKitWidgets.QWebView):
+#=======================================
 
   def __init__(self, repo, parent=None):
   #-------------------------------------
     super(WebView, self).__init__(parent)
-    closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
-    refresh = QtGui.QShortcut(QtGui.QKeySequence.Refresh, self, activated=self.reload)
+    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
+    refresh = QtWidgets.QShortcut(QtGui.QKeySequence.Refresh, self, activated=self.reload)
     self.setPage(WebPage(self))
     self._charts = [ ]
     if repo is not None:
@@ -66,16 +66,16 @@ class WebView(QtWebKit.QWebView):
     ## element.linkTargetFrame() == None when <a> target is blank...
     menu = self.page().createStandardContextMenu()
     menu.addSeparator()
-    menu.addAction(self.pageAction(QtWebKit.QWebPage.Back))
-    menu.addAction(self.pageAction(QtWebKit.QWebPage.Forward))
-    menu.addAction(self.pageAction(QtWebKit.QWebPage.Reload))
+    menu.addAction(self.pageAction(QtWebKitWidgets.QWebPage.Back))
+    menu.addAction(self.pageAction(QtWebKitWidgets.QWebPage.Forward))
+    menu.addAction(self.pageAction(QtWebKitWidgets.QWebPage.Reload))
     try:  ## Check if link_url refers to a recording...
       store = client.Repository(link_url)
       recording = store.get_recording(link_url)
       menu.addSeparator()
       action = menu.addAction('View Recording')
     except StoreException, msg:
-      alert = QtGui.QMessageBox()
+      alert = QtWidgets.QMessageBox()
       alert.setText(str(msg))
       alert.exec_()
     except IOError:
@@ -92,7 +92,7 @@ class WebView(QtWebKit.QWebView):
 
   def createWindow(self, type):
   #----------------------------
-    if type == QtWebKit.QWebPage.WebBrowserWindow:
+    if type == QtWebKitWidgets.QWebPage.WebBrowserWindow:
       # print "Creating window...", type, self.url()
       self._view = WebView(None)
       self._view.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
@@ -100,8 +100,8 @@ class WebView(QtWebKit.QWebView):
     return super(WebView, self).createWindow(type)
 
 
-class WebBrowser(QtGui.QMainWindow):
-#==================================
+class WebBrowser(QtWidgets.QMainWindow):
+#=======================================
 
   def __init__(self, repo):
   #------------------------
@@ -109,13 +109,13 @@ class WebBrowser(QtGui.QMainWindow):
     self._view = WebView(repo)
 
 
-class RepositoryDialog(QtGui.QDialog):
-#=====================================
+class RepositoryDialog(QtWidgets.QDialog):
+#=========================================
 
   def __init__(self, repo, parent=None):
   #-------------------------------------
-    QtGui.QWidget.__init__(self, parent)
-    closekey = QtGui.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
+    QtWidgets.QWidget.__init__(self, parent)
+    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
     self.input = Ui_SelectRepository()
     self.input.setupUi(self)
     self.input.repository.addItem("")
@@ -131,11 +131,11 @@ if __name__ == '__main__':
 #  logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
 #  logging.getLogger().setLevel('DEBUG')
 
-  app = QtGui.QApplication(sys.argv)
+  app = QtWidgets.QApplication(sys.argv)
 
   settings = QtCore.QSettings('biosignalml.org', 'QtBrowser')
 
-  dialog = RepositoryDialog(settings.value('repository', '').toString())
+  dialog = RepositoryDialog(settings.value('repository', ''))
   dialog.show()
   dialog.raise_()
   while dialog.exec_():
@@ -156,7 +156,7 @@ if __name__ == '__main__':
         browser = WebBrowser(url)
         app.exec_()
       except IOError, msg:
-        alert = QtGui.QMessageBox()
+        alert = QtWidgets.QMessageBox()
         alert.setText("Cannot connect to repository: %s" % msg)
         alert.exec_()
 

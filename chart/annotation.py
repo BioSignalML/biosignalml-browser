@@ -1,24 +1,24 @@
-from PyQt4 import QtCore, QtGui
+from PyQt5 import QtCore, QtWidgets
 
 from ui.annotate import Ui_AnnotationDialog
 
 
-class TagItem(QtGui.QListWidgetItem):
-#====================================
+class TagItem(QtWidgets.QListWidgetItem):
+#========================================
 
   def __init__(self, uri, label):
   #------------------------------
-    QtGui.QListWidgetItem.__init__(self, label)
+    QtWidgets.QListWidgetItem.__init__(self, label)
     self.uri = uri
     self.label = label
 
 
-class AnnotationDialog(QtGui.QDialog):
-#=====================================
+class AnnotationDialog(QtWidgets.QDialog):
+#=========================================
 
   def __init__(self, id, start, end, text='', tags=None, parent=None):
   #-------------------------------------------------------------------
-    QtGui.QDialog.__init__(self, parent)
+    QtWidgets.QDialog.__init__(self, parent)
     self.ui = Ui_AnnotationDialog()
     self.ui.setupUi(self)
     if id.startswith('http://'):
@@ -30,7 +30,7 @@ class AnnotationDialog(QtGui.QDialog):
     
     if tags is None: tags = [ ]
     semantic_tags = parent.semantic_tags  # { uri: label }
-    self.ui.taglist.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+    self.ui.taglist.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
     for u, l in semantic_tags.iteritems(): self.ui.taglist.addItem(TagItem(u, l))
     for t in tags:   ## Show 'unknown' tags
       if t not in semantic_tags: self.ui.taglist.addItem(TagItem(t, str(t)))
