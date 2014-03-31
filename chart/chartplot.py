@@ -164,6 +164,7 @@ class SignalPlot(object):
         i = self._poly.size() - 2
       p0 = self._poly.at(i)
       p1 = self._poly.at(i+1)
+      if p0.x() == p1.x(): return (p0.y() + p1.y())/2.0
       return p0.y() + (time - p0.x())*(p1.y() - p0.y())/(p1.x() - p0.x())
 
   def _index(self, time):
