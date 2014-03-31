@@ -909,3 +909,31 @@ class ChartPlot(ChartWidget):
             output = QtGui.QImage(self.width(), self.height(), QtGui.QImage.Format_ARGB32_Premultiplied)
             self._draw(output)
             output.save(filename, 'PNG')
+
+
+if __name__ == '__main__':
+#=========================
+
+  import sys
+  import math
+
+  logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
+  logging.getLogger().setLevel('DEBUG')
+
+
+  from biosignalml.data import UniformTimeSeries
+
+  app = QtWidgets.QApplication(sys.argv)
+
+  chart = ChartPlot()
+  chart.addSignalPlot('1', 'label', 'units')
+  points = 1000
+  tsdata = np.fromfunction(lambda x: np.sin(2.0*np.pi*x/points), (points+1,))
+  print tsdata
+  data = DataSegment(0.0, UniformTimeSeries(tsdata, rate=1))
+  chart.setTimeRange(0.0, float(points))
+  chart.appendData('1', data)
+  chart.show()
+
+
+  sys.exit(app.exec_())
