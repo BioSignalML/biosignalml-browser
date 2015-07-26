@@ -10,7 +10,7 @@ from ui.controller import Ui_Controller
 from biosignalml import BSML
 from biosignalml.data import DataSegment
 import biosignalml.model
-import biosignalml.units.ontology as uom
+import biosignalml.units as uom
 
 from nrange import NumericRange
 from table import SortedTable
