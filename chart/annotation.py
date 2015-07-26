@@ -31,7 +31,7 @@ class AnnotationDialog(QtWidgets.QDialog):
     if tags is None: tags = [ ]
     semantic_tags = parent.semantic_tags  # { uri: label }
     self.ui.taglist.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-    for u, l in semantic_tags.iteritems(): self.ui.taglist.addItem(TagItem(u, l))
+    for u, l in semantic_tags.items(): self.ui.taglist.addItem(TagItem(u, l))
     for t in tags:   ## Show 'unknown' tags
       if t not in semantic_tags: self.ui.taglist.addItem(TagItem(t, str(t)))
     self.ui.taglist.sortItems()

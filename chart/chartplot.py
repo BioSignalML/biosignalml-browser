@@ -616,7 +616,7 @@ class ChartPlot(ChartWidget):
     nextcolour = 0
     colourdict = {}          # key by text, to use the same colour for the same text
     for ann, id in sorted([ (ann, id)
-                            for id, ann in self._annotations.iteritems() ]):
+                            for id, ann in self._annotations.items() ]):
       row = None
       colours = [ None, None, None ]   # On left, above, below
       for n, e in enumerate(endtimes):
@@ -929,7 +929,7 @@ if __name__ == '__main__':
   chart.addSignalPlot('1', 'label', 'units')
   points = 1000
   tsdata = np.fromfunction(lambda x: np.sin(2.0*np.pi*x/points), (points+1,))
-  print tsdata
+  print(tsdata)
   data = DataSegment(0.0, UniformTimeSeries(tsdata, rate=1))
   chart.setTimeRange(0.0, float(points))
   chart.appendData('1', data)

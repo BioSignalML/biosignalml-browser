@@ -74,7 +74,7 @@ class WebView(QtWebKitWidgets.QWebView):
       recording = store.get_recording(link_url)
       menu.addSeparator()
       action = menu.addAction('View Recording')
-    except StoreException, msg:
+    except StoreException as msg:
       alert = QtWidgets.QMessageBox()
       alert.setText(str(msg))
       alert.exec_()
@@ -155,7 +155,7 @@ if __name__ == '__main__':
         settings.setValue('repository', url)
         browser = WebBrowser(url)
         app.exec_()
-      except IOError, msg:
+      except IOError as msg:
         alert = QtWidgets.QMessageBox()
         alert.setText("Cannot connect to repository: %s" % msg)
         alert.exec_()

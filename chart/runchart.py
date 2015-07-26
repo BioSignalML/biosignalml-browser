@@ -37,14 +37,14 @@ PREFIXES = {
 def abbreviate_uri(uri):
 #=======================
   v = str(uri)
-  for pfx, ns in PREFIXES.iteritems():
+  for pfx, ns in PREFIXES.items():
     if v.startswith(ns): return '%s:%s' % (pfx, v[len(ns):])
   return v
 
 def expand_uri(uri):
 #===================
   v = str(uri)
-  for pfx, ns in PREFIXES.iteritems():
+  for pfx, ns in PREFIXES.items():
     if v.startswith(pfx+':'): return ns + v[len(pfx)+1:]
   return v
 
@@ -78,7 +78,7 @@ class SignalReadThread(QtCore.QThread):
       for d in self._signal.read(self._interval, maxpoints=20000):
         self.append_points.emit(self._id, d)
         if self._exit: break
-    except Exception, msg:
+    except Exception as msg:
       logging.error(msg)
 
   def stop(self):
@@ -705,7 +705,7 @@ class Controller(QtWidgets.QWidget):
 
   def exportRecording(self, start, end):
   #-------------------------------------
-    print 'export', start, end
+    print('export', start, end)
 
 
   #def keyPressEvent(self, event):   ## Also need to do so in chart...
@@ -717,8 +717,8 @@ def show_chart(store, recording, start=0.0, end=None):
 #=====================================================
   try:
     ctlr = Controller(store, "%s#t=%g,%s" % (recording.uri, start, end if end is not None else ''))
-  except IOError, msg:
-    print str(msg)
+  except IOError as msg:
+    print(str(msg))
     return
   ctlr.viewer.raise_()
   ctlr.viewer.activateWindow()
@@ -730,7 +730,7 @@ def show_recording(uri, start=0.0, end=None):
   store = biosignalml.client.Repository(uri)
   try:
     ctlr = Controller(store, "%s#t=%g,%s" % (uri, start, end if end is not None else ''))
-  except IOError, msg:
+  except IOError as msg:
     sys.exit(str(msg))
   ctlr.viewer.raise_()
   ctlr.viewer.activateWindow()
@@ -747,7 +747,7 @@ if __name__ == "__main__":
 
   ## Replace following with Python arg parser...
   if len(sys.argv) <= 1:
-    print "Usage: %s recording_uri [start] [duration]" % sys.argv[0]
+    print("Usage: %s recording_uri [start] [duration]" % sys.argv[0])
     sys.exit(1)
 
   app = QtWidgets.QApplication(sys.argv)
@@ -757,7 +757,7 @@ if __name__ == "__main__":
     try:
       start = float(sys.argv[2])
     except:
-      print "Invalid start time"
+      print("Invalid start time")
       sys.exit(1)
   else:
     start = 0.0
@@ -765,7 +765,7 @@ if __name__ == "__main__":
     try:
       end = start + float(sys.argv[3])
     except:
-      print "Invalid duration"
+      print("Invalid duration")
       sys.exit(1)
   else:
     end = None

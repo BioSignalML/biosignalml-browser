@@ -30,7 +30,7 @@ class RepoRecordings(threading.Thread):
         p = urlparse.urlparse(u)
         recordings.append((tuple(p.path[1:].split('/')), u))
       self._recQ.put(recordings)
-    except Exception, msg:
+    except Exception as msg:
       self._recQ.put(str(msg))
 
 

@@ -53,11 +53,11 @@ if __name__ == '__main__':
   r = NumericRange(3.035687, 30.47)
   r = NumericRange(0, 1806.6)
 
-  print r.start, r.end, r.major, r.minor, r.quanta
+  print(r.start, r.end, r.major, r.minor, r.quanta)
 
   def test(a):
   #-----------
-    print a, '==>', r.map(a)
+    printr(a, '==>', r.map(a))
 
   test(30.035667565)
   test(30.035671565)
