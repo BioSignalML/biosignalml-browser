@@ -41,7 +41,7 @@ class AnnotationDialog(QtWidgets.QDialog):
       if t.uri in tags: t.setSelected(True)
     self.ui.taglist.hide()
     self._tags_visible = False
-    QtCore.QObject.connect(self.ui.tags, QtCore.SIGNAL("clicked()"), self.show_tags)
+    self.ui.tags.clicked.connect(self.show_tags)
     self.ui.taglabels.setText(', '.join(sorted([semantic_tags.get(t, str(t)) for t in tags])))
 
 
