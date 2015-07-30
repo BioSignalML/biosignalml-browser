@@ -7,7 +7,6 @@ from PyQt4 import QtCore, QtGui, QtWebKit
 
 from biosignalml import client
 
-from runchart import show_chart
 from treemodel import TreeView, SortedUriTree
 
 
