@@ -11,6 +11,7 @@ from biosignalml import BSML
 from biosignalml.data import DataSegment
 import biosignalml.model
 import biosignalml.units as uom
+from biosignalml.formats.hdf5 import HDF5Recording
 
 from nrange import NumericRange
 from table import SortedTable
@@ -314,8 +315,8 @@ class AnnotationTable(object):
 class Controller(QtWidgets.QWidget):
 #===================================
 
-  def __init__(self, store, rec_uri, recording=None, parent=None):
-  #---------------------------------------------------------------
+  def __init__(self, recording, segment=None, annotator=None, tags={ }, parent=None):
+  #----------------------------------------------------------------------------------
     QtWidgets.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
 #                                       | QtCore.Qt.WindowMinMaxButtonsHint
 #                           #           | QtCore.Qt.WindowStaysOnTopHint
@@ -324,33 +325,21 @@ class Controller(QtWidgets.QWidget):
     closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
     self.controller = Ui_Controller()
     self.controller.setupUi(self)
-    self._graphstore = store
     self._readers = [ ]
 
-    start = 0.0
-    end = None
-    rec_uri = str(rec_uri)
-    mediatag = rec_uri.rfind('#t=')
-    if mediatag >= 0:
-      tag = rec_uri[mediatag+3:]
-      rec_uri = rec_uri[:mediatag]
-      try:
-        times = re.match('(.*?)(,(.*))?$', tag).groups()
-        start = float(times[0])
-        end = float(times[2])
-      except ValueError:
-        pass
-
-    if recording is None:
-      self._recording = store.get_recording(rec_uri)
-    else:
-      self._recording = recording
-    if self._recording is None:
-      raise IOError("Unknown recording: %s" % rec_uri)
-    self.uri = str(self._recording.uri)
-    self.setWindowTitle(self.uri)
+    self._recording = recording
+    self._rec_uri = str(self._recording.uri)
+    self.setWindowTitle(self._rec_uri)
     self._make_uri = self._recording.uri.make_uri    # Method for minting new URIs
 
+    self._tags = tags
+
+    if segment is None:
+      start = 0.0
+      end = None
+    else:
+      start = segment[0]
+      end = segment[1]
     if end is None:
       duration = self._recording.duration
       if duration is None or duration <= 0.0:
@@ -360,22 +349,20 @@ class Controller(QtWidgets.QWidget):
     else:
       duration = start - end
       start = end
-
     self._start = start
     self._duration = duration
+    self._timerange = NumericRange(0.0, duration)
+
     self.controller.rec_posn = QtWidgets.QLabel(self)
     self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
     self.controller.rec_posn.resize(self.controller.rec_start.size())
     self.controller.splitter.splitterMoved.connect(self._splitter_moved)
 
-    self._timerange = NumericRange(0.0, duration)
 
     annotator = wfdbAnnotation   ##################
 
-    self.semantic_tags = store.get_semantic_tags()
-
     self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable, resource)
-    for a in store.get_annotations(rec_uri, self._recording.graph):
+    for a in self._recording.graph.get_annotations():
       if a.time is None:
         annstart = None
         annend   = None
@@ -386,8 +373,8 @@ class Controller(QtWidgets.QWidget):
                                  a.comment if a.comment is not None else '',
                                  a.tags, True, a) )
 ##      print (str(a.uri), annstart, annend, str(a.comment), a.tags)
-    for e in [store.get_event(evt, self._recording.graph)
-                for evt in store.get_event_uris(rec_uri, timetype=BSML.Interval, graph_uri=self._recording.graph)]:
+    for e in [self._recording.graph.get_event(evt)
+                for evt in self._recording.graph.get_event_uris(timetype=BSML.Interval)]:
       self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), None, False, e) )
 
     self._annotation_table = SortedTable(self.controller.annotations, AnnotationTable.header(),
@@ -401,7 +388,7 @@ class Controller(QtWidgets.QWidget):
     self._event_rows = None
     self.controller.events.addItem('None')
     self.controller.events.insertItems(1, ['%s (%s)' % (abbreviate_uri(etype), count)
-      for etype, count in store.event_types(rec_uri, counts=True, graph_uri=self._recording.graph)])
+      for etype, count in self._recording.graph.get_event_types(counts=True)])
       # if no duration ...
     self.controller.events.addItem('All')
     self._event_type = 'None'
@@ -410,7 +397,7 @@ class Controller(QtWidgets.QWidget):
     self.controller.signals.setModel(self.model)
     self.controller.signals.setColumnWidth(0, 25)
 
-    self.viewer = ChartForm(self.uri, self._start, self._duration)
+    self.viewer = ChartForm(self._rec_uri, self._start, self._duration)
     self.model.rowVisible.connect(self.viewer.setPlotVisible)
     self.model.rowMoved.connect(self.viewer.movePlot)
     self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
@@ -419,7 +406,7 @@ class Controller(QtWidgets.QWidget):
     self.viewer.ui.chart.annotationDeleted.connect(self.annotationDeleted)
     self.viewer.ui.chart.exportRecording.connect(self.exportRecording)
 
-    self.viewer.setSemanticTags(self.semantic_tags)
+    self.viewer.setSemanticTags(self._tags)
 
     interval = self._recording.interval(self._start, self._duration)
     self._setup_slider()
@@ -476,7 +463,7 @@ class Controller(QtWidgets.QWidget):
     if tags is None:
       return ''
     else:
-      return ', '.join(sorted([self.semantic_tags.get(str(t), str(t)) for t in tags]))
+      return ', '.join(sorted([self._tags.get(str(t), str(t)) for t in tags]))
 
   def _adjust_layout(self):
   #------------------------
@@ -642,9 +629,8 @@ class Controller(QtWidgets.QWidget):
       return
     if index == 'All': etype = None
     else: etype = expand_uri(str(index).rsplit(' (', 1)[0])
-    events = [ self._graphstore.get_event(evt, self._recording.graph)
-                 for evt in self._graphstore.events(self.uri, eventtype=etype,
-                                                    timetype=BSML.Instant, graph_uri=self._recording.graph) ]
+    events = [ self._recording.graph.get_event(evt)
+                 for evt in self._recording.graph.get_event_uris(eventtype=etype, timetype=BSML.Instant) ]
     self._events = { str(event.uri): (event.time.start, event.time.duration) for event in events }
     self._event_rows = self._annotation_table.appendRows([ AnnotationTable.row(event.uri,
                                                             [self._timerange.map(event.time.start),
@@ -660,7 +646,7 @@ class Controller(QtWidgets.QWidget):
       segment = biosignalml.model.Segment(self._make_uri(),
                                           self._recording,
                                           self._recording.interval(start, end=end))
-      self._graphstore.extend_recording_graph(self._recording, segment)
+      self._recording.add_resource(segment)
       self._add_annotation(segment, text, tags, predecessor)
 
   def _add_annotation(self, about, text, tags, predecessor=None):
@@ -669,7 +655,7 @@ class Controller(QtWidgets.QWidget):
                                               about=about,
                                               comment=text, tags=tags,
                                               precededBy=predecessor)
-    self._graphstore.extend_recording_graph(self._recording, annotation)
+    self._recording.add_resource(annotation)
     if annotation.time is not None:
       (start, end) = (annotation.time.start, annotation.time.end)
     else:
@@ -700,7 +686,7 @@ class Controller(QtWidgets.QWidget):
   def annotationDeleted(self, id):
   #-------------------------------
     self._remove_annotation(id)
-    self._graphstore.remove_recording_resource(self._recording, id)
+    self._recording.remove_resource(self.id)
 
 
   def exportRecording(self, start, end):
@@ -713,25 +699,9 @@ class Controller(QtWidgets.QWidget):
   #  pass
 
 
-def show_chart(store, recording, start=0.0, end=None):
-#=====================================================
-  try:
-    ctlr = Controller(store, "%s#t=%g,%s" % (recording.uri, start, end if end is not None else ''))
-  except IOError as msg:
-    print(str(msg))
-    return
-  ctlr.viewer.raise_()
-  ctlr.viewer.activateWindow()
-  return ctlr
-
-
-def show_recording(uri, start=0.0, end=None):
-#============================================
-  store = biosignalml.client.Repository(uri)
-  try:
-    ctlr = Controller(store, "%s#t=%g,%s" % (uri, start, end if end is not None else ''))
-  except IOError as msg:
-    sys.exit(str(msg))
+def show_chart(recording, start=0.0, end=None, tags={ }):
+#========================================================
+  ctlr = Controller(recording, (start, end), wfdbAnnotation, tags)
   ctlr.viewer.raise_()
   ctlr.viewer.activateWindow()
   return ctlr
@@ -747,12 +717,12 @@ if __name__ == "__main__":
 
   ## Replace following with Python arg parser...
   if len(sys.argv) <= 1:
-    print("Usage: %s recording_uri [start] [duration]" % sys.argv[0])
+    print("Usage: %s RECORDING [start] [duration]" % sys.argv[0])
     sys.exit(1)
 
   app = QtWidgets.QApplication(sys.argv)
 
-  rec_uri = sys.argv[1]
+  uri = sys.argv[1]
   if len(sys.argv) >= 3:
     try:
       start = float(sys.argv[2])
@@ -770,7 +740,17 @@ if __name__ == "__main__":
   else:
     end = None
 
-  viewer = show_recording(rec_uri, start, end)
-  viewer.show()
+  try:
+    if uri.startswith('http://'):
+      store = biosignalml.client.Repository(uri)
+      recording = store.get_recording(uri)
+      tags = store.get_semantic_tags()
+    else:
+      recording = HDF5Recording.open(uri)
+      tags = { }                  ## Load from file...
+    viewer = show_chart(recording, start, end, tags=tags)
+    viewer.show()
+  except IOError as msg:
+    sys.exit(str(msg))
 
   sys.exit(app.exec_())
