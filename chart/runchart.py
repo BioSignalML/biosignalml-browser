@@ -416,7 +416,9 @@ class Controller(QtWidgets.QWidget):
         self.viewer.addEventPlot(uri, s.label, annotator)
       else:
         try: units = uom.RESOURCES[str(s.units)].label
-        except: units = str(s.units)
+        except:
+          u = str(s.units)
+          units = u[u.find('#')+1:]
         self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
     self._plot_signals(interval)
     for a in self._annotations:  # tuple(uri, start, end, text, tags, resource)
