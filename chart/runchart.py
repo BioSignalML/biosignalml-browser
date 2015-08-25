@@ -358,9 +358,6 @@ class Controller(QtWidgets.QWidget):
     self.controller.rec_posn.resize(self.controller.rec_start.size())
     self.controller.splitter.splitterMoved.connect(self._splitter_moved)
 
-
-    annotator = wfdbAnnotation   ##################
-
     self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable, resource)
     for a in self._recording.graph.get_annotations():
       if a.time is None:
