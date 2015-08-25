@@ -693,6 +693,9 @@ class Controller(QtWidgets.QWidget):
 
   def exportRecording(self, start, end):
   #-------------------------------------
+    ## This is where we create a BSML file with current set of displayed signals
+    ## along with events and annotations starting or ending in the interval, and
+    ## provenance linking back to the original.
     print('export', start, end)
 
 

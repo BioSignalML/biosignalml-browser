@@ -875,7 +875,7 @@ class ChartPlot(ChartWidget):
        and self._selectstart[0] < pos.x() < self._selectend[0]):
         menu.addAction("Zoom")
         menu.addAction("Annotate")
-        menu.addAction("Export")
+##        menu.addAction("Export")
         item = menu.exec_(self.mapToGlobal(pos))
         if item:
           clearselection = False
