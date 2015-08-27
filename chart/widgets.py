@@ -5,6 +5,7 @@ Sub-class QT classes for widget promotion.
 """
 
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 
 class ChartFrame(QtWidgets.QFrame):
@@ -14,7 +15,7 @@ class ChartFrame(QtWidgets.QFrame):
   Emit a signal when the size of the chart's frame changes.
   """
 
-  frameResize = QtCore.pyqtSignal(QtCore.QRect)
+  frameResize = pyqtSignal(QtCore.QRect)
 
   def resizeEvent(self, e):
   #-----------------------
