@@ -465,9 +465,9 @@ class ChartPlot(ChartWidget):
     self._plot_width  = w - (MARGIN_LEFT + MARGIN_RIGHT)
     self._plot_height = h - (MARGIN_TOP + MARGIN_BOTTOM)
 
-    if self._id is not None:
-      drawtext(qp, MARGIN_LEFT+self._plot_width/2, 10, self._id,
-               fontSize=16, fontWeight=QtGui.QFont.Bold)
+#    if self._id is not None:
+#      drawtext(qp, MARGIN_LEFT+self._plot_width/2, 10, self._id,
+#               fontSize=16, fontWeight=QtGui.QFont.Bold)
 
     # Set pixel positions of markers and selected region for
     # use in mouse events.
