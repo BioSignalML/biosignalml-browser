@@ -379,6 +379,7 @@ class AnnotationList(QtWidgets.QWidget):
                                           self._recording,
                                           self._recording.interval(start, end=end))
       self._recording.add_resource(segment)
+      self._recording._modified = True
       self._add_annotation(segment, text, tags, predecessor)
 
   def _add_annotation(self, about, text, tags, predecessor=None):
@@ -419,6 +420,7 @@ class AnnotationList(QtWidgets.QWidget):
   #-------------------------------
     self._remove_annotation(id)
     self._recording.remove_resource(self.id)
+    self._recording._modified = True
 
 
 class Scroller(QtWidgets.QWidget):
@@ -559,6 +561,7 @@ class MainWindow(QtWidgets.QMainWindow):
       start = end
     self._readers = [ ]
     self._recording = recording
+    self._recording._modified = False
     self._start = start        ## Used in adjust_layout
 
     signals = SignalList(recording, annotator, self)
@@ -668,6 +671,11 @@ class MainWindow(QtWidgets.QMainWindow):
   #------------------------------    ## And send us hide/show messages or keys
   #  pass
 
+  def closeEvent(self, event):
+  #---------------------------
+    if self._recording._modified:
+      self._recording._modified = False
+      self._recording.close()
 
 
 if __name__ == "__main__":
