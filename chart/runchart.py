@@ -717,6 +717,11 @@ if __name__ == "__main__":
     else:
       recording = HDF5Recording.open(uri)
       tags = { }                  ## Load from file...
+      tags = { 'http://standards/org/ontology#tag1': 'Tag 1',
+               'http://standards/org/ontology#tag2': 'Tag 2',
+               'http://standards/org/ontology#tag3': 'Tag 3',
+               'http://standards/org/ontology#tag4': 'Tag 4',
+             }
     viewer = MainWindow(recording, start, end, tags=tags, annotator=wfdbAnnotation)
     viewer.show()
   except IOError as msg:
