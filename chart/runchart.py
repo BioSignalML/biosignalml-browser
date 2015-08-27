@@ -1,14 +1,19 @@
 import sys
 import re
 import logging
+from types import FunctionType
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
-from ui.chart      import Ui_Chart
-from ui.controller import Ui_Controller
+from mainwindow        import Ui_MainWindow
+from ui.signallist     import Ui_SignalList
+from ui.annotationlist import Ui_AnnotationList
+from ui.scroller       import Ui_Scroller
 
 from biosignalml import BSML
 from biosignalml.data import DataSegment
+from biosignalml.data.time import Interval
 import biosignalml.model
 import biosignalml.units as uom
 from biosignalml.formats.hdf5 import HDF5Recording
@@ -61,7 +66,7 @@ def signal_uri(signal):
 class SignalReadThread(QtCore.QThread):
 #======================================
 
-  append_points = QtCore.pyqtSignal(str, DataSegment)
+  append_points = pyqtSignal(str, DataSegment)
 
   def __init__(self, sig, interval, plotter):
   #------------------------------------------
@@ -80,6 +85,7 @@ class SignalReadThread(QtCore.QThread):
         self.append_points.emit(self._id, d)
         if self._exit: break
     except Exception as msg:
+      raise  ########################################
       logging.error(msg)
 
   def stop(self):
@@ -87,138 +93,12 @@ class SignalReadThread(QtCore.QThread):
     self._exit = True
 
 
-class ChartForm(QtWidgets.QWidget):
-#==================================
-
-  def __init__(self, uri, start, duration, parent=None):
-  #-----------------------------------------------------
-    QtWidgets.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
-#                                       | QtCore.Qt.WindowMinMaxButtonsHint
-#                           #           | QtCore.Qt.WindowStaysOnTopHint
-#                          )
-    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
-    self.ui = Ui_Chart()
-    self.ui.setupUi(self)
-    self.ui.chart.chartPosition.connect(self.on_chart_resize)
-    self.ui.chart.updateTimeScroll.connect(self.position_timescroll)
-    self.ui.timescroll.hide()
-    self.setWindowTitle(uri)
-    self.ui.chart.setId(uri)
-    self.setTimeRange(start, duration)
-    self._user_zoom_index = self.ui.timezoom.count()
-    self.ui.chart.zoomChart.connect(self.zoom_chart)
-
-
-  def setTimeRange(self, start, duration):
-  #---------------------------------------
-    self.ui.chart.setTimeRange(start, duration)
-    self.ui.chart.setTimeScroll(self.ui.timescroll)
-
-  def setSemanticTags(self, tag_dict):
-  #-----------------------------------
-    self.ui.chart.setSemanticTags(tag_dict)
-
-  def setMarker(self, time):
-  #-------------------------
-    self.ui.chart.setMarker(time)
-
-  def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
-  #----------------------------------------------------------------------------------------
-    self.ui.chart.addSignalPlot(id, label, units, visible=visible, data=data, ymin=ymin, ymax=ymax)
-
-  def addEventPlot(self, id, label, mapping=lambda x: str(x), visible=True, data=None):
-  #------------------------------------------------------------------------------------
-    self.ui.chart.addEventPlot(id, label, mapping, visible=visible, data=data)
-
-  def addAnnotation(self, id, start, end, text, tags, edit=False):
-  #---------------------------------------------------------------
-    self.ui.chart.addAnnotation(id, start, end, text, tags, edit)
-
-  def deleteAnnotation(self, id):
-  #------------------------------
-    self.ui.chart.deleteAnnotation(id)
-
-  def setPlotVisible(self, id, visible=True):
-  #------------------------------------------
-    self.ui.chart.setPlotVisible(id, visible)
-
-  def orderPlots(self, ids):
-  #-------------------------
-    self.ui.chart.orderPlots(ids)
-
-  def movePlot(self, from_id, to_id):
-  #----------------------------------
-    self.ui.chart.movePlot(from_id, to_id)
-
-  def plotSelected(self, row):
-  #---------------------------
-    self.ui.chart.plotSelected(row)
-
-  def resetAnnotations(self):
-  #--------------------------
-    self.ui.chart.resetAnnotations()
-
-  def save_chart_as_png(self, filename):
-  #-------------------------------------
-    self.ui.chart.save_as_png(filename)
-
-  def resizeEvent(self, e):
-  #------------------------
-    self.ui.layoutWidget.setGeometry(QtCore.QRect(10, 25, self.width()-20, self.height() - 50))
-
-  def on_timescroll_valueChanged(self, position):
-  #----------------------------------------------
-    self.ui.chart.moveTimeScroll(self.ui.timescroll)
-
-  def position_timescroll(self, visible):
-  #--------------------------------------
-    self.ui.chart.setTimeScroll(self.ui.timescroll)
-    self.ui.timescroll.setVisible(visible)
-
-  def on_timezoom_currentIndexChanged(self, text):
-  #-----------------------------------------------
-    if isinstance(text, basestring) and text != "":
-      scale = float(str(text).split()[0])
-      self.ui.chart.setTimeZoom(scale)
-      self.position_timescroll(scale > 1.0)
-
-  def zoom_chart(self, scale):
-  #---------------------------
-    if self.ui.timezoom.count() > self._user_zoom_index:
-      self.ui.timezoom.setItemText(self._user_zoom_index, "%.2f x" % scale)
-    else:
-      self.ui.timezoom.insertItem(self._user_zoom_index, "%.2f x" % scale)
-    self.ui.timezoom.setCurrentIndex(-1)
-    self.ui.timezoom.setCurrentIndex(self._user_zoom_index)
-    # Above will trigger on_timezoom_currentIndexChanged()
-
-  def position_timescroll(self, visible):
-  #--------------------------------------
-    self.ui.chart.setTimeScroll(self.ui.timescroll)
-    self.ui.timescroll.setVisible(visible)
-
-  def on_frame_frameResize(self, geometry):
-  #----------------------------------------
-    geometry.adjust(3, 3, -3, -3)
-    self.ui.chart.setGeometry(geometry)
-    #QtCore.QRect(offset-4, self.height()-40, width+8, 30))
-
-  def on_chart_resize(self, offset, width, bottom):
-  #------------------------------------------------
-    h = self.ui.timescroll.height()
-    self.ui.timescroll.setGeometry(QtCore.QRect(offset-10, bottom+27, width+40, h))
-
-  def on_chart_customContextMenuRequested(self, pos):
-  #--------------------------------------------------
-    self.ui.chart.contextMenu(pos)
-
-
 
 class SignalInfo(QtCore.QAbstractTableModel):
 #============================================
 
-  rowVisible = QtCore.pyqtSignal(str, bool)   # id, state
-  rowMoved = QtCore.pyqtSignal(str, str)      # from_id, to_id
+  rowVisible = pyqtSignal(str, bool)   # id, state
+  rowMoved = pyqtSignal(str, str)      # from_id, to_id
 
   HEADER    = [ '', 'Label', 'Uri' ]
   ID_COLUMN = 2                               # Uri is ID
@@ -265,7 +145,7 @@ class SignalInfo(QtCore.QAbstractTableModel):
     if role == QtCore.Qt.CheckStateRole and index.column() == 0:
       self._rows[index.row()][0] = (value == QtCore.Qt.Checked)
       self.rowVisible.emit(self._rows[index.row()][self.ID_COLUMN], (value == QtCore.Qt.Checked))
-      self.dataChanged.emit(index, index)
+###      self.dataChanged.emit(index, index)   ### NO SLOT...
       return True
     return False
 
@@ -308,56 +188,70 @@ class AnnotationTable(object):
 
   @staticmethod
   def row(uri, times, type, text, tagtext=''):
-  #---=---------------------------------------
+  #-------------------------------------------
     return [str(uri)] + times + [ type, text, tagtext ]
 
 
-class Controller(QtWidgets.QWidget):
+
+class SignalList(QtWidgets.QWidget):
 #===================================
 
-  def __init__(self, recording, segment=None, annotator=None, tags={ }, parent=None):
-  #----------------------------------------------------------------------------------
-    QtWidgets.QWidget.__init__(self, parent) # , QtCore.Qt.CustomizeWindowHint
-#                                       | QtCore.Qt.WindowMinMaxButtonsHint
-#                           #           | QtCore.Qt.WindowStaysOnTopHint
-#                          )
+  add_event_plot = pyqtSignal(str, str, FunctionType) ## , bool, DataSegment)
+  add_signal_plot = pyqtSignal(str, str, str) ## , bool, DataSegment, float, float)
+  show_signals = pyqtSignal(Interval) 
 
-    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
-    self.controller = Ui_Controller()
-    self.controller.setupUi(self)
-    self._readers = [ ]
+  def __init__(self, recording, annotator, parent=None):
+  #-----------------------------------------------------
+    QtWidgets.QWidget.__init__(self, parent)
+    self.ui = Ui_SignalList()
+    self.ui.setupUi(self)
+    self._recording = recording
+    self._annotator = annotator
+    self.model = SignalInfo(recording)
+    self.ui.signals.setModel(self.model)
+    self.ui.signals.setColumnWidth(0, 25)
+
+  def plot_signals(self, start, duration):
+  #---------------------------------------
+    interval = self._recording.interval(start, duration)
+    for s in self._recording.signals():
+      uri = signal_uri(s)
+      if str(s.units) == str(uom.UNITS.AnnotationData.uri):
+        self.add_event_plot.emit(uri, s.label, self._annotator)
+      else:
+        try: units = uom.RESOURCES[str(s.units)].label
+        except:
+          u = str(s.units)
+          units = u[u.find('#')+1:]
+        self.add_signal_plot.emit(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
+    self.show_signals.emit(interval)
+
+  def on_allsignals_toggled(self, state):
+  #--------------------------------------
+    self.model.setVisibility(state)
+
+
+class AnnotationList(QtWidgets.QWidget):
+#=======================================
+
+  add_annotation = pyqtSignal(str, float, float, str, dict, bool)
+  delete_annotation = pyqtSignal(str)
+  move_plot = pyqtSignal(float)
+  set_marker = pyqtSignal(float)
+  set_slider_value = pyqtSignal(float)
+  show_slider_time = pyqtSignal(float)
+
+  def __init__(self, recording, tags, parent=None):
+  #------------------------------------------------
+
+    QtWidgets.QWidget.__init__(self, parent)
+    self.ui = Ui_AnnotationList()
+    self.ui.setupUi(self)
 
     self._recording = recording
-    self._rec_uri = str(self._recording.uri)
-    self.setWindowTitle(self._rec_uri)
-    self._make_uri = self._recording.uri.make_uri    # Method for minting new URIs
-
     self._tags = tags
-
-    if segment is None:
-      start = 0.0
-      end = None
-    else:
-      start = segment[0]
-      end = segment[1]
-    if end is None:
-      duration = self._recording.duration
-      if duration is None or duration <= 0.0:
-        self._recording.duration = duration = 60.0    ######
-    elif start <= end:
-      duration = end - start
-    else:
-      duration = start - end
-      start = end
-    self._start = start
-    self._duration = duration
-    self._timerange = NumericRange(0.0, duration)
-
-    self.controller.rec_posn = QtWidgets.QLabel(self)
-    self.controller.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
-    self.controller.rec_posn.resize(self.controller.rec_start.size())
-    self.controller.splitter.splitterMoved.connect(self._splitter_moved)
-
+    self._make_uri = self._recording.uri.make_uri    # Method for minting new URIs
+    self._timerange = NumericRange(0.0, recording.duration)  ### ???????
     self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable, resource)
     for a in self._recording.graph.get_annotations():
       if a.time is None:
@@ -374,7 +268,7 @@ class Controller(QtWidgets.QWidget):
                 for evt in self._recording.graph.get_event_uris(timetype=BSML.Interval)]:
       self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), None, False, e) )
 
-    self._annotation_table = SortedTable(self.controller.annotations, AnnotationTable.header(),
+    self._annotation_table = SortedTable(self.ui.annotations, AnnotationTable.header(),
                                          [ AnnotationTable.row(a[0], self._make_ann_times(a[1], a[2]),
                                                               'Annotation' if a[5] else 'Event',
                                                               a[3], self._tag_labels(a[4]))
@@ -383,67 +277,18 @@ class Controller(QtWidgets.QWidget):
     self._events = { }
     self._event_type = None
     self._event_rows = None
-    self.controller.events.addItem('None')
-    self.controller.events.insertItems(1, ['%s (%s)' % (abbreviate_uri(etype), count)
+    self.ui.events.addItem('None')
+    self.ui.events.insertItems(1, ['%s (%s)' % (abbreviate_uri(etype), count)
       for etype, count in self._recording.graph.get_event_types(counts=True)])
       # if no duration ...
-    self.controller.events.addItem('All')
+    self.ui.events.addItem('All')
     self._event_type = 'None'
 
-    self.model = SignalInfo(self._recording)
-    self.controller.signals.setModel(self.model)
-    self.controller.signals.setColumnWidth(0, 25)
-
-    self.viewer = ChartForm(self._rec_uri, self._start, self._duration)
-    self.model.rowVisible.connect(self.viewer.setPlotVisible)
-    self.model.rowMoved.connect(self.viewer.movePlot)
-    self.controller.signals.rowSelected.connect(self.viewer.plotSelected)
-    self.viewer.ui.chart.annotationAdded.connect(self.annotationAdded)
-    self.viewer.ui.chart.annotationModified.connect(self.annotationModified)
-    self.viewer.ui.chart.annotationDeleted.connect(self.annotationDeleted)
-    self.viewer.ui.chart.exportRecording.connect(self.exportRecording)
-
-    self.viewer.setSemanticTags(self._tags)
-
-    interval = self._recording.interval(self._start, self._duration)
-    self._setup_slider()
-    for s in self._recording.signals():
-      uri = signal_uri(s)
-      if str(s.units) == str(uom.UNITS.AnnotationData.uri):
-        self.viewer.addEventPlot(uri, s.label, annotator)
-      else:
-        try: units = uom.RESOURCES[str(s.units)].label
-        except:
-          u = str(s.units)
-          units = u[u.find('#')+1:]
-        self.viewer.addSignalPlot(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
-    self._plot_signals(interval)
+  @pyqtSlot()
+  def show_annotations(self):
+  #--------------------------
     for a in self._annotations:  # tuple(uri, start, end, text, tags, resource)
-      if a[1] is not None: self.viewer.addAnnotation(*a[:6])
-    # self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
-    self.viewer.show()
-
-  def __del__(self):
-  #-----------------
-    self._stop_readers()
-
-  def _plot_signals(self, interval):
-  #---------------------------------
-    self._stop_readers()
-    self.viewer.resetAnnotations()
-    for s in self._recording.signals():
-      self._readers.append(SignalReadThread(s, interval, self.viewer))
-      self._readers[-1].start()
-
-  def _stop_readers(self):
-  #-----------------------
-    for t in self._readers: t.stop()
-    while True:
-      stopped = True
-      for t in self._readers:
-        stopped = stopped and t.wait(10)
-      if stopped: break
-    self._readers = [ ]
+      if a[1] is not None: self.add_annotation.emit(*a[:6])
 
   def _make_ann_times(self, start, end):
   #-------------------------------------
@@ -463,119 +308,6 @@ class Controller(QtWidgets.QWidget):
       return ''
     else:
       return ', '.join(sorted([self._tags.get(str(t), str(t)) for t in tags]))
-
-  def _adjust_layout(self):
-  #------------------------
-    self.controller.annotations.resizeCells()
-    self._show_slider_time(self._start)
-
-  def resizeEvent(self, event):
-  #----------------------------
-    self._adjust_layout()
-
-  def _splitter_moved(self, pos, index):
-  #-------------------------------------
-    self._adjust_layout()
-
-  def showEvent(self, event):
-  #--------------------------
-#    if self.controller.rec_posn.pos().y() == 0:  # After laying out controller
-    self._adjust_layout()
-    QtWidgets.QWidget.showEvent(self, event)
-
-  def _set_slider_time(self, label, time):
-  #---------------------------------------
-    ## Show as HH:MM:SS
-    label.setText(str(self._timerange.map(time, -1)))
-
-  def _show_slider_time(self, time):
-  #---------------------------------
-    self._set_slider_time(self.controller.rec_posn, time)
-    sb = self.controller.segment
-    self.controller.rec_posn.move(  ## 50 = approx width of scroll end arrows
-      20 + sb.pos().x() + (sb.width()-50)*time/self._recording.duration,
-      self.controller.rec_start.pos().y() + 6)
-
-  def _set_slider_value(self, time):
-  #---------------------------------
-    sb = self.controller.segment
-    width = sb.maximum() + sb.pageStep() - sb.minimum()
-    sb.setValue(width*time/self._recording.duration)
-
-  def _setup_slider(self):
-  #-----------------------
-    self._sliding = True            ## So we don't move_viewer() when sliderMoved()
-    self._move_timer = None         ## is triggered by setting the slider's value
-    duration = self._recording.duration
-    if duration == 0: return
-    sb = self.controller.segment
-    sb.setMinimum(0)
-    scrollwidth = 10000
-    sb.setPageStep(scrollwidth*self._duration/duration)
-    sb.setMaximum(scrollwidth - sb.pageStep())
-    sb.setValue(scrollwidth*self._start/duration)
-    self._set_slider_time(self.controller.rec_start, 0.0)
-    self._set_slider_time(self.controller.rec_end, duration)
-
-  def _stop_move_timer(self):
-  #--------------------------
-    if self._move_timer is not None:
-      self.killTimer(self._move_timer)
-      self._move_timer = None
-
-  def _start_move_timer(self):
-  #---------------------------
-    if self._move_timer is not None:
-      self.killTimer(self._move_timer)
-    self._move_timer = self.startTimer(100)  # 100ms
-
-  def timerEvent(self, event):
-  #---------------------------
-    if self._move_timer is not None:
-      self._stop_move_timer()
-      self._move_viewer(self._newstart)
-
-  def _slider_moved(self):
-  #-----------------------
-    sb = self.controller.segment
-    duration = self._recording.duration
-    width = sb.maximum() + sb.pageStep() - sb.minimum()
-    self._newstart = sb.value()*duration/float(width)
-    self._show_slider_time(self._newstart)
-    if self.controller.segment.isSliderDown():
-      self._start_move_timer()
-      self._sliding = True
-    elif self._sliding:
-      if self._move_timer is not None:
-        self._stop_move_timer()
-        self._move_viewer(self._newstart)
-      self._sliding = False
-    else:
-      self._move_viewer(self._newstart)
-
-  def _move_viewer(self, start):
-  #-----------------------------
-    if start != self._start:
-      self._plot_signals(self._recording.interval(start, self._duration))
-      self.viewer.setTimeRange(start, self._duration)
-      self._start = start
-      for a in self._annotations:  # tuple(uri, start, end, text, tags, resource)
-        if a[1] is not None: self.viewer.addAnnotation(*a[:6])
-
-  def on_segment_valueChanged(self, position):
-  #-------------------------------------------
-    self._slider_moved()
-    # Sluggish if large data segments with tracking...
-  # Tracking is on, show time at slider posiotion
-  # But also catch slider released and use this to refresh chart data...
-
-  def on_segment_sliderReleased(self):
-  #-----------------------------------
-    self._slider_moved()
-
-  def on_allsignals_toggled(self, state):
-  #--------------------------------------
-    self.model.setVisibility(state)
 
   def _find_annotation(self, id):
   #------------------------------
@@ -612,10 +344,10 @@ class Controller(QtWidgets.QWidget):
         self._duration = end - start
       else:
         start = max(0.0, time - self._duration/4.0)
-      self._move_viewer(start)
-      self._set_slider_value(start)
-      self._show_slider_time(start)
-      self.viewer.setMarker(time)
+      self.move_plot.emit(start)
+      self.set_slider_value.emit(start)
+      self.show_slider_time.emit(start)
+      self.set_marker.emit(time)
 
   def on_events_currentIndexChanged(self, index):
   #----------------------------------------------
@@ -637,8 +369,9 @@ class Controller(QtWidgets.QWidget):
                                                              event.time.duration], 'Event',
                                                             abbreviate_uri(event.eventtype))
                                                          for event in events ])
-    self._adjust_layout()
+##    self._adjust_layout()
 
+  @pyqtSlot(float, float, str, str, list, str)
   def annotationAdded(self, start, end, text, tags, predecessor=None):
   #-------------------------------------------------------------------
     if text or tags:
@@ -664,16 +397,15 @@ class Controller(QtWidgets.QWidget):
                                                             'Annotation', text,
                                                             self._tag_labels(tags)) ])
     self._annotations.append((str(annotation.uri), start, end, text, tags, True, annotation))
-    self.viewer.addAnnotation(annotation.uri, start, end, text, tags, True)
-
-
+    self.add_annotation.emit(annotation.uri, start, end, text, tags, True)
 
   def _remove_annotation(self, id):
   #--------------------------------
     self._annotation_table.deleteRow(id)
     self._delete_annotation(id)
-    self.viewer.deleteAnnotation(id)
+    self.delete_annotation.emit(id)
 
+  @pyqtSlot(str, str, list)
   def annotationModified(self, id, text, tags):
   #--------------------------------------------
     ann = self._find_annotation(id)
@@ -682,11 +414,247 @@ class Controller(QtWidgets.QWidget):
       if text or tags:
         self._add_annotation(ann[6].about, text, tags, predecessor=id)
 
+  @pyqtSlot(str)
   def annotationDeleted(self, id):
   #-------------------------------
     self._remove_annotation(id)
     self._recording.remove_resource(self.id)
 
+
+class Scroller(QtWidgets.QWidget):
+#=================================
+
+  set_plot_time_range = pyqtSignal(float, float)
+  show_signals = pyqtSignal(Interval)
+  show_annotations = pyqtSignal()
+
+  def __init__(self, recording, start, duration, parent=None):
+  #-----------------------------------------------------------
+    QtWidgets.QWidget.__init__(self, parent)
+    self.ui = Ui_Scroller()
+    self.ui.setupUi(self)
+    self.ui.rec_posn = QtWidgets.QLabel(self)
+    self.ui.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+    self.ui.rec_posn.resize(self.ui.rec_start.size())
+    self._timerange = NumericRange(0.0, duration)
+    self._recording = recording
+    self._start = start
+    self._duration = duration       ### v's recording's duration ???
+
+  def _set_slider_time(self, label, time):
+  #---------------------------------------
+    ## Show as HH:MM:SS
+    label.setText(str(self._timerange.map(time, -1)))
+
+  @pyqtSlot(float)
+  def show_slider_time(self, time):
+  #--------------------------------
+    self._set_slider_time(self.ui.rec_posn, time)
+    sb = self.ui.segment
+    self.ui.rec_posn.move(  ## 50 = approx width of scroll end arrows
+      20 + sb.pos().x() + (sb.width()-50)*time/self._duration,
+      self.ui.rec_start.pos().y() + 6)
+
+  @pyqtSlot(float)
+  def set_slider_value(self, time):
+  #---------------------------------
+    sb = self.ui.segment
+    width = sb.maximum() + sb.pageStep() - sb.minimum()
+    sb.setValue(width*time/self._duration)
+
+  def setup_slider(self):
+  #----------------------
+    self._sliding = True            ## So we don't move_plot() when sliderMoved()
+    self._move_timer = None         ## is triggered by setting the slider's value
+    duration = self._recording.duration     ## Versus slider's duration
+    if duration == 0: return
+    sb = self.ui.segment
+    sb.setMinimum(0)
+    scrollwidth = 10000
+    sb.setPageStep(scrollwidth*self._duration/duration)
+    sb.setMaximum(scrollwidth - sb.pageStep())
+    sb.setValue(scrollwidth*self._start/duration)
+    self._set_slider_time(self.ui.rec_start, 0.0)
+    self._set_slider_time(self.ui.rec_end, duration)
+
+  def _stop_move_timer(self):
+  #--------------------------
+    if self._move_timer is not None:
+      self.killTimer(self._move_timer)
+      self._move_timer = None
+
+  def _start_move_timer(self):
+  #---------------------------
+    if self._move_timer is not None:
+      self.killTimer(self._move_timer)
+    self._move_timer = self.startTimer(100)  # 100ms
+
+  def timerEvent(self, event):
+  #---------------------------
+    if self._move_timer is not None:
+      self._stop_move_timer()
+      self.move_plot(self._newstart)
+
+  def _slider_moved(self):
+  #-----------------------
+    sb = self.ui.segment
+    duration = self._recording.duration
+    width = sb.maximum() + sb.pageStep() - sb.minimum()
+    self._newstart = sb.value()*duration/float(width)
+    self._show_slider_time(self._newstart)
+    if self.ui.segment.isSliderDown():
+      self._start_move_timer()
+      self._sliding = True
+    elif self._sliding:
+      if self._move_timer is not None:
+        self._stop_move_timer()
+        self.move_plot(self._newstart)
+      self._sliding = False
+    else:
+      self.move_plot(self._newstart)
+
+  @pyqtSlot(float)
+  def move_plot(self, start):
+  #---------------------------
+    if start != self._start:
+      self.show_signals.emit(self._recording.interval(start, self._duration))
+      self.set_plot_time_range.emit(start, self._duration)
+      self._start = start
+      self.show_annotations.emit()
+
+  def on_segment_valueChanged(self, position):
+  #-------------------------------------------
+    self._slider_moved()
+    # Sluggish if large data segments with tracking...
+  # Tracking is on, show time at slider position
+  # But also catch slider released and use this to refresh chart data...
+
+  def on_segment_sliderReleased(self):
+  #-----------------------------------
+    self._slider_moved()
+
+
+class MainWindow(QtWidgets.QMainWindow):
+#=======================================
+
+  reset_annotations = pyqtSignal()
+##  resize_annotation_list = pyqtSignal()
+##  show_slider_time = pyqtSignal(float)
+
+
+  def __init__(self, recording, start=0.0, end=None, tags={ }, annotator=None):
+  #----------------------------------------------------------------------------
+
+    QtWidgets.QMainWindow.__init__(self)
+    self.setWindowTitle(recording.uri)
+
+    if end is None:
+      duration = recording.duration
+      if duration is None or duration <= 0.0:
+        recording.duration = duration = 60.0    ######
+    elif start <= end:
+      duration = end - start
+    else:
+      duration = start - end
+      start = end
+    self._readers = [ ]
+    self._recording = recording
+    self._start = start        ## Used in adjust_layout
+
+    signals = SignalList(recording, annotator, self)
+    annotations = AnnotationList(recording, tags, self)
+    scroller = Scroller(recording, start, duration, self)
+
+    self.ui = Ui_MainWindow()
+    self.ui.setupUi(self, signals, annotations, scroller)
+
+    # Setup chart    
+    self.ui.chartform.setTimeRange(start, duration)
+    chart = self.ui.chartform.ui.chart
+    chart.setId(uri)
+    chart.setSemanticTags(tags)
+    chart.exportRecording.connect(self.exportRecording)
+
+    # Connections with signal list
+    signals.add_event_plot.connect(chart.addEventPlot)
+    signals.add_signal_plot.connect(chart.addSignalPlot)
+    signals.show_signals.connect(self.plot_signals)
+    signals.model.rowVisible.connect(chart.setPlotVisible)
+    signals.model.rowMoved.connect(chart.movePlot)
+    signals.ui.signals.rowSelected.connect(chart.plotSelected)
+
+    # Connections with annotation list
+    annotations.add_annotation.connect(chart.addAnnotation)
+    annotations.delete_annotation.connect(chart.deleteAnnotation)
+    annotations.set_marker.connect(chart.setMarker)
+    annotations.move_plot.connect(scroller.move_plot)
+    annotations.set_slider_value.connect(scroller.set_slider_value)
+    annotations.show_slider_time.connect(scroller.show_slider_time)
+    chart.annotationAdded.connect(annotations.annotationAdded)
+    chart.annotationModified.connect(annotations.annotationModified)
+    chart.annotationDeleted.connect(annotations.annotationDeleted)
+
+    # Connections with scroller
+    scroller.set_plot_time_range.connect(chart.setTimeRange)
+    scroller.show_signals.connect(self.plot_signals)
+    scroller.show_annotations.connect(annotations.show_annotations)
+
+    # Connect our signals
+    self.reset_annotations.connect(chart.resetAnnotations)
+##    self.resize_annotation_list.connect(annotations.annotations.resizeCells)
+##    self.show_slider_time.connect(scroller.show_slider_time)
+
+    # Everything connected, let's go...
+    signals.plot_signals(start, duration)
+    annotations.show_annotations()
+    scroller.setup_slider()
+
+#    self.ui.chartform._user_zoom_index = self.ui.timezoom.count()
+#    self.ui.chartform.ui.chart.zoomChart.connect(self.zoom_chart)
+
+    ## self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
+
+
+  def __del__(self):
+  #-----------------
+    self._stop_readers()
+
+  @pyqtSlot(Interval)
+  def plot_signals(self, interval):
+  #---------------------------------
+    self._stop_readers()
+    self.reset_annotations.emit()
+    for s in self._recording.signals():   ## Why not only ones currently selected ????
+      self._readers.append(SignalReadThread(s, interval, self.ui.chartform))
+      self._readers[-1].start()
+
+  def _stop_readers(self):
+  #-----------------------
+    for t in self._readers: t.stop()
+    while True:
+      stopped = True
+      for t in self._readers:
+        stopped = stopped and t.wait(10)
+      if stopped: break
+    self._readers = [ ]
+
+  '''   ### Now happens in appropriate widgets
+  @pyqtSlot()
+  def adjust_layout(self):
+  #------------------------
+    self.resize_annotation_list.emit()
+    self.show_slider_time.emit(self._start)
+
+  def resizeEvent(self, event):
+  #----------------------------
+    self.adjust_layout()
+
+  def showEvent(self, event):
+  #--------------------------
+#    if self.controller.rec_posn.pos().y() == 0:  # After laying out controller
+    self.adjust_layout()
+    QtWidgets.QWidget.showEvent(self, event)
+  '''
 
   def exportRecording(self, start, end):
   #-------------------------------------
@@ -701,13 +669,6 @@ class Controller(QtWidgets.QWidget):
   #  pass
 
 
-def show_chart(recording, start=0.0, end=None, tags={ }):
-#========================================================
-  ctlr = Controller(recording, (start, end), wfdbAnnotation, tags)
-  ctlr.viewer.raise_()
-  ctlr.viewer.activateWindow()
-  return ctlr
-
 
 if __name__ == "__main__":
 #=========================
@@ -715,15 +676,12 @@ if __name__ == "__main__":
   import biosignalml.client
 
   logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
-  logging.getLogger().setLevel('DEBUG')
+#  logging.getLogger().setLevel('DEBUG')
 
   ## Replace following with Python arg parser...
   if len(sys.argv) <= 1:
     print("Usage: %s RECORDING [start] [duration]" % sys.argv[0])
     sys.exit(1)
-
-  app = QtWidgets.QApplication(sys.argv)
-
   uri = sys.argv[1]
   if len(sys.argv) >= 3:
     try:
@@ -742,6 +700,7 @@ if __name__ == "__main__":
   else:
     end = None
 
+  app = QtWidgets.QApplication(sys.argv)
   try:
     if uri.startswith('http://'):
       store = biosignalml.client.Repository(uri)
@@ -750,9 +709,10 @@ if __name__ == "__main__":
     else:
       recording = HDF5Recording.open(uri)
       tags = { }                  ## Load from file...
-    viewer = show_chart(recording, start, end, tags=tags)
+    viewer = MainWindow(recording, start, end, tags=tags, annotator=wfdbAnnotation)
     viewer.show()
   except IOError as msg:
+    raise  ###################
     sys.exit(str(msg))
 
   sys.exit(app.exec_())
