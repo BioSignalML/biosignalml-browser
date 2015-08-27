@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from ui.annotate import Ui_AnnotationDialog
 
@@ -49,6 +50,7 @@ class AnnotationDialog(QtWidgets.QDialog):
   #------------------------
     return str(self.ui.annotation.toPlainText()).strip()
 
+  @pyqtSlot()
   def show_tags(self):
   #-------------------
     self.ui.taglabels.setText(', '.join(sorted([t.label for t in self.ui.taglist.selectedItems()])))

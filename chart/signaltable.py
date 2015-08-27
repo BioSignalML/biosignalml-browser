@@ -1,4 +1,5 @@
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 
 class SignalItem(QtWidgets.QStyledItemDelegate):
@@ -47,7 +48,7 @@ class SignalItem(QtWidgets.QStyledItemDelegate):
 class SignalTable(QtWidgets.QTableView):
 #=======================================
 
-  rowSelected = QtCore.pyqtSignal(int)   # row, -1 means clear
+  rowSelected = pyqtSignal(int)   # row, -1 means clear
 
   def __init__(self, *args, **kwds):
   #---------------------------------

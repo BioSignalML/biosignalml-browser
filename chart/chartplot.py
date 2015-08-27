@@ -2,9 +2,11 @@ import math
 import logging
 import collections
 import numpy as np
+from types import FunctionType
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import QtOpenGL
+from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from biosignalml.data import DataSegment
 
@@ -295,13 +297,13 @@ class ChartPlot(ChartWidget):
   and all sharing the same X-axis (time axis).
 
   """
-  chartPosition = QtCore.pyqtSignal(int, int, int)
-  updateTimeScroll = QtCore.pyqtSignal(bool)
-  annotationAdded = QtCore.pyqtSignal(float, float, str, list)
-  annotationModified = QtCore.pyqtSignal(str, str, list)
-  annotationDeleted = QtCore.pyqtSignal(str)
-  exportRecording = QtCore.pyqtSignal(str, float, float)
-  zoomChart = QtCore.pyqtSignal(float)
+  chartPosition = pyqtSignal(int, int, int)
+  updateTimeScroll = pyqtSignal(bool)
+  annotationAdded = pyqtSignal(float, float, str, list)
+  annotationModified = pyqtSignal(str, str, list)
+  annotationDeleted = pyqtSignal(str)
+  exportRecording = pyqtSignal(str, float, float)
+  zoomChart = pyqtSignal(float)
 
   def __init__(self, parent=None):
   #-------------------------------
@@ -336,6 +338,7 @@ class ChartPlot(ChartWidget):
   #-----------------------------------
     self.semantic_tags = tag_dict    ## { uri: label }
 
+  @pyqtSlot(str, str, str) ## , bool, DataSegment, float, float)
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
     plot = SignalPlot(label, units, data, ymin, ymax)
@@ -343,6 +346,7 @@ class ChartPlot(ChartWidget):
     self._plotlist.append([str(id), visible, plot])
     self.update()
 
+  @pyqtSlot(str, str, FunctionType) ## , bool, DataSegment)
   def addEventPlot(self, id, label, mapping=lambda x: str(x), visible=True, data=None):
   #------------------------------------------------------------------------------------
     plot = EventPlot(label, mapping, data)
@@ -350,7 +354,7 @@ class ChartPlot(ChartWidget):
     self._plotlist.append([str(id), visible, plot])
     self.update()
 
-  @QtCore.pyqtSlot(str, DataSegment)
+  @pyqtSlot(str, DataSegment)
   def appendData(self, id, data):
   #------------------------------
     n = self._plots.get(str(id), -1)
@@ -358,6 +362,7 @@ class ChartPlot(ChartWidget):
       self._plotlist[n][2].appendData(data)
       self.update()
 
+  @pyqtSlot(str, bool)
   def setPlotVisible(self, id, visible=True):
   #------------------------------------------
     n = self._plots.get(str(id), -1)
@@ -365,11 +370,13 @@ class ChartPlot(ChartWidget):
       self._plotlist[n][1] = visible
       self.update()
 
+  @pyqtSlot(result=list)
   def plotOrder(self):
   #-------------------
     """ Get list of plot ids in display order. """
     return [ p[0] for p in self._plotlist ]
 
+  @pyqtSlot(list)
   def orderPlots(self, ids):
   #-------------------------
     """
@@ -391,6 +398,7 @@ class ChartPlot(ChartWidget):
       self._plots[plots[i][0]] = n
     self.update()
 
+  @pyqtSlot(str, str)
   def movePlot(self, from_id, to_id):
   #----------------------------------
     """ Move a plot, shifting others up or down."""
@@ -408,23 +416,27 @@ class ChartPlot(ChartWidget):
       self._plots[str(from_id)] = m
     self.update()
 
+  @pyqtSlot(int)
   def plotSelected(self, row):
   #---------------------------
     for n, p in enumerate(self._plotlist):
       p[2].selected = (n == row)
     self.update()
 
+  @pyqtSlot()
   def resetAnnotations(self):
   #--------------------------
     self._annotations = collections.OrderedDict()
     self._annrects = []
 
+  @pyqtSlot(str, float, float, str, dict, bool)
   def addAnnotation(self, id, start, end, text, tags, edit=False):
   #---------------------------------------------------------------
     if end is None: end = start
     if end > self.start and start < self.end:
       self._annotations[str(id)] = (start, end, text, tags, edit)
 
+  @pyqtSlot(str)
   def deleteAnnotation(self, id):
   #------------------------------
     self._annotations.pop(str(id), None)
@@ -683,6 +695,7 @@ class ChartPlot(ChartWidget):
   #---------------------------  
     return MARGIN_LEFT + (time - self._start)*self._plot_width/float(self._duration)
 
+  @pyqtSlot(float, float)
   def setTimeRange(self, start, duration):
   #---------------------------------------
     self.start = self._start = start
@@ -726,6 +739,7 @@ class ChartPlot(ChartWidget):
 #      if m[1] > self._end: m[1] = self._end
     self.update()
 
+  @pyqtSlot(float)
   def setMarker(self, time):
   #-------------------------
     self._markers[0][0] = self._time_to_pos(time)
