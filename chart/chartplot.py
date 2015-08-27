@@ -332,7 +332,7 @@ class ChartPlot(ChartWidget):
 
   def setId(self, id):
   #-------------------
-    self._id = str(id)
+    self._id = id
 
   def setSemanticTags(self, tag_dict):
   #-----------------------------------
@@ -342,22 +342,22 @@ class ChartPlot(ChartWidget):
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
   #----------------------------------------------------------------------------------------
     plot = SignalPlot(label, units, data, ymin, ymax)
-    self._plots[str(id)] = len(self._plotlist)
-    self._plotlist.append([str(id), visible, plot])
+    self._plots[id] = len(self._plotlist)
+    self._plotlist.append([id, visible, plot])
     self.update()
 
   @pyqtSlot(str, str, FunctionType) ## , bool, DataSegment)
   def addEventPlot(self, id, label, mapping=lambda x: str(x), visible=True, data=None):
   #------------------------------------------------------------------------------------
     plot = EventPlot(label, mapping, data)
-    self._plots[str(id)] = len(self._plotlist)
-    self._plotlist.append([str(id), visible, plot])
+    self._plots[id] = len(self._plotlist)
+    self._plotlist.append([id, visible, plot])
     self.update()
 
   @pyqtSlot(str, DataSegment)
   def appendData(self, id, data):
   #------------------------------
-    n = self._plots.get(str(id), -1)
+    n = self._plots.get(id, -1)
     if n >= 0:
       self._plotlist[n][2].appendData(data)
       self.update()
@@ -365,7 +365,7 @@ class ChartPlot(ChartWidget):
   @pyqtSlot(str, bool)
   def setPlotVisible(self, id, visible=True):
   #------------------------------------------
-    n = self._plots.get(str(id), -1)
+    n = self._plots.get(id, -1)
     if n >= 0:
       self._plotlist[n][1] = visible
       self.update()
@@ -389,7 +389,7 @@ class ChartPlot(ChartWidget):
     order = []
     plots = []
     for id in ids:
-      n = self._plots.get(str(id), -1)
+      n = self._plots.get(id, -1)
       if n >= 0:
         order.append(n)
         plots.append(self._plotlist[n])
@@ -402,8 +402,8 @@ class ChartPlot(ChartWidget):
   def movePlot(self, from_id, to_id):
   #----------------------------------
     """ Move a plot, shifting others up or down."""
-    n = self._plots.get(str(from_id), -1)
-    m = self._plots.get(str(to_id), -1)
+    n = self._plots.get(from_id, -1)
+    m = self._plots.get(to_id, -1)
     if n >= 0 and m >= 0 and n != m:
       p = self._plotlist[n]
       if n > m:   # shift up
@@ -434,12 +434,12 @@ class ChartPlot(ChartWidget):
   #---------------------------------------------------------------
     if end is None: end = start
     if end > self.start and start < self.end:
-      self._annotations[str(id)] = (start, end, text, tags, edit)
+      self._annotations[id] = (start, end, text, tags, edit)
 
   @pyqtSlot(str)
   def deleteAnnotation(self, id):
   #------------------------------
-    self._annotations.pop(str(id), None)
+    self._annotations.pop(id, None)
     self.update()
 
   def resizeEvent(self, e):
