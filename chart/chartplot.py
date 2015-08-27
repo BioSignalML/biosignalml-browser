@@ -855,8 +855,9 @@ class ChartPlot(ChartWidget):
         self._selectmove = None
     self._mousebutton = None
 
-  def contextMenu(self, pos):
-  #--------------------------
+  def contextMenuEvent(self, event):
+  #---------------------------------
+    pos = event.pos()
     self._mousebutton = None
     for a in self._annrects:
       if a[0].contains(pos):
