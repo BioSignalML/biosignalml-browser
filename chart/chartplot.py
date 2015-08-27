@@ -330,13 +330,14 @@ class ChartPlot(ChartWidget):
     self._annrects = []    # List of tuple(rect, id)
     self.semantic_tags = { }
 
+
   def setId(self, id):
   #-------------------
     self._id = id
 
-  def setSemanticTags(self, tag_dict):
-  #-----------------------------------
-    self.semantic_tags = tag_dict    ## { uri: label }
+  def setSemanticTags(self, tags):
+  #-------------------------------
+    self.semantic_tags = tags    ## { uri: label }
 
   @pyqtSlot(str, str, str) ## , bool, DataSegment, float, float)
   def addSignalPlot(self, id, label, units, visible=True, data=None, ymin=None, ymax=None):
