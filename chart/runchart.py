@@ -234,7 +234,7 @@ class SignalList(QtWidgets.QWidget):
 class AnnotationList(QtWidgets.QWidget):
 #=======================================
 
-  add_annotation = pyqtSignal(str, float, float, str, dict, bool)
+  add_annotation = pyqtSignal(str, float, float, str, list, bool)
   delete_annotation = pyqtSignal(str)
   move_plot = pyqtSignal(float)
   set_marker = pyqtSignal(float)
