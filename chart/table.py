@@ -20,6 +20,8 @@ class TableView(QtWidgets.QTableView):
     self.setShowGrid(False)
     self.setWordWrap(True)
     self.verticalHeader().setVisible(False)
+    self.verticalHeader().sectionResizeMode(QtWidgets.QHeaderView.Fixed)
+    self.verticalHeader().setDefaultSectionSize(18)
     self.horizontalHeader().setStretchLastSection(True)
     self.horizontalHeader().setHighlightSections(False)
     self.horizontalHeader().setSortIndicatorShown(True)
