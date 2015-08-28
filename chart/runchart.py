@@ -550,7 +550,6 @@ class MainWindow(QtWidgets.QMainWindow):
   #-------------------------------------------------------------------------------------
 
     QtWidgets.QMainWindow.__init__(self)
-    self.setWindowTitle(recording.uri)
 
     if end is None:
       duration = recording.duration
@@ -572,6 +571,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     self.ui = Ui_MainWindow()
     self.ui.setupUi(self, signals, annotations, scroller)
+    self.setWindowTitle(recording.uri)
 
     # Setup chart    
     self.ui.chartform.setTimeRange(start, duration)
