@@ -546,8 +546,8 @@ class MainWindow(QtWidgets.QMainWindow):
 ##  show_slider_time = pyqtSignal(float)
 
 
-  def __init__(self, recording, start=0.0, end=None, tags={ }, annotator=None):
-  #----------------------------------------------------------------------------
+  def __init__(self, recording, start=0.0, end=None, semantic_tags={ }, annotator=None):
+  #-------------------------------------------------------------------------------------
 
     QtWidgets.QMainWindow.__init__(self)
     self.setWindowTitle(recording.uri)
