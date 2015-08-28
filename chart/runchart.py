@@ -145,7 +145,7 @@ class SignalInfo(QtCore.QAbstractTableModel):
     if role == QtCore.Qt.CheckStateRole and index.column() == 0:
       self._rows[index.row()][0] = (value == QtCore.Qt.Checked)
       self.rowVisible.emit(self._rows[index.row()][self.ID_COLUMN], (value == QtCore.Qt.Checked))
-###      self.dataChanged.emit(index, index)   ### NO SLOT...
+      self.dataChanged.emit(index, index)
       return True
     return False
 
