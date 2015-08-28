@@ -682,6 +682,8 @@ class ChartPlot(ChartWidget):
 #        pen.setWidth(ANN_LINE_WIDTH)
 #        painter.setPen(pen)
         painter.fillRect(rect, colour)
+        rect = QtCore.QRect(left, ann_top - ANN_LINE_WIDTH,  ## Untransformed
+                            width, ANN_LINE_WIDTH)           ## for contains(pos)
         self._annrects.append((rect, id))
     painter.setTransform(xfm)
 
