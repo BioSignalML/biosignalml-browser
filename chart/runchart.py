@@ -505,7 +505,7 @@ class Scroller(QtWidgets.QWidget):
     duration = self._recording.duration
     width = sb.maximum() + sb.pageStep() - sb.minimum()
     self._newstart = sb.value()*duration/float(width)
-    self._show_slider_time(self._newstart)
+    self.show_slider_time(self._newstart)
     if self.ui.segment.isSliderDown():
       self._start_move_timer()
       self._sliding = True
