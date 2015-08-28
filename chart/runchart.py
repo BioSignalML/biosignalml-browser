@@ -241,15 +241,15 @@ class AnnotationList(QtWidgets.QWidget):
   set_slider_value = pyqtSignal(float)
   show_slider_time = pyqtSignal(float)
 
-  def __init__(self, recording, tags, parent=None):
-  #------------------------------------------------
+  def __init__(self, recording, semantic_tags, parent=None):
+  #---------------------------------------------------------
 
     QtWidgets.QWidget.__init__(self, parent)
     self.ui = Ui_AnnotationList()
     self.ui.setupUi(self)
 
     self._recording = recording
-    self._tags = tags
+    self._semantic_tags = semantic_tags
     self._make_uri = self._recording.uri.make_uri    # Method for minting new URIs
     self._timerange = NumericRange(0.0, recording.duration)  ### ???????
     self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable, resource)
@@ -307,7 +307,7 @@ class AnnotationList(QtWidgets.QWidget):
     if tags is None:
       return ''
     else:
-      return ', '.join(sorted([self._tags.get(str(t), str(t)) for t in tags]))
+      return ', '.join(sorted([self._semantic_tags.get(str(t), str(t)) for t in tags]))
 
   def _find_annotation(self, id):
   #------------------------------
@@ -565,7 +565,7 @@ class MainWindow(QtWidgets.QMainWindow):
     self._start = start        ## Used in adjust_layout
 
     signals = SignalList(recording, annotator, self)
-    annotations = AnnotationList(recording, tags, self)
+    annotations = AnnotationList(recording, semantic_tags, self)
     scroller = Scroller(recording, start, duration, self)
 
     self.ui = Ui_MainWindow()
@@ -575,7 +575,7 @@ class MainWindow(QtWidgets.QMainWindow):
     self.ui.chartform.setTimeRange(start, duration)
     chart = self.ui.chartform.ui.chart
     chart.setId(uri)
-    chart.setSemanticTags(tags)
+    chart.setSemanticTags(semantic_tags)
     chart.exportRecording.connect(self.exportRecording)
 
     # Connections with signal list
@@ -713,16 +713,15 @@ if __name__ == "__main__":
     if uri.startswith('http://'):
       store = biosignalml.client.Repository(uri)
       recording = store.get_recording(uri)
-      tags = store.get_semantic_tags()
+      semantic_tags = store.get_semantic_tags()
     else:
       recording = HDF5Recording.open(uri)
-      tags = { }                  ## Load from file...
-      tags = { 'http://standards/org/ontology#tag1': 'Tag 1',
-               'http://standards/org/ontology#tag2': 'Tag 2',
-               'http://standards/org/ontology#tag3': 'Tag 3',
-               'http://standards/org/ontology#tag4': 'Tag 4',
-             }
-    viewer = MainWindow(recording, start, end, tags=tags, annotator=wfdbAnnotation)
+      semantic_tags = { 'http://standards/org/ontology#tag1': 'Tag 1',   ### Load from file
+                        'http://standards/org/ontology#tag2': 'Tag 2',
+                        'http://standards/org/ontology#tag3': 'Tag 3',
+                        'http://standards/org/ontology#tag4': 'Tag 4',
+                      }
+    viewer = MainWindow(recording, start, end, semantic_tags=semantic_tags, annotator=wfdbAnnotation)
     viewer.show()
   except IOError as msg:
     raise  ###################
