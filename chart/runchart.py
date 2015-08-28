@@ -263,17 +263,18 @@ class AnnotationList(QtWidgets.QWidget):
       self._annotations.append( (str(a.uri), annstart, annend,
                                  a.comment if a.comment is not None else '',
                                  a.tags, True, a) )
-##      print (str(a.uri), annstart, annend, str(a.comment), a.tags)
-    for e in [self._recording.graph.get_event(evt)
-                for evt in self._recording.graph.get_event_uris(timetype=BSML.Interval)]:
-      self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), None, False, e) )
-
     self._annotation_table = SortedTable(self.ui.annotations, AnnotationTable.header(),
                                          [ AnnotationTable.row(a[0], self._make_ann_times(a[1], a[2]),
                                                               'Annotation' if a[5] else 'Event',
                                                               a[3], self._tag_labels(a[4]))
                                              for a in self._annotations ],
                                          parent=self)
+
+#    for e in [self._recording.graph.get_event(evt)
+#                for evt in self._recording.graph.get_event_uris(timetype=BSML.Interval)]:
+#      if e.time.end is None: e.time.end = e.time.start
+#      self._annotations.append( (str(e.uri), e.time.start, e.time.end, abbreviate_uri(e.eventtype), [], False, e) )
+
     self._events = { }
     self._event_type = None
     self._event_rows = None
