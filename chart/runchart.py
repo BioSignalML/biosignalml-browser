@@ -380,8 +380,8 @@ class AnnotationList(QtWidgets.QWidget):
                                           self._recording,
                                           self._recording.interval(start, end=end))
       self._recording.add_resource(segment)
-      self._recording._modified = True
       self._add_annotation(segment, text, tags, predecessor)
+      self._recording._modified = True
 
   def _add_annotation(self, about, text, tags, predecessor=None):
   #--------------------------------------------------------------
@@ -415,12 +415,13 @@ class AnnotationList(QtWidgets.QWidget):
       self._remove_annotation(id)
       if text or tags:
         self._add_annotation(ann[6].about, text, tags, predecessor=id)
+      self._recording._modified = True
 
   @pyqtSlot(str)
   def annotationDeleted(self, id):
   #-------------------------------
     self._remove_annotation(id)
-    self._recording.remove_resource(self.id)
+    self._recording.remove_resource(id)
     self._recording._modified = True
 
 
