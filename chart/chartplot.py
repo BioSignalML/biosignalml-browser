@@ -919,14 +919,21 @@ class ChartPlot(ChartWidget):
           if clearselection: self._selectend = self._selectstart
           self.update()
       else:
+        if self._timezoom > 1.0:
+          menu.addAction("Reset zoom")    ## Have but disabled...
         menu.addAction("Save as PNG")
         item = menu.exec_(self.mapToGlobal(pos))
         if item:
-          filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save chart', '', '*.png')
-          if filename:
-            output = QtGui.QImage(self.width(), self.height(), QtGui.QImage.Format_ARGB32_Premultiplied)
-            self._draw(output)
-            output.save(filename, 'PNG')
+          if   item.text() == 'Reset zoom':
+##          self.zoomChart.emit(1.0)    # Results in setTimeZoom() being called
+            self._timezoom = 1.0  ## ????
+            self.setTimeRange(0.0, self.duration)       ## TEMP ???
+          elif item.text() == 'Save as PNG':
+            filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Save chart', '', '*.png')
+            if filename:
+              output = QtGui.QImage(self.width(), self.height(), QtGui.QImage.Format_ARGB32_Premultiplied)
+              self._draw(output)
+              output.save(filename, 'PNG')
 
 
 if __name__ == '__main__':
