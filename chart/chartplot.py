@@ -688,14 +688,14 @@ class ChartPlot(ChartWidget):
     painter.setTransform(xfm)
 
   def _pos_to_time(self, pos):
-  #---------------------------  
+  #---------------------------
     time = self._start + float(self._duration)*(pos - MARGIN_LEFT)/self._plot_width
     if time < self._start: time = self._start
     if time > self._end: time = self._end
     return self._timeRange.map(time)
 
   def _time_to_pos(self, time):
-  #---------------------------  
+  #---------------------------
     return MARGIN_LEFT + (time - self._start)*self._plot_width/float(self._duration)
 
   @pyqtSlot(float, float)
