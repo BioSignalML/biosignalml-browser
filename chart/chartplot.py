@@ -299,7 +299,7 @@ class ChartPlot(ChartWidget):
   """
   chartPosition = pyqtSignal(int, int, int)
   updateTimeScroll = pyqtSignal(bool)
-  annotationAdded = pyqtSignal(float, float, str, list)
+  annotationAdded = pyqtSignal(float, float, str, list, str)
   annotationModified = pyqtSignal(str, str, list)
   annotationDeleted = pyqtSignal(str)
   exportRecording = pyqtSignal(str, float, float)
@@ -909,7 +909,7 @@ class ChartPlot(ChartWidget):
               text = dialog.get_annotation()
               tags = dialog.get_tags()
               if text or tags:
-                self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text, tags)
+                self.annotationAdded.emit(self._selectstart[1], self._selectend[1], text, tags, None)
                 clearselection = True
           elif item.text() == 'Export':
             filename = QtWidgets.QFileDialog.getSaveFileName(self, 'Export region', '', '*.bsml')

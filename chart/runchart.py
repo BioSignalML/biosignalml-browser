@@ -296,7 +296,7 @@ class AnnotationList(QtWidgets.QWidget):
   @pyqtSlot()
   def show_annotations(self):
   #--------------------------
-    for a in self._annotations:  # tuple(uri, start, end, text, tags, resource)
+    for a in self._annotations:  # tuple(uri, start, end, text, tags, editable, resource)
       if a[1] is not None: self.add_annotation.emit(*a[:6])
 
   def _make_ann_times(self, start, end):
@@ -330,7 +330,7 @@ class AnnotationList(QtWidgets.QWidget):
         del self._annotations[n]
         return
 
-  def on_annotations_doubleClicked(self, index):
+  def disabled_on_annotations_doubleClicked(self, index):   ####
   #---------------------------------------------
     source = index.model().mapToSource(index)
     id = source.model().createIndex(source.row(), 0).data()
@@ -380,7 +380,7 @@ class AnnotationList(QtWidgets.QWidget):
                                                          for event in events ])
 ##    self._adjust_layout()
 
-  @pyqtSlot(float, float, str, str, list, str)
+  @pyqtSlot(float, float, str, list, str)
   def annotationAdded(self, start, end, text, tags, predecessor=None):
   #-------------------------------------------------------------------
     if text or tags:
