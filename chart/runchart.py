@@ -186,6 +186,14 @@ class AnnotationTable(object):
   #------------
     return ['', 'Start', 'End', 'Duration',  'Type', 'Annotation', 'Tags']
 
+
+  '''
+  Is this the place to actually hold the table?
+
+  And have a 'get_cell(row, col)' that returns QVariant?
+
+  '''
+
   @staticmethod
   def row(uri, times, type, text, tagtext=''):
   #-------------------------------------------
