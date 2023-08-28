@@ -224,7 +224,14 @@ class SignalList(QtWidgets.QWidget):
         except:
           u = str(s.units)
           units = u[u.find('#')+1:]
-        self.add_signal_plot.emit(uri, s.label, units) ## , ymin=s.minValue, ymax=s.maxValue)
+        self.add_signal_plot.emit(uri, s.label,
+                                  units.replace('_per_', '/')
+                                       .replace('micro', 'µ')
+                                       .replace('milli', 'm')
+                                       .replace('volt', 'V')
+                                       .replace('cm2', 'cm²')
+                                       )
+                                  ## , ymin=s.minValue, ymax=s.maxValue)
     self.show_signals.emit(interval)
 
   def on_allsignals_toggled(self, state):
