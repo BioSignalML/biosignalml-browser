@@ -198,7 +198,7 @@ class SignalList(QtWidgets.QWidget):
 
   add_event_plot = pyqtSignal(str, str, FunctionType) ## , bool, DataSegment)
   add_signal_plot = pyqtSignal(str, str, str) ## , bool, DataSegment, float, float)
-  show_signals = pyqtSignal(Interval) 
+  show_signals = pyqtSignal(Interval)
 
   def __init__(self, recording, annotator, parent=None):
   #-----------------------------------------------------
@@ -219,7 +219,8 @@ class SignalList(QtWidgets.QWidget):
       if str(s.units) == str(uom.UNITS.AnnotationData.uri):
         self.add_event_plot.emit(uri, s.label, self._annotator)
       else:
-        try: units = uom.RESOURCES[str(s.units)].label
+        try:
+          units = uom.RESOURCES[str(s.units)].label
         except:
           u = str(s.units)
           units = u[u.find('#')+1:]
@@ -573,7 +574,7 @@ class MainWindow(QtWidgets.QMainWindow):
     self.ui.setupUi(self, signals, annotations, scroller)
     self.setWindowTitle(recording.uri)
 
-    # Setup chart    
+    # Setup chart
     self.ui.chartform.setTimeRange(start, duration)
     chart = self.ui.chartform.ui.chart
     chart.setId(uri)
@@ -618,7 +619,6 @@ class MainWindow(QtWidgets.QMainWindow):
 #    self.ui.chartform.ui.chart.zoomChart.connect(self.zoom_chart)
 
     ## self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
-
 
   def __del__(self):
   #-----------------

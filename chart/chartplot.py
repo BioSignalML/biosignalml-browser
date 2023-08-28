@@ -35,7 +35,7 @@ except ImportError:
 
 
 # Margins of plotting region within chart, in pixels
-MARGIN_LEFT   =  120
+MARGIN_LEFT   = 120
 MARGIN_RIGHT  =  80
 MARGIN_TOP    = 100
 MARGIN_BOTTOM =  40
@@ -448,7 +448,7 @@ class ChartPlot(ChartWidget):
     self.chartPosition.emit(self.pos().x() + MARGIN_LEFT,
                             self.width() - (MARGIN_LEFT + MARGIN_RIGHT),
                             self.pos().y() + self.height())
-  
+
   def paintEvent(self, e):
   #-----------------------
     self._draw(self)

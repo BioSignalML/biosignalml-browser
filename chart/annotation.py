@@ -28,7 +28,7 @@ class AnnotationDialog(QtWidgets.QDialog):
     self.setWindowTitle(id)
     self.ui.description.setText('Annotate %g to %g seconds' % (start, end))
     self.ui.annotation.setPlainText(text)
-    
+
     if tags is None: tags = [ ]
     semantic_tags = parent.semantic_tags  # { uri: label }
     self.ui.taglist.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
