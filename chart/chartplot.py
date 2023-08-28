@@ -409,10 +409,10 @@ class ChartPlot(ChartWidget):
       p = self._plotlist[n]
       if n > m:   # shift up
         self._plotlist[m+1:n+1] = self._plotlist[m:n]
-        for i in xrange(m+1, n+1): self._plots[self._plotlist[i][0]] = i
+        for i in range(m+1, n+1): self._plots[self._plotlist[i][0]] = i
       else:       # shift down
         self._plotlist[n:m] = self._plotlist[n+1:m+1]
-        for i in xrange(n, m): self._plots[self._plotlist[i][0]] = i
+        for i in range(n, m): self._plots[self._plotlist[i][0]] = i
       self._plotlist[m] = p
       self._plots[from_id] = m
     self.update()
