@@ -707,6 +707,7 @@ class ChartPlot(ChartWidget):
     self.setTimeZoom(self._timezoom)    # Keep existing zoom
     self._markers = [ [0, self._start], [0, self._start] ]  ##  Two markers
 
+  @pyqtSlot(float)
   def setTimeZoom(self, scale):
   #----------------------------
     self._timezoom = scale
