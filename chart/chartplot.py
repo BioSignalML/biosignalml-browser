@@ -211,7 +211,7 @@ class SignalPlot(object):
        and (self.gridheight/labelfreq) > 1 and (n % labelfreq) == 0):
         painter.drawLine(QtCore.QPointF(start-0.005*(end-start), y), QtCore.QPointF(start, y))
         painter.setPen(QtGui.QPen(textColour, 0))
-        drawtext(painter, MARGIN_LEFT-20, y, str(y), mapX=False)    # Label grid
+        drawtext(painter, MARGIN_LEFT-20, y, '{:4g}'.format(y), mapX=False)    # Label grid
       y += self._range.major
       if -1e-10 < y < 1e-10: y = 0.0  #####
       n += 1
@@ -231,7 +231,7 @@ class SignalPlot(object):
          if y is not None:
            y = self._range.map(y, extra=1)
            xy = xfm.map(QtCore.QPointF(t, y))
-           drawtext(painter, xy.x()+5, xy.y(), str(y), mapX=False, mapY=False, align=alignLeft)
+           drawtext(painter, xy.x()+5, xy.y(), '{:4g}'.format(y), mapX=False, mapY=False, align=alignLeft)
 
 
 class EventPlot(object):
@@ -239,7 +239,7 @@ class EventPlot(object):
   """
   A single event trace.
   """
-  def __init__(self, label, mapping=lambda x: (str(x), str(x)), data=None):
+  def __init__(self, label, mapping=lambda x: '{:4g}'.format(x), data=None):
   #------------------------------------------------------------------------
     self.label = label
     self.selected = False
@@ -348,8 +348,8 @@ class ChartPlot(ChartWidget):
     self.update()
 
   @pyqtSlot(str, str, FunctionType) ## , bool, DataSegment)
-  def addEventPlot(self, id, label, mapping=lambda x: str(x), visible=True, data=None):
-  #------------------------------------------------------------------------------------
+  def addEventPlot(self, id, label, mapping=lambda x: '{:4g}'.format(x), visible=True, data=None):
+  #----------------------------------------------------------------------------------------------
     plot = EventPlot(label, mapping, data)
     self._plots[id] = len(self._plotlist)
     self._plotlist.append([id, visible, plot])
@@ -556,12 +556,12 @@ class ChartPlot(ChartWidget):
       duration = (self._selectend[1] - self._selectstart[1])
       ypos = MARGIN_TOP - 8
       painter.setPen(QtGui.QPen(selectTimeColour, 0))
-      drawtext(painter, self._selectstart[1], ypos, str(self._selectstart[1]), mapY=False)
-      drawtext(painter, self._selectend[1],   ypos, str(self._selectend[1]),   mapY=False)
+      drawtext(painter, self._selectstart[1], ypos, '{:4g}'.format(self._selectstart[1]), mapY=False)
+      drawtext(painter, self._selectend[1],   ypos, '{:4g}'.format(self._selectend[1]),   mapY=False)
       painter.setPen(QtGui.QPen(selectLenColour, 0))
       middle = (self._selectend[1] + self._selectstart[1])/2.0
       if duration < 0: duration = -duration
-      drawtext(painter, middle, ypos, str(duration), mapY=False)
+      drawtext(painter, middle, ypos, '{:4g}'.format(duration), mapY=False)
 
   def _draw_time_grid(self, painter):
   #----------------------------------
@@ -582,7 +582,7 @@ class ChartPlot(ChartWidget):
         painter.drawLine(QtCore.QPoint(self._time_to_pos(t), MARGIN_TOP),
           QtCore.QPoint(self._time_to_pos(t), ypos+5))
         painter.setPen(QtGui.QPen(textColour, 0))
-        drawtext(painter, self._time_to_pos(t), ypos+18, str(t),
+        drawtext(painter, self._time_to_pos(t), ypos+18, '{:4g}'.format(t),
           mapX=False, mapY=False)
       t += self._timeRange.major
     drawtext(painter, MARGIN_LEFT+self._plot_width+40, ypos+18,
@@ -604,13 +604,13 @@ class ChartPlot(ChartWidget):
       painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour, 0))
       painter.drawLine(QtCore.QPoint(m[0], ypos + 6),
         QtCore.QPoint(m[0], MARGIN_TOP+self._plot_height+10))
-      drawtext(painter, m[0], ypos, str(self._timeRange.map(m[1])),
+      drawtext(painter, m[0], ypos, '{:4g}'.format(self._timeRange.map(m[1])),
         mapX=False, mapY=False)
       if n > 0 and m[1] != last[1]:
         painter.setPen(QtGui.QPen(textColour, 0))
         width = self._timeRange.map(last[1]) - self._timeRange.map(m[1])
         if width < 0: width = -width
-        drawtext(painter, (last[0]+m[0])/2.0, ypos, str(width),
+        drawtext(painter, (last[0]+m[0])/2.0, ypos, '{:4g}'.format(width),
           mapX=False, mapY=False)
       last = m
     painter.setTransform(xfm)
