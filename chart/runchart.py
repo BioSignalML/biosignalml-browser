@@ -266,16 +266,21 @@ class AnnotationList(QtWidgets.QWidget):
         annstart = None
         annend   = None
       else:
-        annstart = a.time.start
-        annend   = None if a.time.duration in [None, 0.0] else a.time.end
-      self._annotations.append( (str(a.uri), annstart, annend,
-                                 a.comment if a.comment is not None else '',
-                                 a.tags, True, a) )
-    self._annotation_table = SortedTable(self.ui.annotations, AnnotationTable.header(),
-                                         [ AnnotationTable.row(a[0], self._make_ann_times(a[1], a[2]),
-                                                              'Annotation' if a[5] else 'Event',
-                                                              a[3], self._tag_labels(a[4]))
-                                             for a in self._annotations ],
+        annstart = ann.time.start
+        annend   = None if ann.time.duration in [None, 0.0] else ann.time.end
+      tags = ann.tags
+      if not isinstance(tags, list): tags = [ tags ]
+      self._annotations.append( (ann.uri, annstart, annend,
+                                 ann.comment if ann.comment is not None else '',
+                                 tags, True, ann) )
+    self._annotation_table = SortedTable(self.ui.annotations,
+                                         AnnotationTable.header(),
+                                         [AnnotationTable.row(ann[0],
+                                                              self._make_ann_times(ann[1], ann[2]),
+                                                              'Annotation' if ann[5] else 'Event',
+                                                              ann[3],
+                                                              self._tag_labels(ann[4]))
+                                            for ann in self._annotations],
                                          parent=self)
 
 #    for e in [self._recording.graph.get_event(evt)
