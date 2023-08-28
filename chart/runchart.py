@@ -718,6 +718,7 @@ if __name__ == "__main__":
     end = None
 
   app = QtWidgets.QApplication(sys.argv)
+  app.setStyle("fusion")   ## For Ubuntu 14.04
   try:
     if uri.startswith('http://'):
       store = biosignalml.client.Repository(uri)
