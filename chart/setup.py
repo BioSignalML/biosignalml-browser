@@ -5,8 +5,8 @@ shutil.rmtree("build", ignore_errors=True)
 shutil.rmtree("dist", ignore_errors=True)
 
 APPNAME = 'QtBrowser'
-APP = ['QtBrowser.py']
-VERSION = '0.4.1'
+APP = ['runchart.py']
+VERSION = '0.5.0a'
 
 DATA_FILES = []
 ## DATA_FILES = ['gpl-3.0.txt']
