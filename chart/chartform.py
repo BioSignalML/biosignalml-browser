@@ -94,7 +94,7 @@ class ChartForm(QtWidgets.QWidget):
   '''
   def on_timezoom_currentIndexChanged(self, text):
   #-----------------------------------------------
-    if isinstance(text, basestring) and text != "":
+    if isinstance(text, str) and text != "":
       scale = float(str(text).split()[0])
       self.ui.chart.setTimeZoom(scale)
       self.position_timescroll(scale > 1.0)

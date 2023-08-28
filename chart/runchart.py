@@ -172,7 +172,7 @@ class SignalInfo(QtCore.QAbstractTableModel):
 
   def setVisibility(self, visible):
   #--------------------------------
-    for r in xrange(len(self._rows)):
+    for r in range(len(self._rows)):
       self.setData(self.createIndex(r, 0),
                    QtCore.Qt.Checked if visible else QtCore.Qt.Unchecked,
                    QtCore.Qt.CheckStateRole)
@@ -353,7 +353,7 @@ class AnnotationList(QtWidgets.QWidget):
   def on_events_currentIndexChanged(self, index):
   #----------------------------------------------
     if (self._event_type is None      # Setting up
-     or not isinstance(index, basestring)): return
+     or not isinstance(index, str)): return
     if self._event_rows is not None:
       self._annotation_table.removeRows(self._event_rows)
     if index == 'None':

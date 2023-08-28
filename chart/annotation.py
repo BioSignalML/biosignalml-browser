@@ -37,7 +37,7 @@ class AnnotationDialog(QtWidgets.QDialog):
       if t not in semantic_tags: self.ui.taglist.addItem(TagItem(t, str(t)))
     self.ui.taglist.sortItems()
     ## Setting selected as items are added doesn't work (because of sort??)
-    for n in xrange(self.ui.taglist.count()):
+    for n in range(self.ui.taglist.count()):
       t = self.ui.taglist.item(n)
       if t.uri in tags: t.setSelected(True)
     self.ui.taglist.hide()
