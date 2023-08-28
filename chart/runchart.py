@@ -733,7 +733,7 @@ if __name__ == "__main__":
     viewer = MainWindow(recording, start, end, semantic_tags=semantic_tags, annotator=wfdbAnnotation)
     viewer.show()
   except IOError as msg:
-    raise  ###################
     sys.exit(str(msg))
-
+  except:
+    raise  ###################
   sys.exit(app.exec_())

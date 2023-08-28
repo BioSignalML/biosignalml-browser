@@ -70,11 +70,15 @@ class WebView(QtWebKitWidgets.QWebView):
     menu.addAction(self.pageAction(QtWebKitWidgets.QWebPage.Forward))
     menu.addAction(self.pageAction(QtWebKitWidgets.QWebPage.Reload))
     try:  ## Check if link_url refers to a recording...
+      logging.debug('LINK: %s', link_url)
       store = client.Repository(link_url)
+      logging.debug('STORE: %s', store)
       recording = store.get_recording(link_url)
+      logging.debug('RECORDING: %s', recording)
       menu.addSeparator()
       action = menu.addAction('View Recording')
     except StoreException as msg:
+      logging.debug('EXCEPTION: %s', msg)
       alert = QtWidgets.QMessageBox()
       alert.setText(str(msg))
       alert.exec_()
@@ -83,12 +87,14 @@ class WebView(QtWebKitWidgets.QWebView):
     item = menu.exec_(self.mapToGlobal(pos))
     if item:
       if item.text() == 'View Recording':
-        chart = show_chart(store, recording)
-        if chart is not None:
+        try:
+          chart = show_chart(store, recording)
           self._charts.append(chart)
           chart.show()
           chart.viewer.raise_()
           chart.viewer.activateWindow()
+        except IOError as msg:
+          print(str(msg))          ### Alert....
 
   def createWindow(self, type):
   #----------------------------
@@ -128,8 +134,8 @@ class RepositoryDialog(QtWidgets.QDialog):
 if __name__ == '__main__':
 #=========================
 
-#  logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
-#  logging.getLogger().setLevel('DEBUG')
+  logging.basicConfig(format='%(asctime)s %(levelname)8s %(threadName)s: %(message)s')
+  logging.getLogger().setLevel('DEBUG')
 
   app = QtWidgets.QApplication(sys.argv)
 
