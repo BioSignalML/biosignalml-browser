@@ -414,7 +414,7 @@ class ChartPlot(ChartWidget):
         self._plotlist[n:m] = self._plotlist[n+1:m+1]
         for i in xrange(n, m): self._plots[self._plotlist[i][0]] = i
       self._plotlist[m] = p
-      self._plots[str(from_id)] = m
+      self._plots[from_id] = m
     self.update()
 
   @pyqtSlot(int)
@@ -808,7 +808,7 @@ class ChartPlot(ChartWidget):
       text.append("<p>%s</p>" % ann[2])
     if ann[3] not in [ None, [ ] ]:
       text.append("<p>Tags: %s</p>"
-        % ', '.join(sorted([self.semantic_tags.get(str(t), str(t)) for t in ann[3]])))
+        % ', '.join(sorted([self.semantic_tags.get(tag, tag) for tag in ann[3]])))
     return ''.join(text)
 
   def mouseMoveEvent(self, event):
@@ -874,9 +874,9 @@ class ChartPlot(ChartWidget):
             if item.text() == 'Edit':
               dialog = AnnotationDialog(self._id, ann[0], ann[1], text=ann[2], tags=ann[3], parent=self)
               if dialog.exec_():
-                text = str(dialog.get_annotation()).strip()
+                text = dialog.get_annotation().strip()
                 tags = dialog.get_tags()
-                if (text and text != str(ann[2]).strip() or tags != ann[3]):
+                if (text and text != ann[2].strip() or tags != ann[3]):
                   self.annotationModified.emit(ann_id, text, tags)
             elif item.text() == 'Delete':
               confirm = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Question, "Delete Annotation",
