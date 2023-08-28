@@ -13,9 +13,8 @@ DATA_FILES = []
 
 OPTIONS = {'argv_emulation': False,
            'compressed': True,
-           'includes': ['PyQt4', 'pint.*'],
            'packages': ['pint'],
-           'iconfile': 'QtBrowser.icns',
+           'includes': ['PyQt5'], ##, 'pint.*'],
            'excludes': ['modulegraph', 'graph_tool', 'sympy', 'scipy',
                         'wx', 'matplotlib', 'OpenGL', 'zmq'],
            'dylib_excludes': ['Tcl.framework','Tk.framework'],

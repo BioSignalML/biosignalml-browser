@@ -22,7 +22,7 @@ OPTIONS = {
            'compressed': True,
            'optimize': 2,
            'bundle_files': 1,
-           'includes': ['PyQt4', 'PyQt4.QtNetwork', 'sip'],
+           'includes': ['PyQt5', 'PyQt5.QtNetwork', 'sip'],
            'packages': ['pint'],
            'excludes': ['modulegraph', 'graph_tool', 'sympy', 'scipy',
                         'wx', 'matplotlib', 'OpenGL', 'zmq',
