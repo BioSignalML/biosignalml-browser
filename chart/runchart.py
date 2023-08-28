@@ -261,8 +261,8 @@ class AnnotationList(QtWidgets.QWidget):
     self._make_uri = self._recording.uri.make_uri    # Method for minting new URIs
     self._timerange = NumericRange(0.0, recording.duration)  ### ???????
     self._annotations = [ ]     # tuple(uri, start, end, text, tags, editable, resource)
-    for a in self._recording.graph.get_annotations():
-      if a.time is None:
+    for ann in self._recording.graph.get_annotations():
+      if ann.time is None:
         annstart = None
         annend   = None
       else:
