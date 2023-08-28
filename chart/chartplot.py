@@ -16,7 +16,7 @@ from annotation import AnnotationDialog
 ##ChartWidget = QtWidgets.QWidget   # Hangs if > 64K points
 ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
 
-
+'''
 try:
 ## Borrowed from http://home.gna.org/veusz/
   from veusz.qtloops import addNumpyToPolygonF
@@ -28,10 +28,10 @@ try:
     return poly
 
 except ImportError:
-
-  def make_polygon(points):
-  #------------------------
-    return QtGui.QPolygonF([QtCore.QPointF(pt[0], pt[1]) for pt in points])
+'''
+def make_polygon(points):
+#------------------------
+  return QtGui.QPolygonF([QtCore.QPointF(pt[0], pt[1]) for pt in points])
 
 
 # Margins of plotting region within chart, in pixels
