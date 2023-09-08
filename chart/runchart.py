@@ -3,13 +3,13 @@ import re
 import logging
 from types import FunctionType
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
 
 from mainwindow        import Ui_MainWindow
 from ui.signallist     import Ui_SignalList
 from ui.annotationlist import Ui_AnnotationList
 from ui.scroller       import Ui_Scroller
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
 from biosignalml import BSML
 from biosignalml.data import DataSegment
@@ -119,32 +119,32 @@ class SignalInfo(QtCore.QAbstractTableModel):
 
   def headerData(self, section, orientation, role):
   #------------------------------------------------
-    if orientation == QtCore.Qt.Horizontal:
-      if role == QtCore.Qt.DisplayRole:
+    if orientation == QtCore.Qt.Orientation.Horizontal:
+      if role == QtCore.Qt.ItemDataRole.DisplayRole:
         return self.HEADER[section]
-      elif role == QtCore.Qt.TextAlignmentRole:
-        return QtCore.Qt.AlignLeft
-      elif role == QtCore.Qt.FontRole:
+      elif role == QtCore.Qt.ItemDataRole.TextAlignmentRole:
+        return QtCore.Qt.AlignmentFlag.AlignLeft
+      elif role == QtCore.Qt.ItemDataRole.FontRole:
         font = QtGui.QFont(QtWidgets.QApplication.font())
         font.setBold(True)
         return font
 
   def data(self, index, role):
   #---------------------------
-    if   role == QtCore.Qt.DisplayRole:
+    if   role == QtCore.Qt.ItemDataRole.DisplayRole:
       if index.column() != 0:
         return str(self._rows[index.row()][index.column()])
       else:
         return QtCore.QVariant()
-    elif role == QtCore.Qt.CheckStateRole:
+    elif role == QtCore.Qt.ItemDataRole.CheckStateRole:
       if index.column() == 0:
-        return QtCore.Qt.Checked if self._rows[index.row()][0] else QtCore.Qt.Unchecked
+        return QtCore.Qt.CheckState.Checked if self._rows[index.row()][0] else QtCore.Qt.CheckState.Unchecked
 
   def setData(self, index, value, role):
   #-------------------------------------
-    if role == QtCore.Qt.CheckStateRole and index.column() == 0:
-      self._rows[index.row()][0] = (value == QtCore.Qt.Checked)
-      self.rowVisible.emit(self._rows[index.row()][self.ID_COLUMN], (value == QtCore.Qt.Checked))
+    if role == QtCore.Qt.ItemDataRole.CheckStateRole and index.column() == 0:
+      self._rows[index.row()][0] = (value == QtCore.Qt.CheckState.Checked)
+      self.rowVisible.emit(self._rows[index.row()][self.ID_COLUMN], (value == QtCore.Qt.CheckState.Checked))
       self.dataChanged.emit(index, index)
       return True
     return False
@@ -166,16 +166,16 @@ class SignalInfo(QtCore.QAbstractTableModel):
   def flags(self, index):
   #-----------------------
     if index.column() == 0:
-      return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsSelectable
+      return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsSelectable
     else:
-      return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+      return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
 
   def setVisibility(self, visible):
   #--------------------------------
     for r in range(len(self._rows)):
       self.setData(self.createIndex(r, 0),
-                   QtCore.Qt.Checked if visible else QtCore.Qt.Unchecked,
-                   QtCore.Qt.CheckStateRole)
+                   QtCore.Qt.CheckState.Checked if visible else QtCore.Qt.CheckState.Unchecked,
+                   QtCore.Qt.ItemDataRole.CheckStateRole)
 
 
 class AnnotationTable(object):
@@ -459,7 +459,7 @@ class Scroller(QtWidgets.QWidget):
     self.ui = Ui_Scroller()
     self.ui.setupUi(self)
     self.ui.rec_posn = QtWidgets.QLabel(self)
-    self.ui.rec_posn.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
+    self.ui.rec_posn.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)
     self.ui.rec_posn.resize(self.ui.rec_start.size())
     self._timerange = NumericRange(0.0, duration)
     self._recording = recording
@@ -495,10 +495,10 @@ class Scroller(QtWidgets.QWidget):
     if duration == 0: return
     sb = self.ui.segment
     sb.setMinimum(0)
-    scrollwidth = 10000
-    sb.setPageStep(scrollwidth*self._duration/duration)
+    scrollwidth: int = 10000
+    sb.setPageStep(int(scrollwidth*self._duration/duration))
     sb.setMaximum(scrollwidth - sb.pageStep())
-    sb.setValue(scrollwidth*self._start/duration)
+    sb.setValue(int(scrollwidth*self._start/duration))
     self._set_slider_time(self.ui.rec_start, 0.0)
     self._set_slider_time(self.ui.rec_end, duration)
 
@@ -638,7 +638,7 @@ class MainWindow(QtWidgets.QMainWindow):
 #    self.ui.chartform._user_zoom_index = self.ui.timezoom.count()
 #    self.ui.chartform.ui.chart.zoomChart.connect(self.zoom_chart)
 
-    ## self.setFocusPolicy(QtCore.Qt.StrongFocus) # Needed to handle key events
+    ## self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus) # Needed to handle key events
 
   def __del__(self):
   #-----------------

@@ -3,4 +3,4 @@ all: chart.py controller.py annotate.py    \
      scroller.py annotationlist.py
 
 %.py: %.ui
-	pyuic5 $< -o $@
+	pyuic6 $< -o $@

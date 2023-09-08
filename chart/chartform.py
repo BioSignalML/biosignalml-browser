@@ -1,5 +1,5 @@
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
 from ui.chart import Ui_Chart
 
@@ -13,7 +13,7 @@ class ChartForm(QtWidgets.QWidget):
 #                                       | QtCore.Qt.WindowMinMaxButtonsHint
 #                           #           | QtCore.Qt.WindowStaysOnTopHint
 #                          )
-    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
+    closekey = QtGui.QShortcut(QtGui.QKeySequence.StandardKey.Close, self, activated=self.close)
     self.ui = Ui_Chart()
     self.ui.setupUi(self)
     self.ui.chart.chartPosition.connect(self.on_chart_resize)

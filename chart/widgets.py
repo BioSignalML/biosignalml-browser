@@ -4,8 +4,8 @@ Sub-class QT classes for widget promotion.
 
 """
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
 
 class ChartFrame(QtWidgets.QFrame):

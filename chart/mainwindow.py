@@ -5,10 +5,10 @@
 # Created: Wed Aug 26 10:24:57 2015
 #      by: PyQt5 UI code generator 5.4
 #
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 from chartform import ChartForm
 
-from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_MainWindow(object):
@@ -31,31 +31,31 @@ class Ui_MainWindow(object):
 
         self.signalsDock = QtWidgets.QDockWidget(MainWindow)
         self.signalsDock.setFloating(False)
-        self.signalsDock.setAllowedAreas(QtCore.Qt.AllDockWidgetAreas)
+        self.signalsDock.setAllowedAreas(QtCore.Qt.DockWidgetArea.AllDockWidgetAreas)
         self.signalsDock.setObjectName("signalsDock")
         self.signalsWidget = signalsWidget
         self.signalsWidget.setObjectName("signalsWidget")
         self.signalsDock.setWidget(self.signalsWidget)
-        MainWindow.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.signalsDock)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, self.signalsDock)
         
         self.annotationsDock = QtWidgets.QDockWidget(MainWindow)
         self.annotationsDock.setFloating(False)
-        self.signalsDock.setAllowedAreas(QtCore.Qt.AllDockWidgetAreas)
+        self.signalsDock.setAllowedAreas(QtCore.Qt.DockWidgetArea.AllDockWidgetAreas)
         self.annotationsDock.setObjectName("annotationsDock")
         self.annotationsWidget = annotationsWidget
         self.annotationsWidget.setObjectName("annotationsWidget")
         self.annotationsDock.setWidget(self.annotationsWidget)
-        MainWindow.addDockWidget(QtCore.Qt.TopDockWidgetArea, self.annotationsDock)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea.TopDockWidgetArea, self.annotationsDock)
 
         self.scrollDock = QtWidgets.QDockWidget(MainWindow)
         self.scrollDock.setFloating(False)
-        self.scrollDock.setAllowedAreas(QtCore.Qt.TopDockWidgetArea
-                                      | QtCore.Qt.BottomDockWidgetArea)
+        self.scrollDock.setAllowedAreas(QtCore.Qt.DockWidgetArea.TopDockWidgetArea
+                                      | QtCore.Qt.DockWidgetArea.BottomDockWidgetArea)
         self.scrollDock.setObjectName("scrollDock")
         self.scrollWidget = scrollWidget
         self.scrollWidget.setObjectName("scrollWidget")
         self.scrollDock.setWidget(self.scrollWidget)
-        MainWindow.addDockWidget(QtCore.Qt.BottomDockWidgetArea, self.scrollDock)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea.BottomDockWidgetArea, self.scrollDock)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)

@@ -4,7 +4,7 @@ A generic widget and model for working with a table view.
 Selection by row and sortable columns are provided.
 """
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class TableView(QtWidgets.QTableView):
@@ -20,13 +20,13 @@ class TableView(QtWidgets.QTableView):
     self.setShowGrid(False)
     self.setWordWrap(True)
     self.verticalHeader().setVisible(False)
-    self.verticalHeader().sectionResizeMode(QtWidgets.QHeaderView.Fixed)
+    self.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Fixed)
     self.verticalHeader().setDefaultSectionSize(18)
     self.horizontalHeader().setStretchLastSection(True)
     self.horizontalHeader().setHighlightSections(False)
     self.horizontalHeader().setSortIndicatorShown(True)
-    self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-    self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+    self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+    self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
 
   def resizeCells(self):  # Needs to be done after table is populated
   #---------------------
@@ -69,27 +69,27 @@ class TableModel(QtCore.QAbstractTableModel):
 
   def headerData(self, section, orientation, role):
   #------------------------------------------------
-    if orientation == QtCore.Qt.Horizontal:
-      if role == QtCore.Qt.DisplayRole:
+    if orientation == QtCore.Qt.Orientation.Horizontal:
+      if role == QtCore.Qt.ItemDataRole.DisplayRole:
         return self._header[section]
-      elif role == QtCore.Qt.TextAlignmentRole:
-        return QtCore.Qt.AlignLeft
-      elif role == QtCore.Qt.FontRole:
+      elif role == QtCore.Qt.ItemDataRole.TextAlignmentRole:
+        return QtCore.Qt.AlignmentFlag.AlignLeft
+      elif role == QtCore.Qt.ItemDataRole.FontRole:
         font = QtGui.QFont(QtWidgets.QApplication.font())
         font.setBold(True)
         return font
 
   def data(self, index, role):
   #---------------------------
-    if   role == QtCore.Qt.DisplayRole:
+    if   role == QtCore.Qt.ItemDataRole.DisplayRole:
       value = self._rows[index.row()][index.column()]
       return QtCore.QVariant(value) if value is not None else ''
-    elif role == QtCore.Qt.TextAlignmentRole:
-      return QtCore.Qt.AlignTop
+    elif role == QtCore.Qt.ItemDataRole.TextAlignmentRole:
+      return QtCore.Qt.AlignmentFlag.AlignTop
 
   def flags(self, index):
   #-----------------------
-    return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+    return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
 
   def appendRows(self, rows):
   #--------------------------
@@ -136,8 +136,8 @@ class SortedTable(QtCore.QSortFilterProxyModel):
     view.setModel(self)
     view.setSortingEnabled(True)
     view.setColumnHidden(0, True)
-    self.sort(1, QtCore.Qt.AscendingOrder)
-    view.horizontalHeader().setSortIndicator(1, QtCore.Qt.AscendingOrder)
+    self.sort(1, QtCore.Qt.SortOrder.AscendingOrder)
+    view.horizontalHeader().setSortIndicator(1, QtCore.Qt.SortOrder.AscendingOrder)
 
 #    self._filter = tablefilter    # function(row, content)
 #

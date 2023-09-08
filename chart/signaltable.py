@@ -1,5 +1,5 @@
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
 
 class SignalItem(QtWidgets.QStyledItemDelegate):
@@ -14,8 +14,8 @@ class SignalItem(QtWidgets.QStyledItemDelegate):
     r = option.rect
     viewoption = QtWidgets.QStyleOptionViewItem(option)
     if index.column() == 0:
-      margin = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PM_FocusFrameHMargin) + 1
-      viewoption.rect = QtWidgets.QStyle.alignedRect(option.direction, QtCore.Qt.AlignCenter,
+      margin = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PixelMetric.PM_FocusFrameHMargin) + 1
+      viewoption.rect = QtWidgets.QStyle.alignedRect(option.direction, QtCore.Qt.AlignmentFlag.AlignCenter,
                                                  QtCore.QSize(option.decorationSize.width() + 5, option.decorationSize.height()),
                                                  QtCore.QRect(r.x() + margin,
                                                               r.y(),
@@ -30,19 +30,19 @@ class SignalItem(QtWidgets.QStyledItemDelegate):
     Toggle checkbox on mouse click and key press.
     """
     flags = model.flags(index)
-    if not (flags & (QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)):
+    if not (flags & (QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsEnabled)):
       return False
     if not index.isValid(): return False
-    value = index.data(QtCore.Qt.CheckStateRole)
+    value = index.data(QtCore.Qt.ItemDataRole.CheckStateRole)
     if not event.type() == QtCore.QEvent.MouseButtonRelease: return False
-    margin = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PM_FocusFrameHMargin) + 1
-    if not QtWidgets.QStyle.alignedRect(option.direction, QtCore.Qt.AlignCenter, option.decorationSize,
+    margin = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PixelMetric.PM_FocusFrameHMargin) + 1
+    if not QtWidgets.QStyle.alignedRect(option.direction, QtCore.Qt.AlignmentFlag.AlignCenter, option.decorationSize,
                                     QtCore.QRect(option.rect.x() + (2 * margin),
                                                  option.rect.y(),
                                                  option.rect.width() - (2 * margin),
                                                  option.rect.height())).contains(event.pos()): return False
-    state = QtCore.Qt.Unchecked if (value == QtCore.Qt.Checked) else QtCore.Qt.Checked
-    return model.setData(index, state, QtCore.Qt.CheckStateRole)
+    state = QtCore.Qt.CheckState.Unchecked if (value == QtCore.Qt.CheckState.Checked) else QtCore.Qt.CheckState.Checked
+    return model.setData(index, state, QtCore.Qt.ItemDataRole.CheckStateRole)
 
 
 class SignalTable(QtWidgets.QTableView):
@@ -58,8 +58,8 @@ class SignalTable(QtWidgets.QTableView):
     self.verticalHeader().hide()
     self.horizontalHeader().setStretchLastSection(True)
     self.horizontalHeader().setHighlightSections(False)
-    self.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-    self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+    self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+    self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
     self._selectedrow = -1
 
   def mousePressEvent(self, event):

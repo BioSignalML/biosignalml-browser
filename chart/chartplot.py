@@ -4,17 +4,18 @@ import collections
 import numpy as np
 from types import FunctionType
 
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5 import QtOpenGL
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt6 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtOpenGL, QtOpenGLWidgets
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
 from biosignalml.data import DataSegment
 
 from nrange import NumericRange
 from annotation import AnnotationDialog
 
-##ChartWidget = QtWidgets.QWidget   # Hangs if > 64K points
-ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
+ChartWidget = QtWidgets.QWidget      # Hangs if > 64K points ???
+#ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
+#ChartWidget = QtOpenGLWidgets.QOpenGLWidget
 
 '''
 try:
@@ -91,12 +92,13 @@ def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred, font
   elif (align & alignTop)    == alignTop:    ty = y + th
   else:                                      ty = y - adjust
   for t in lines:
-    tw = metrics.width(t)
+    bounds = metrics.boundingRect(t)
+    tw = bounds.width()
     if   (align & alignCentre) == alignCentre: tx = x - tw/2.0
     elif (align & alignRight)  == alignRight:  tx = x - tw
     else:                                      tx = x
     painter.drawText(QtCore.QPointF(tx, ty), t)
-    ty += metrics.height()                  ## lineSpacing()
+    ty += bounds.height()                  ## lineSpacing()
   painter.setFont(font)             # Reset, in case changed above
   painter.setTransform(xfm)
 
@@ -307,10 +309,10 @@ class ChartPlot(ChartWidget):
 
   def __init__(self, parent=None):
   #-------------------------------
-    if ChartWidget == QtOpenGL.QGLWidget:
-      QtOpenGL.QGLWidget.__init__(self,
-        QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers),
-        parent)
+    if ChartWidget == QtOpenGLWidgets.QOpenGLWidget:
+      QtOpenGLWidgets.QOpenGLWidget.__init__(self, parent)
+#        QtOpenGL.QGLFormat(QtOpenGL.QGL.SampleBuffers),
+#        parent)
     else:
       QtWidgets.QWidget.__init__(self, parent)
     self.setPalette(QtGui.QPalette(QtGui.QColor('black'), QtGui.QColor('white')))
@@ -458,7 +460,7 @@ class ChartPlot(ChartWidget):
     qp = QtGui.QPainter()
     qp.begin(device)
 
-    qp.setRenderHint(QtGui.QPainter.Antialiasing)
+    qp.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
 
     w = device.width()
     h = device.height()
@@ -659,7 +661,7 @@ class ChartPlot(ChartWidget):
       endtimes[row][1] = thiscolour  # Save colour index
       colour = ANN_COLOURS[thiscolour]
       pen = QtGui.QPen(colour, 0)
-#      pen.setCapStyle(QtCore.Qt.FlatCap)
+#      pen.setCapStyle(QtCore.Qt.PenCapStyle.FlatCap)
 #      pen.setWidth(1)
       painter.setPen(pen)
       xstart = self._time_to_pos(ann[0])
@@ -696,7 +698,7 @@ class ChartPlot(ChartWidget):
 
   def _time_to_pos(self, time):
   #---------------------------
-    return MARGIN_LEFT + (time - self._start)*self._plot_width/float(self._duration)
+    return MARGIN_LEFT + int((time - self._start)*self._plot_width/float(self._duration))
 
   @pyqtSlot(float, float)
   def setTimeRange(self, start, duration):
@@ -728,10 +730,10 @@ class ChartPlot(ChartWidget):
   def setTimeScroll(self, scrollbar):
   #----------------------------------
     scrollbar.setMinimum(0)
-    scrollwidth = 1000
-    scrollbar.setPageStep(scrollwidth/self._timezoom)
+    scrollwidth: int = 1000
+    scrollbar.setPageStep(int(scrollwidth/self._timezoom))
     scrollbar.setMaximum(scrollwidth - scrollbar.pageStep())
-    scrollbar.setValue(scrollwidth*(self._start - self.start)/float(self.duration))
+    scrollbar.setValue(int(scrollwidth*(self._start - self.start)/float(self.duration)))
 
   def moveTimeScroll(self, scrollbar):
   #-----------------------------------
@@ -752,7 +754,7 @@ class ChartPlot(ChartWidget):
   def mousePressEvent(self, event):
   #--------------------------------
     self._mousebutton = event.button()
-    if self._mousebutton != QtCore.Qt.LeftButton: return
+    if self._mousebutton != QtCore.Qt.MouseButton.LeftButton: return
     pos = event.pos()
     xpos = pos.x()
     xtime = self._pos_to_time(xpos)
@@ -824,7 +826,7 @@ class ChartPlot(ChartWidget):
           font = QtWidgets.QToolTip.font()
           font.setPointSize(16)
           QtWidgets.QToolTip.setFont(font)
-          QtWidgets.QToolTip.showText(event.globalPos(),
+          QtWidgets.QToolTip.showText(event.globalPosition().toPoint(),
             self._annotation_display_text(self._annotations[a[1]]))
           tooltip = True
           break
@@ -843,11 +845,11 @@ class ChartPlot(ChartWidget):
         self._selectstart[0] += delta
         self._selectstart[1] = self._timeRange.map(self._selectstart[0])
       self.update()
-    if not tooltip: QtWidgets.QToolTip.showText(event.globalPos(), '')
+    if not tooltip: QtWidgets.QToolTip.showText(event.globalPosition().toPoint(), '')
 
   def mouseReleaseEvent(self, event):
   #----------------------------------
-    if self._mousebutton == QtCore.Qt.LeftButton:
+    if self._mousebutton == QtCore.Qt.MouseButton.LeftButton:
       self._marker = -1
       if self._selecting:
         if self._selectstart[0] > self._selectend[0]: # Moved start edge
@@ -870,11 +872,11 @@ class ChartPlot(ChartWidget):
           menu = QtWidgets.QMenu()
           menu.addAction("Edit")
           menu.addAction("Delete")
-          item = menu.exec_(self.mapToGlobal(pos))
+          item = menu.exec(self.mapToGlobal(pos))
           if item:
             if item.text() == 'Edit':
               dialog = AnnotationDialog(self._id, ann[0], ann[1], text=ann[2], tags=ann[3], parent=self)
-              if dialog.exec_():
+              if dialog.exec():
                 text = dialog.get_annotation().strip()
                 tags = dialog.get_tags()
                 if (text and text != ann[2].strip() or tags != ann[3]):
@@ -884,7 +886,7 @@ class ChartPlot(ChartWidget):
                 "Delete Annotation", QtWidgets.QMessageBox.Cancel | QtWidgets.QMessageBox.Ok)
               confirm.setInformativeText("Do you want to delete the annotation?")
               confirm.setDefaultButton(QtWidgets.QMessageBox.Cancel)
-              if confirm.exec_() == QtWidgets.QMessageBox.Ok:
+              if confirm.exec() == QtWidgets.QMessageBox.Ok:
                 self.annotationDeleted.emit(ann_id)
         return
     if (MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height)
@@ -895,7 +897,7 @@ class ChartPlot(ChartWidget):
         menu.addAction("Zoom")
         menu.addAction("Annotate")
 ##        menu.addAction("Export")
-        item = menu.exec_(self.mapToGlobal(pos))
+        item = menu.exec(self.mapToGlobal(pos))
         if item:
           clearselection = False
           if item.text() == 'Zoom':
@@ -906,7 +908,7 @@ class ChartPlot(ChartWidget):
             clearselection = True
           elif item.text() == 'Annotate':
             dialog = AnnotationDialog(self._id, self._selectstart[1], self._selectend[1], parent=self)
-            if dialog.exec_():
+            if dialog.exec():
               text = dialog.get_annotation()
               tags = dialog.get_tags()
               if text or tags:
@@ -923,7 +925,7 @@ class ChartPlot(ChartWidget):
         if self._timezoom > 1.0:
           menu.addAction("Reset zoom")    ## Have but disabled...
         menu.addAction("Save as PNG")
-        item = menu.exec_(self.mapToGlobal(pos))
+        item = menu.exec(self.mapToGlobal(pos))
         if item:
           if   item.text() == 'Reset zoom':
 ##          self.zoomChart.emit(1.0)    # Results in setTimeZoom() being called
@@ -961,5 +963,5 @@ if __name__ == '__main__':
   chart.appendData('1', data)
   chart.show()
 
+  sys.exit(app.exec())
 
-  sys.exit(app.exec_())

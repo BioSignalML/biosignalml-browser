@@ -37,7 +37,7 @@ class QueryForm(QtGui.QWidget):
   #----------------------------
     op = self.ui.operation.clone('operation%d' % row, True)
     op.row = row
-    self.ui.gridLayout.addWidget(op, row, 0, QtCore.Qt.AlignTop)
+    self.ui.gridLayout.addWidget(op, row, 0, QtCore.Qt.AlignmentFlag.AlignTop)
     op.currentIndexChanged.connect(self.on_operation_changed)
     self._rows.append([ op, None ])
 

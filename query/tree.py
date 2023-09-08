@@ -124,28 +124,28 @@ class ResultsTreeModel(QtCore.QAbstractItemModel):
     if index.isValid():
       col = index.column()
       item = index.internalPointer()
-      if   role == QtCore.Qt.DisplayRole:
+      if   role == QtCore.Qt.ItemDataRole.DisplayRole:
         return item.data(col)
-      elif role == QtCore.Qt.TextAlignmentRole:
+      elif role == QtCore.Qt.ItemDataRole.TextAlignmentRole:
         return QtCore.Qt.AlignTop
-      elif col == 0 and role == QtCore.Qt.DecorationRole:
+      elif col == 0 and role == QtCore.Qt.ItemDataRole.DecorationRole:
         if item.data(2) == 'Database':
           return QtGui.QApplication.style().standardIcon(QtGui.QStyle.SP_DirIcon)
         elif item.data(2) == 'Recording':
           return QtGui.QApplication.style().standardIcon(QtGui.QStyle.SP_FileIcon)
-      elif col == 0 and role == QtCore.Qt.ToolTipRole:
+      elif col == 0 and role == QtCore.Qt.ItemDataRole.ToolTipRole:
         return item.data(1)
     return QtCore.QVariant()
 
   def flags(self, index):
   #----------------------
     if not index.isValid():
-      return QtCore.Qt.NoItemFlags
-    return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+      return QtCore.Qt.ItemFlag.NoItemFlags
+    return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable
 
   def headerData(self, section, orientation, role):
   #------------------------------------------------
-    if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
+    if orientation == QtCore.Qt.Orientation.Horizontal and role == QtCore.Qt.ItemDataRole.DisplayRole:
       return self._root.data(section)
     return None
 

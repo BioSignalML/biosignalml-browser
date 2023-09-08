@@ -8,7 +8,7 @@ if hasattr(sys,"frozen") and len(sys.path) == 1:
   sys.path_importer_cache[libpath] = None
 ##
 
-from PyQt5 import QtCore, QtGui, QtWidgets, QtWebKitWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets, QtWebKitWidgets
 
 from biosignalml import client
 from biosignalml.rdf.sparqlstore import StoreException
@@ -49,8 +49,8 @@ class WebView(QtWebKitWidgets.QWebView):
   def __init__(self, repo, parent=None):
   #-------------------------------------
     super(WebView, self).__init__(parent)
-    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
-    refresh = QtWidgets.QShortcut(QtGui.QKeySequence.Refresh, self, activated=self.reload)
+    closekey = QtGui.QShortcut(QtGui.QKeySequence.StandardKey.Close, self, activated=self.close)
+    refresh = QtGui.QShortcut(QtGui.QKeySequence.StandardKey.Refresh, self, activated=self.reload)
     self.setPage(WebPage(self))
     self._charts = [ ]
     if repo is not None:
@@ -81,10 +81,10 @@ class WebView(QtWebKitWidgets.QWebView):
       logging.debug('EXCEPTION: %s', msg)
       alert = QtWidgets.QMessageBox()
       alert.setText(str(msg))
-      alert.exec_()
+      alert.exec()
     except IOError:
       pass
-    item = menu.exec_(self.mapToGlobal(pos))
+    item = menu.exec(self.mapToGlobal(pos))
     if item:
       if item.text() == 'View Recording':
         try:
@@ -101,7 +101,7 @@ class WebView(QtWebKitWidgets.QWebView):
     if type == QtWebKitWidgets.QWebPage.WebBrowserWindow:
       # print "Creating window...", type, self.url()
       self._view = WebView(None)
-      self._view.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+      self._view.setAttribute(QtCore.Qt.WidgetAttribute.WA_DeleteOnClose, True)
       return self._view
     return super(WebView, self).createWindow(type)
 
@@ -121,7 +121,7 @@ class RepositoryDialog(QtWidgets.QDialog):
   def __init__(self, repo, parent=None):
   #-------------------------------------
     QtWidgets.QWidget.__init__(self, parent)
-    closekey = QtWidgets.QShortcut(QtGui.QKeySequence.Close, self, activated=self.close)
+    closekey = QtGui.QShortcut(QtGui.QKeySequence.StandardKey.Close, self, activated=self.close)
     self.input = Ui_SelectRepository()
     self.input.setupUi(self)
     self.input.repository.addItem("")
@@ -144,7 +144,7 @@ if __name__ == '__main__':
   dialog = RepositoryDialog(settings.value('repository', ''))
   dialog.show()
   dialog.raise_()
-  while dialog.exec_():
+  while dialog.exec():
     input = dialog.input
     url = QtCore.QUrl.fromUserInput(input.repository.currentText())
     if url.isValid():
@@ -160,13 +160,9 @@ if __name__ == '__main__':
 
         settings.setValue('repository', url)
         browser = WebBrowser(url)
-        app.exec_()
+        app.exec()
       except IOError as msg:
         alert = QtWidgets.QMessageBox()
         alert.setText("Cannot connect to repository: %s" % msg)
-        alert.exec_()
-
-
-
-
+        alert.exec()
 

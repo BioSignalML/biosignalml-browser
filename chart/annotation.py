@@ -1,5 +1,5 @@
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt6 import QtCore, QtWidgets
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
 from ui.annotate import Ui_AnnotationDialog
 
@@ -31,7 +31,7 @@ class AnnotationDialog(QtWidgets.QDialog):
 
     if tags is None: tags = [ ]
     semantic_tags = parent.semantic_tags  # { uri: label }
-    self.ui.taglist.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+    self.ui.taglist.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
     for u, l in semantic_tags.items(): self.ui.taglist.addItem(TagItem(u, l))
     for t in tags:   ## Show 'unknown' tags
       if t not in semantic_tags: self.ui.taglist.addItem(TagItem(t, str(t)))
