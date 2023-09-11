@@ -236,7 +236,7 @@ class SignalList(QtWidgets.QWidget):
     interval = self._recording.interval(start, duration)
     for s in self._recording.signals():
       uri = signal_uri(s)
-      if str(s.units) == str(uom.UNITS.AnnotationData.uri):
+      if str(s.units) == str(uom.UNITS.AnnotationData):
         self.add_event_plot.emit(uri, s.label, self._annotator)
       else:
         try:
