@@ -1,15 +1,12 @@
-# -*- coding: utf-8 -*-
+#===============================================================================
 
-# Modified from form generated from 'ui/mainwindow.ui'
-#
-# Created: Wed Aug 26 10:24:57 2015
-#      by: PyQt5 UI code generator 5.4
-#
 from PyQt6 import QtCore, QtGui, QtWidgets
+
+#===============================================================================
 
 from chartform import ChartForm
 
-
+#===============================================================================
 
 class Ui_MainWindow(object):
 #===========================
@@ -65,3 +62,5 @@ class Ui_MainWindow(object):
     #-----------------------------------
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+
+#===============================================================================

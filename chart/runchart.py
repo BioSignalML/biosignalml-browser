@@ -1,15 +1,16 @@
+#===============================================================================
+
 import sys
 import re
 import logging
 from types import FunctionType
 
+#===============================================================================
 
-from mainwindow        import Ui_MainWindow
-from ui.signallist     import Ui_SignalList
-from ui.annotationlist import Ui_AnnotationList
-from ui.scroller       import Ui_Scroller
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
+
+#===============================================================================
 
 from biosignalml import BSML
 from biosignalml.data import DataSegment
@@ -18,9 +19,17 @@ import biosignalml.model
 import biosignalml.units as uom
 from biosignalml.formats.hdf5 import HDF5Recording
 
+#===============================================================================
+
+from mainwindow        import Ui_MainWindow
+from ui.signallist     import Ui_SignalList
+from ui.annotationlist import Ui_AnnotationList
+from ui.scroller       import Ui_Scroller
+
 from nrange import NumericRange
 from table import SortedTable
 
+#===============================================================================
 
 def wfdbAnnotation(e):
 #=====================
@@ -32,6 +41,8 @@ def wfdbAnnotation(e):
     if mark == 'N': mark = u'\u2022'  # Unicode bullet
     return (mark, wfdb.anndesc(int(e)))
   return ('', '')
+
+#===============================================================================
 
 PREFIXES = {
   'bsml': 'http://www.biosignalml.org/ontologies/2011/04/biosignalml#',
@@ -54,7 +65,6 @@ def expand_uri(uri):
     if v.startswith(pfx+':'): return ns + v[len(pfx)+1:]
   return v
 
-
 def signal_uri(signal):
 #======================
   prefix = str(signal.recording.uri)
@@ -62,6 +72,7 @@ def signal_uri(signal):
   if uri.startswith(prefix): return uri[len(prefix):]
   else:                      return uri
 
+#===============================================================================
 
 class SignalReadThread(QtCore.QThread):
 #======================================
@@ -92,7 +103,7 @@ class SignalReadThread(QtCore.QThread):
   #--------------
     self._exit = True
 
-
+#===============================================================================
 
 class SignalInfo(QtCore.QAbstractTableModel):
 #============================================
@@ -177,6 +188,7 @@ class SignalInfo(QtCore.QAbstractTableModel):
                    QtCore.Qt.CheckState.Checked if visible else QtCore.Qt.CheckState.Unchecked,
                    QtCore.Qt.ItemDataRole.CheckStateRole)
 
+#===============================================================================
 
 class AnnotationTable(object):
 #=============================
@@ -199,7 +211,7 @@ class AnnotationTable(object):
   #-------------------------------------------
     return [str(uri)] + times + [ type, text, tagtext ]
 
-
+#===============================================================================
 
 class SignalList(QtWidgets.QWidget):
 #===================================
@@ -246,6 +258,7 @@ class SignalList(QtWidgets.QWidget):
   #--------------------------------------
     self.model.setVisibility(state)
 
+#===============================================================================
 
 class AnnotationList(QtWidgets.QWidget):
 #=======================================
@@ -558,6 +571,7 @@ class Scroller(QtWidgets.QWidget):
   #-----------------------------------
     self._slider_moved()
 
+#===============================================================================
 
 class MainWindow(QtWidgets.QMainWindow):
 #=======================================
@@ -699,6 +713,7 @@ class MainWindow(QtWidgets.QMainWindow):
       self._recording._modified = False
       self._recording.close()
 
+#===============================================================================
 
 if __name__ == "__main__":
 #=========================
@@ -751,3 +766,6 @@ if __name__ == "__main__":
   except:
     raise  ###################
   sys.exit(app.exec_())
+
+#===============================================================================
+

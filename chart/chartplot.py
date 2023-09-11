@@ -1,17 +1,26 @@
 import math
+#===============================================================================
 import logging
 import collections
 import numpy as np
 from types import FunctionType
 
+#===============================================================================
+
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6 import QtOpenGL, QtOpenGLWidgets
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
+#===============================================================================
+
 from biosignalml.data import DataSegment
+
+#===============================================================================
 
 from nrange import NumericRange
 from annotation import AnnotationDialog
+
+#===============================================================================
 
 ChartWidget = QtWidgets.QWidget      # Hangs if > 64K points ???
 #ChartWidget = QtOpenGL.QGLWidget    # Faster, anti-aliasing not quite as good QWidget
@@ -30,17 +39,20 @@ try:
 
 except ImportError:
 '''
+
+#===============================================================================
+
 def make_polygon(points):
 #------------------------
   return QtGui.QPolygonF([QtCore.QPointF(pt[0], pt[1]) for pt in points])
 
+#===============================================================================
 
 # Margins of plotting region within chart, in pixels
 MARGIN_LEFT   = 120
 MARGIN_RIGHT  =  80
 MARGIN_TOP    = 100
 MARGIN_BOTTOM =  40
-
 
 traceColour      = QtGui.QColor('green')
 selectedColour   = QtGui.QColor('red')             ## When signal is selected in controller
@@ -68,6 +80,7 @@ alignBottom      = 0x08
 alignMiddle      = 0x0C
 alignCentred     = 0x0F
 
+#===============================================================================
 
 def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred, fontSize=None, fontWeight=None):
 #-----------------------------------------------------------------------------------------------------------
@@ -102,6 +115,7 @@ def drawtext(painter, x, y, text, mapX=True, mapY=True, align=alignCentred, font
   painter.setFont(font)             # Reset, in case changed above
   painter.setTransform(xfm)
 
+#===============================================================================
 
 class SignalPlot(object):
 #========================
@@ -235,6 +249,7 @@ class SignalPlot(object):
            xy = xfm.map(QtCore.QPointF(t, y))
            drawtext(painter, xy.x()+5, xy.y(), '{:4g}'.format(y), mapX=False, mapY=False, align=alignLeft)
 
+#===============================================================================
 
 class EventPlot(object):
 #=======================
@@ -331,7 +346,6 @@ class ChartPlot(ChartWidget):
     self._annotations = collections.OrderedDict()  # id --> to tuple(start, end, text, tags, editable)
     self._annrects = []    # List of tuple(rect, id)
     self.semantic_tags = { }
-
 
   def setId(self, id):
   #-------------------
@@ -938,6 +952,7 @@ class ChartPlot(ChartWidget):
               self._draw(output)
               output.save(filename, 'PNG')
 
+#===============================================================================
 
 if __name__ == '__main__':
 #=========================
@@ -965,3 +980,4 @@ if __name__ == '__main__':
 
   sys.exit(app.exec())
 
+#===============================================================================

@@ -16,6 +16,7 @@ from biosignalml.rdf.sparqlstore import StoreException
 from runchart import show_chart
 from ui.repo import Ui_SelectRepository
 
+#===============================================================================
 
 class WebPage(QtWebKitWidgets.QWebPage):
 #=======================================
@@ -42,6 +43,7 @@ class WebPage(QtWebKitWidgets.QWebPage):
 #    print "Clicked...", url, url.path()
 #    self.view().load(url)
 
+#===============================================================================
 
 class WebView(QtWebKitWidgets.QWebView):
 #=======================================
@@ -105,6 +107,7 @@ class WebView(QtWebKitWidgets.QWebView):
       return self._view
     return super(WebView, self).createWindow(type)
 
+#===============================================================================
 
 class WebBrowser(QtWidgets.QMainWindow):
 #=======================================
@@ -114,6 +117,7 @@ class WebBrowser(QtWidgets.QMainWindow):
     super(WebBrowser, self).__init__()
     self._view = WebView(repo)
 
+#===============================================================================
 
 class RepositoryDialog(QtWidgets.QDialog):
 #=========================================
@@ -130,6 +134,7 @@ class RepositoryDialog(QtWidgets.QDialog):
     self.input.repository.addItems(sorted(repos))
     self.input.repository.setCurrentIndex(self.input.repository.findText(repo))
 
+#===============================================================================
 
 if __name__ == '__main__':
 #=========================
@@ -166,3 +171,4 @@ if __name__ == '__main__':
         alert.setText("Cannot connect to repository: %s" % msg)
         alert.exec()
 
+#===============================================================================

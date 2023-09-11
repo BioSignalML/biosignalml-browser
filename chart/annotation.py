@@ -1,8 +1,13 @@
+#===============================================================================
+
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 
+#===============================================================================
+
 from ui.annotate import Ui_AnnotationDialog
 
+#===============================================================================
 
 class TagItem(QtWidgets.QListWidgetItem):
 #========================================
@@ -13,6 +18,7 @@ class TagItem(QtWidgets.QListWidgetItem):
     self.uri = uri
     self.label = label
 
+#===============================================================================
 
 class AnnotationDialog(QtWidgets.QDialog):
 #=========================================
@@ -45,7 +51,6 @@ class AnnotationDialog(QtWidgets.QDialog):
     self.ui.tags.clicked.connect(self.show_tags)
     self.ui.taglabels.setText(', '.join(sorted([semantic_tags.get(t, str(t)) for t in tags])))
 
-
   def get_annotation(self):
   #------------------------
     return str(self.ui.annotation.toPlainText()).strip()
@@ -60,3 +65,5 @@ class AnnotationDialog(QtWidgets.QDialog):
   def get_tags(self):
   #------------------
      return [ t.uri for t in self.ui.taglist.selectedItems() ]
+
+#===============================================================================
