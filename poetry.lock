@@ -2,28 +2,29 @@
 
 [[package]]
 name = "biosignalml"
-version = "0.7.0-a.1"
+version = "0.7.0a1"
 description = ""
 optional = false
 python-versions = ">=3.10,<4.0"
-files = []
-develop = true
+files = [
+    {file = "biosignalml-0.7.0a1-py3-none-any.whl", hash = "sha256:ad3d547402beaeec53231c87efc2c2fc51c4cbe9d5c3f87f7cbda504c5ab98b9"},
+]
 
 [package.dependencies]
-h5py = "^3.9.0"
-httplib2 = "^0.22.0"
-isodate = "^0.6.1"
-numpy = "^1.25.2"
-pint = "^0.22"
-pyparsing = "^3.1.1"
-python-dateutil = "^2.8.2"
-rdflib = "^7.0.0"
-simplejson = "^3.19.1"
-ws4py = "^0.5.1"
+h5py = ">=3.9.0,<4.0.0"
+httplib2 = ">=0.22.0,<0.23.0"
+isodate = ">=0.6.1,<0.7.0"
+numpy = ">=1.25.2,<2.0.0"
+pint = ">=0.22,<0.23"
+pyparsing = ">=3.1.1,<4.0.0"
+python-dateutil = ">=2.8.2,<3.0.0"
+rdflib = ">=7.0.0,<8.0.0"
+simplejson = ">=3.19.1,<4.0.0"
+ws4py = ">=0.5.1,<0.6.0"
 
 [package.source]
-type = "directory"
-url = "../python-lib"
+type = "url"
+url = "https://github.com/BioSignalML/biosignalml-python/releases/download/v0.7.0-a.1/biosignalml-0.7.0a1-py3-none-any.whl"
 
 [[package]]
 name = "h5py"
@@ -377,4 +378,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "56294c7b838c559dc47c7cc2dd2a209ca51c15aeee431a3b7be8cbb5323ab352"
+content-hash = "b143917fecc5a7f7c43a2b54504036efc64f83f52ea8ab4a2043f0f1f4cca796"
