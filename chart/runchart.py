@@ -616,7 +616,7 @@ class MainWindow(QtWidgets.QMainWindow):
     # Setup chart
     self.ui.chartform.setTimeRange(start, duration)
     chart = self.ui.chartform.ui.chart
-    chart.setId(uri)
+    chart.setId(recording.uri)
     chart.setSemanticTags(semantic_tags)
     chart.exportRecording.connect(self.exportRecording)
 
