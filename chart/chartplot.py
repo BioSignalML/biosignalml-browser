@@ -1,9 +1,11 @@
-import math
 #===============================================================================
+
+from dataclasses import dataclass
 import logging
 import collections
-import numpy as np
 from types import FunctionType
+
+import numpy as np
 
 #===============================================================================
 
@@ -140,9 +142,10 @@ class SignalPlot(object):
 
   def _setYrange(self):
   #--------------------
-    if self._ymin == self._ymax:
-      if self._ymin: (ymin, ymax) = (self._ymin-abs(self._ymin)/2.0, self._ymax+abs(self._ymax)/2.0)
-      else:          (ymin, ymax) = (-0.5, 0.5)
+    if self._ymax is None or self._ymin is None:
+      (ymin, ymax) = (-0.5, 0.5)
+    elif self._ymin == self._ymax:
+      (ymin, ymax) = (self._ymin-abs(self._ymin)/2.0, self._ymax+abs(self._ymax)/2.0)
     else:
       (ymin, ymax) = (self._ymin, self._ymax)
     self._range = NumericRange(ymin, ymax)
@@ -189,8 +192,10 @@ class SignalPlot(object):
   #----------------------
     i = 0
     j = self._poly.size()
-    if (time < self._poly.at(0).x()
-     or time > self._poly.at(j-1).x()): return None
+    if (j == 0
+     or time < self._poly.at(0).x()
+     or time > self._poly.at(j-1).x()):
+      return None
     while i < j:
       m = (i + j)//2
       if self._poly.at(m).x() <= time: i = m + 1
@@ -306,6 +311,15 @@ class EventPlot(object):
         self._eventpos.append( (int(xy.x()+0.5), int(xy.y()+0.5), '\n'.join(event[1].split())) )
     painter.setClipping(False)
 
+#===============================================================================
+
+@dataclass
+class PlotListData:
+  id: str
+  visible: bool
+  plot: SignalPlot|EventPlot
+
+#===============================================================================
 
 class ChartPlot(ChartWidget):
 #============================
@@ -332,9 +346,9 @@ class ChartPlot(ChartWidget):
       QtWidgets.QWidget.__init__(self, parent)
     self.setPalette(QtGui.QPalette(QtGui.QColor('black'), QtGui.QColor('white')))
     self.setMouseTracking(True)
-    self._id = None
-    self._plots = {}        # id --> index in plotlist
-    self._plotlist = []     # [id, visible, plot] triples as a list
+    self._id = ''
+    self._plots: dict[str, int] = {}            # id --> index in plotlist
+    self._plotlist: list[PlotListData] = []     # [id, visible, plot] triples as a list
     self._timezoom = 1.0
     self._markers = [ ]     # List of [xpos, time] pairs
     self._marker = -1       # Index of marker being dragged
@@ -360,7 +374,7 @@ class ChartPlot(ChartWidget):
   #----------------------------------------------------------------------------------------
     plot = SignalPlot(label, units, data, ymin, ymax)
     self._plots[id] = len(self._plotlist)
-    self._plotlist.append([id, visible, plot])
+    self._plotlist.append(PlotListData(id, visible, plot))
     self.update()
 
   @pyqtSlot(str, str, FunctionType) ## , bool, DataSegment)
@@ -368,7 +382,7 @@ class ChartPlot(ChartWidget):
   #----------------------------------------------------------------------------------------------
     plot = EventPlot(label, mapping, data)
     self._plots[id] = len(self._plotlist)
-    self._plotlist.append([id, visible, plot])
+    self._plotlist.append(PlotListData(id, visible, plot))
     self.update()
 
   @pyqtSlot(str, DataSegment)
@@ -376,7 +390,7 @@ class ChartPlot(ChartWidget):
   #------------------------------
     n = self._plots.get(id, -1)
     if n >= 0:
-      self._plotlist[n][2].appendData(data)
+      self._plotlist[n].plot.appendData(data)
       self.update()
 
   @pyqtSlot(str, bool)
@@ -384,14 +398,14 @@ class ChartPlot(ChartWidget):
   #------------------------------------------
     n = self._plots.get(id, -1)
     if n >= 0:
-      self._plotlist[n][1] = visible
+      self._plotlist[n].visible = visible
       self.update()
 
   @pyqtSlot(result=list)
   def plotOrder(self):
   #-------------------
     """ Get list of plot ids in display order. """
-    return [ p[0] for p in self._plotlist ]
+    return [ p.id for p in self._plotlist ]
 
   @pyqtSlot(list)
   def orderPlots(self, ids):
@@ -403,8 +417,8 @@ class ChartPlot(ChartWidget):
     of ids in the list. Plots with ids not in the list are not
     moved. Unknown ids are ignored.
     """
-    order = []
-    plots = []
+    order: list[int] = []
+    plots: list[PlotListData] = []
     for id in ids:
       n = self._plots.get(id, -1)
       if n >= 0:
@@ -412,7 +426,7 @@ class ChartPlot(ChartWidget):
         plots.append(self._plotlist[n])
     for i, n in enumerate(sorted(order)):
       self._plotlist[n] = plots[i]
-      self._plots[plots[i][0]] = n
+      self._plots[plots[i].id] = n
     self.update()
 
   @pyqtSlot(str, str)
@@ -425,10 +439,10 @@ class ChartPlot(ChartWidget):
       p = self._plotlist[n]
       if n > m:   # shift up
         self._plotlist[m+1:n+1] = self._plotlist[m:n]
-        for i in range(m+1, n+1): self._plots[self._plotlist[i][0]] = i
+        for i in range(m+1, n+1): self._plots[self._plotlist[i].id] = i
       else:       # shift down
         self._plotlist[n:m] = self._plotlist[n+1:m+1]
-        for i in range(n, m): self._plots[self._plotlist[i][0]] = i
+        for i in range(n, m): self._plots[self._plotlist[i].id] = i
       self._plotlist[m] = p
       self._plots[from_id] = m
     self.update()
@@ -437,7 +451,7 @@ class ChartPlot(ChartWidget):
   def plotSelected(self, row):
   #---------------------------
     for n, p in enumerate(self._plotlist):
-      p[2].selected = (n == row)
+      p.plot.selected = (n == row)
     self.update()
 
   @pyqtSlot()
@@ -512,7 +526,7 @@ class ChartPlot(ChartWidget):
     self._draw_time_grid(qp)
 
     # Draw each each visible trace
-    plots = [ p[2] for p in self._plotlist if p[1] ]
+    plots = [ p.plot for p in self._plotlist if p.visible ]
     gridheight = 0
     for plot in plots: gridheight += plot.gridheight
     plotposition = gridheight
@@ -537,7 +551,7 @@ class ChartPlot(ChartWidget):
 
   def _draw_plot_labels(self, painter):
   #-----------------------------------
-    plots = [ p[2] for p in self._plotlist if p[1] ]
+    plots = [ p.plot for p in self._plotlist if p.visible ]
     gridheight = 0
     for plot in plots: gridheight += plot.gridheight
     plotposition = gridheight
