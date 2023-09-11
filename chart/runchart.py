@@ -121,7 +121,7 @@ class SignalInfo(QtCore.QAbstractTableModel):
   #--------------------------------------------
     QtCore.QAbstractTableModel.__init__(self, *args, **kwds)
     self._rows = [ [True, s.label, signal_uri(s)]
-                     for n, s in enumerate(recording.signals()) ]
+                     for _, s in enumerate(recording.signals()) ]
 
   def rowCount(self, parent=None):
   #-------------------------------
