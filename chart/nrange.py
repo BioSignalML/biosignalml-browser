@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
   def test(a):
   #-----------
-    printr(a, '==>', r.map(a))
+    print(a, '==>', r.map(a))
 
   test(30.035667565)
   test(30.035671565)
