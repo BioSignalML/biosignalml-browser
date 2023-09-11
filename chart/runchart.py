@@ -32,6 +32,8 @@ from table import SortedTable
 
 #===============================================================================
 
+# An example annotator used by MainWindow...
+#
 def wfdbAnnotation(e):
 #=====================
   import wfdb
