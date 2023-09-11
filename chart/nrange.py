@@ -1,6 +1,7 @@
 #===============================================================================
 
 import math
+from typing import Optional, overload
 
 #===============================================================================
 
@@ -22,8 +23,8 @@ class NumericRange(object):
   :return: A tuple with (major, minor) spacing.
   """
 
-  def __init__(self, start, end):
-  #------------------------------
+  def __init__(self, start: float, end: float):
+  #--------------------------------------------
     width = end - start
     if   width < 0.0:
       width = -width
@@ -43,8 +44,12 @@ class NumericRange(object):
     self.end = self.major*math.ceil(end/self.major)
     self.major_size = int(math.floor((self.end-self.start)/self.major + 0.5))
 
-  def map(self, a, extra=0):
-  #-------------------------
+  @overload
+  def map(self, a: float, extra: float=0) -> float: ...
+  @overload
+  def map(self, a: None, extra: float=0) -> None: ...
+  def map(self, a: Optional[float], extra: float=0) -> Optional[float]:
+  #--------------------------------------------------------------------
     if a is not None:
       q = self.quanta/float(math.pow(10, extra))
       return q*math.floor((a + q/2.0)/q)

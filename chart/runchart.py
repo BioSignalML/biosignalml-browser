@@ -3,6 +3,7 @@
 import sys
 import re
 import logging
+from typing import Optional
 from types import FunctionType
 
 #===============================================================================
@@ -325,8 +326,8 @@ class AnnotationList(QtWidgets.QWidget):
     for a in self._annotations:  # tuple(uri, start, end, text, tags, editable, resource)
       if a[1] is not None: self.add_annotation.emit(*a[:6])
 
-  def _make_ann_times(self, start, end):
-  #-------------------------------------
+  def _make_ann_times(self, start: Optional[float], end: Optional[float]):
+  #-----------------------------------------------------------------------
     if start is None:
       return ['', '', '']
     else:
@@ -361,8 +362,8 @@ class AnnotationList(QtWidgets.QWidget):
     source = index.model().mapToSource(index)
     id = source.model().createIndex(source.row(), 0).data()
     ann = self._find_annotation(id)
-    time = None
-    duration = None
+    time: Optional[float] = None
+    duration: Optional[float] = None
     if ann and ann[1] is not None:
       time = ann[1]
       if ann[2] is not None:
