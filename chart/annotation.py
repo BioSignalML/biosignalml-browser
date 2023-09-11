@@ -23,8 +23,8 @@ class TagItem(QtWidgets.QListWidgetItem):
 class AnnotationDialog(QtWidgets.QDialog):
 #=========================================
 
-  def __init__(self, id, start, end, text='', tags=None, parent=None):
-  #-------------------------------------------------------------------
+  def __init__(self, id: str, start: float, end: float, text='', tags=None, parent=None):
+  #--------------------------------------------------------------------------------------
     QtWidgets.QDialog.__init__(self, parent)
     self.ui = Ui_AnnotationDialog()
     self.ui.setupUi(self)
@@ -36,7 +36,7 @@ class AnnotationDialog(QtWidgets.QDialog):
     self.ui.annotation.setPlainText(text)
 
     if tags is None: tags = [ ]
-    semantic_tags = parent.semantic_tags  # { uri: label }
+    semantic_tags = parent.semantic_tags if parent else {} # { uri: label }
     self.ui.taglist.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
     for u, l in semantic_tags.items(): self.ui.taglist.addItem(TagItem(u, l))
     for t in tags:   ## Show 'unknown' tags

@@ -460,7 +460,7 @@ class ChartPlot(ChartWidget):
     self._annotations = collections.OrderedDict()
     self._annrects = []
 
-  @pyqtSlot(str, float, float, str, dict, bool)
+  @pyqtSlot(str, float, float, str, list, bool)
   def addAnnotation(self, id, start, end, text, tags, edit=False):
   #---------------------------------------------------------------
     if end is None: end = start
@@ -494,7 +494,6 @@ class ChartPlot(ChartWidget):
     h = device.height()
     self._plot_width  = w - (MARGIN_LEFT + MARGIN_RIGHT)
     self._plot_height = h - (MARGIN_TOP + MARGIN_BOTTOM)
-
 #    if self._id is not None:
 #      drawtext(qp, MARGIN_LEFT+self._plot_width/2, 10, self._id,
 #               fontSize=16, fontWeight=QtGui.QFont.Bold)
@@ -502,7 +501,7 @@ class ChartPlot(ChartWidget):
     # Set pixel positions of markers and selected region for
     # use in mouse events.
     for m in self._markers: m[0] = self._time_to_pos(m[1])
-    if self._selectstart is not None:
+    if self._selectstart is not None and self._selectend is not None:
       self._selectend[0] = self._time_to_pos(self._selectend[1])
       self._selectstart[0] = self._time_to_pos(self._selectstart[1])
 
@@ -571,7 +570,8 @@ class ChartPlot(ChartWidget):
 
   def _showSelectionRegion(self, painter):
   #---------------------------------------
-    if self._selectstart != self._selectend:
+    if (self._selectstart is not None and self._selectend is not None
+    and self._selectstart != self._selectend):
       duration = (self._selectend[1] - self._selectstart[1])
       painter.setClipping(True)
       painter.fillRect(QtCore.QRectF(self._selectstart[1], 0.0, duration, 1.0), selectionColour)
@@ -582,7 +582,8 @@ class ChartPlot(ChartWidget):
 
   def _showSelectionTimes(self, painter):
   #--------------------------------------
-    if self._selectstart != self._selectend:
+    if (self._selectstart is not None and self._selectend is not None
+    and self._selectstart != self._selectend):
       duration = (self._selectend[1] - self._selectstart[1])
       ypos = MARGIN_TOP - 8
       painter.setPen(QtGui.QPen(selectTimeColour, 0))
@@ -629,6 +630,7 @@ class ChartPlot(ChartWidget):
   #-----------------------------------
     xfm = painter.transform()
     painter.resetTransform()
+    last = [0, 0]
     for n, m in enumerate(self._markers):
       ypos = MARGIN_TOP - 20
       painter.setPen(QtGui.QPen(markerColour if n == 0 else marker2Colour, 0))
@@ -724,7 +726,7 @@ class ChartPlot(ChartWidget):
     if time > self._end: time = self._end
     return self._timeRange.map(time)
 
-  def _time_to_pos(self, time):
+  def _time_to_pos(self, time) -> int:
   #---------------------------
     return MARGIN_LEFT + int((time - self._start)*self._plot_width/float(self._duration))
 
@@ -816,7 +818,7 @@ class ChartPlot(ChartWidget):
     elif MARGIN_TOP < pos.y() <= (MARGIN_TOP + self._plot_height):
 ## Need to be able to clear selection (click inside??)
 ## and start selecting another region (drag outside of region ??)
-      if self._selectstart is None:
+      if self._selectstart is None or self._selectend is None:
         self._selectstart = [xpos, xtime]
         self._selectend = self._selectstart
       elif (xpos-2) <= self._selectstart[0] <= (xpos+2):

@@ -173,6 +173,8 @@ class SignalInfo(QtCore.QAbstractTableModel):
       to_id = self._rows[destrow-1][self.ID_COLUMN]
       self._rows[sourcerow:destrow-1] = self._rows[sourcerow+1:destrow]
       self._rows[destrow-1] = data
+    else:
+      return
     self.rowMoved.emit(from_id, to_id)
 
   def flags(self, index):
