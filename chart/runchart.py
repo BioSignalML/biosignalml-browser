@@ -34,15 +34,25 @@ from table import SortedTable
 
 # An example annotator used by MainWindow...
 #
+# This should really be imported from biosignalml.formats.wfdb
+#
 def wfdbAnnotation(e):
 #=====================
   import wfdb
-  mark = wfdb.annstr(int(e))
+  wfdb_code_to_symbol = {
+    int(label.label_store): label.symbol
+      for label in wfdb.io.annotation.ann_labels
+  }
+  wfdb_code_to_description = {
+    int(label.label_store): label.description
+      for label in wfdb.io.annotation.ann_labels
+  }
+  mark = wfdb_code_to_symbol.get(int(e), '')
   ##  text = "Pacing on" if t < 100 else "Pacing off"   ########
   ##  chart.annotate(text, t, 0.0, textpos=(t, 1.05))
   if mark in "NLRBAaJSVrFejnE/fQ?":
     if mark == 'N': mark = u'\u2022'  # Unicode bullet
-    return (mark, wfdb.anndesc(int(e)))
+    return (mark, wfdb_code_to_description[int(e)])
   return ('', '')
 
 #===============================================================================
