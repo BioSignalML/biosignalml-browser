@@ -5,8 +5,8 @@ description = ""
 authors = ["David Brooks <d.brooks@auckland.ac.nz>"]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-biosignalml = {url = "https://github.com/BioSignalML/biosignalml-python/releases/download/v0.7.0-a.1/biosignalml-0.7.0a1-py3-none-any.whl"}
+python = ">=3.10,<3.13"
+biosignalml = {url = "https://github.com/BioSignalML/biosignalml-python/releases/download/v0.7.1-a.1/biosignalml-0.7.1a1-py3-none-any.whl"}
 pyqt6 = "^6.5.2"
 
 [build-system]
