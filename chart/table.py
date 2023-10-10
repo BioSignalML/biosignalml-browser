@@ -94,7 +94,7 @@ class TableModel(QtCore.QAbstractTableModel):
   def appendRows(self, rows):
   #--------------------------
     posns = (len(self._rows), len(self._rows) + len(rows) - 1)
-    self.beginInsertRows(self.createIndex(len(self._rows), 0), posns[0], posns[1])
+    self.beginInsertRows(QtCore.QModelIndex(), posns[0], posns[1])
     self._rows.extend(rows)
     self._keys = { str(r[0]): n for n, r in enumerate(self._rows) }
     self.endInsertRows()
@@ -102,7 +102,7 @@ class TableModel(QtCore.QAbstractTableModel):
 
   def removeRows(self, posns):
   #---------------------------
-    self.beginRemoveRows(self.createIndex(posns[0], 0), posns[0], posns[1])
+    self.beginRemoveRows(QtCore.QModelIndex(), posns[0], posns[1])
     self._rows[posns[0]:posns[1]+1] = []
     self._keys = { str(r[0]): n for n, r in enumerate(self._rows) }
     self.endRemoveRows()
