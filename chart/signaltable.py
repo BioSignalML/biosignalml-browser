@@ -34,13 +34,15 @@ class SignalItem(QtWidgets.QStyledItemDelegate):
       return False
     if not index.isValid(): return False
     value = index.data(QtCore.Qt.ItemDataRole.CheckStateRole)
-    if not event.type() == QtCore.QEvent.MouseButtonRelease: return False
-    margin = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PixelMetric.PM_FocusFrameHMargin) + 1
-    if not QtWidgets.QStyle.alignedRect(option.direction, QtCore.Qt.AlignmentFlag.AlignCenter, option.decorationSize,
-                                    QtCore.QRect(option.rect.x() + (2 * margin),
-                                                 option.rect.y(),
-                                                 option.rect.width() - (2 * margin),
-                                                 option.rect.height())).contains(event.pos()): return False
+    if event.type() == QtCore.QEvent.Type.MouseButtonRelease:
+      margin = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PixelMetric.PM_FocusFrameHMargin) + 1
+      if not QtWidgets.QStyle.alignedRect(option.direction, QtCore.Qt.AlignmentFlag.AlignCenter, option.decorationSize,
+                                      QtCore.QRect(option.rect.x() + (2 * margin),
+                                                   option.rect.y(),
+                                                   option.rect.width() - (2 * margin),
+                                                   option.rect.height())).contains(event.pos()): return False
+    elif event.type() != QtCore.QEvent.Type.KeyPress:
+      return False
     state = QtCore.Qt.CheckState.Unchecked if (value == QtCore.Qt.CheckState.Checked) else QtCore.Qt.CheckState.Checked
     return model.setData(index, state, QtCore.Qt.ItemDataRole.CheckStateRole)
 
